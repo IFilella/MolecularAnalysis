@@ -6,8 +6,8 @@ import re
 import warnings
 
 def get_MolSimilarity(mol1,mol2,metric='Tanimoto'):
-    fp1 = Chem.RDKFingerprint(mol1)
-    fp2 = Chem.RDKFingerprint(mol2)
+    fp1 = Chem.RDKFingerprint(mol1.mol)
+    fp2 = Chem.RDKFingerprint(mol2.mol)
     if metric == 'Tanimoto':
         return DataStructs.TanimotoSimilarity(fp1,fp2)
     elif  metric == 'Dice':
@@ -22,10 +22,13 @@ def get_MolSimilarity(mol1,mol2,metric='Tanimoto'):
         return DataStructs.KulczynskiSimilarity(fp1,fp2)
     elif metric == 'McConnaughey':
         return DataStructs.McConnaugheySimilarity(fp1,fp2)
-    elif metric == 'Tversky':
-        return DataStructs.TverskySimilarity(fp1,fp2)
     else:
         raise ValueError('Invalid Metric')
+
+def get_no_anchoring_frag(frag):
+    noanfrag = re.sub("\[.*?\]", "", frag)
+    noanfrag = re.sub("\(\)","",noanfrag)
+    return noanfrag
 
 class mol(object):
     """"""
@@ -64,5 +67,5 @@ if __name__ == '__main__':
     m.get_BRICSdecomposition()
     m.get_clean_fragments()
     #Testing Tanimoto Similarity
-    similarity = get_MolSimilarity(m.mol,m.mol)
+    similarity = get_MolSimilarity(m,m)
     print(similarity)
