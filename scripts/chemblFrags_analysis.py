@@ -117,6 +117,7 @@ chemblFra_uniqSMILE_40 = open('/Users/ifilella/BSC/BRICS/data/chemblFragments/ch
 chemblFra_uniqSMILE_40_sim = open('/Users/ifilella/BSC/BRICS/data/chemblFragments/chembl_fragments_uniqSMILE_40_sim.txt','w')
 uniquefrags = {}
 count = 0
+#Loop through all fragments of chemblFra_uniqSMILE_40db
 for i, line in enumerate(chemblFra_uniqSMILE_40):
     count+=1
     line = line.split()
@@ -125,39 +126,59 @@ for i, line in enumerate(chemblFra_uniqSMILE_40):
     m1 = mol.mol(smile=SMILE)
     m1_atoms = m1.mol.GetNumAtoms()
     m1_NOcount = Lipinski.NOCount(m1.mol)
-    #Only for the first line
+    m1_NHOHcount = Lipinski.NHOHCount(m1.mol)
+    m1_rings = Lipinski.RingCount(m1.mol)
+    m1_sp3 = Lipinski.FractionCSP3(m1.mol)
+    #m1_AliphaticCarbocycles = Lipinski.NumAliphaticCarbocycles(m1.mol)
+    #m1_NumAliphaticHeterocycles = Lipinski.NumAliphaticHeterocycles(m1.mol)
+    m1_NumAliphaticRings = Lipinski.NumAliphaticRings(m1.mol)
+    #m1_NumAromaticCarbocycles = Lipinski.NumAromaticCarbocycles(m1.mol)
+    #m1_NumAromaticHeterocycles = Lipinski.NumAromaticHeterocycles(m1.mol)
+    m1_NumAromaticRings = Lipinski.NumAromaticRings(m1.mol)
+    #Save the first fragment into the dicctionary
     if len(uniquefrags.keys()) == 0:
-        uniquefrags[SMILE] = [SMILE,IDs,m1]
+        #uniquefrags[SMILE] = [SMILE,IDs,m1,m1_atoms,m1_NOcount,m1_NHOHcount,m1_rings,m1_sp3,m1_AliphaticCarbocycles,m1_NumAliphaticHeterocycles,m1_NumAliphaticRings,m1_NumAromaticCarbocycles,m1_NumAromaticHeterocycles,m1_NumAromaticRings]
+        uniquefrags[SMILE] = [SMILE,IDs,m1,m1_atoms,m1_NOcount,m1_NHOHcount,m1_rings,m1_sp3,m1_NumAliphaticRings,m1_NumAromaticRings]
+    #Loop through the unique fragments of the dicctionary
     for j,k in enumerate(uniquefrags.keys()):
         m2 = uniquefrags[k][2]
-        m2_atoms = m2.mol.GetNumAtoms()
-        m2_NOcount = Lipinski.NOCount(m2.mol)
-        #First check the number of atoms of m1 and m2 to avoid unecessary calculations
-        #if m1_atoms != m2_atoms:
-        #    if j == len(uniquefrags.keys())-1:
-        #        uniquefrags[SMILE] = [SMILE,IDs,m1]
-        #        break
-        #    else:
-        #        continue
-        ##Second check the number of N and O to avoid unecessary calculations
-        #elif m1_NOcount != m2_NOcount:
-        #    if j == len(uniquefrags.keys())-1:
-        #        uniquefrags[SMILE] = [SMILE,IDs,m1]
-        #        break
-        #    else:
-        #        continue
-        ##If the number of atoms of m1 and m2 the same compute its similarity
-        #else:
-        if True:
-            similarity =  mol.get_MolSimilarity(m1,m2)
-            if j == len(uniquefrags.keys())-1 and similarity != 1:
-                uniquefrags[SMILE] = [SMILE,IDs,m1]
+        m2_atoms = uniquefrags[k][3]
+        m2_NOcount = uniquefrags[k][4]
+        m2_NHOHcount = uniquefrags[k][5]
+        m2_rings = uniquefrags[k][6]
+        m2_sp3 = uniquefrags[k][7]
+        #m2_AliphaticCarbocycles = uniquefrags[k][8]
+        #m2_NumAliphaticHeterocycles = uniquefrags[k][9]
+        m2_NumAliphaticRings = uniquefrags[k][8]
+        #m2_NumAromaticCarbocycles = uniquefrags[k][11]
+        #m2_NumAromaticHeterocycles = uniquefrags[k][12]
+        m2_NumAromaticRings = uniquefrags[k][9]
+        #To avoide unecessary similarity calculations check if the new frag (m1) and the unique frag (m2)
+        #have identical properties susch as the number of atoms or the number of rings.
+        #if m1_atoms != m2_atoms or m1_NOcount != m2_NOcount or m1_rings != m2_rings or m1_NHOHcount != m2_NHOHcount or m1_sp3 != m2_sp3 or m1_AliphaticCarbocycles != m2_AliphaticCarbocycles or m1_NumAliphaticHeterocycles != m2_NumAliphaticHeterocycles or m1_NumAliphaticRings != m2_NumAliphaticRings or m1_NumAromaticCarbocycles != m2_NumAromaticCarbocycles or m1_NumAromaticHeterocycles != m2_NumAromaticHeterocycles or m1_NumAromaticRings != m2_NumAromaticRings:
+        if m1_atoms != m2_atoms or m1_NOcount != m2_NOcount or m1_rings != m2_rings or m1_NHOHcount != m2_NHOHcount or m1_sp3 != m2_sp3 or m1_NumAliphaticRings != m2_NumAliphaticRings or  m1_NumAromaticRings != m2_NumAromaticRings:
+            #If the last iterated unique frag (m2) doesn't share all properties with m1 then save m1 into the dicc
+            if j == len(uniquefrags.keys())-1:
+                #uniquefrags[SMILE] = [SMILE,IDs,m1,m1_atoms,m1_NOcount,m1_NHOHcount,m1_rings,m1_sp3,m1_AliphaticCarbocycles,m1_NumAliphaticHeterocycles,m1_NumAliphaticRings,m1_NumAromaticCarbocycles,m1_NumAromaticHeterocycles,m1_NumAromaticRings]
+                uniquefrags[SMILE] = [SMILE,IDs,m1,m1_atoms,m1_NOcount,m1_NHOHcount,m1_rings,m1_sp3,m1_NumAliphaticRings,m1_NumAromaticRings]
                 break
+            else:
+                continue
+        #If m1 and m2 share identical properties then check the similarity
+        else:
+            similarity =  mol.get_MolSimilarity(m1,m2)
+            #If the last iterated unique frag (m2) and m1 have a similarity different from 1 then store m1 into the dicc
+            if j == len(uniquefrags.keys())-1 and similarity != 1:
+                #uniquefrags[SMILE] = [SMILE,IDs,m1,m1_atoms,m1_NOcount,m1_NHOHcount,m1_rings,m1_sp3,m1_AliphaticCarbocycles,m1_NumAliphaticHeterocycles,m1_NumAliphaticRings,m1_NumAromaticCarbocycles,m1_NumAromaticHeterocycles,m1_NumAromaticRings]
+                uniquefrags[SMILE] = [SMILE,IDs,m1,m1_atoms,m1_NOcount,m1_NHOHcount,m1_rings,m1_sp3,m1_NumAliphaticRings,m1_NumAromaticRings]
+                break
+            #If the last iterated unique frag (m2) and m1 have a similarity of 1 store m1 with m2
             elif j == len(uniquefrags.keys())-1 and similarity == 1:
                 print("0: " + uniquefrags[k][0] + " " +SMILE)
                 uniquefrags[k][0] += ',' + SMILE
                 uniquefrags[k][1] += ',' + IDs
                 break
+            #If the iterated unique frag (m2) and m1 have a similarity of 1 store m1 with m2
             elif similarity == 1:
                 print("1: " + uniquefrags[k][0] + " " +SMILE)
                 uniquefrags[k][0] += ',' + SMILE
@@ -168,7 +189,7 @@ for i, line in enumerate(chemblFra_uniqSMILE_40):
     if verbose:
         print('Unique fragments: %d'%len(uniquefrags.keys()))
         print('Analized fragments: %d'%count)
-    if i == 2400: break
+    if i == 48000: break
 
 print("Saving into file")
 for k in uniquefrags.keys():
