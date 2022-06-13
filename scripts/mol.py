@@ -5,6 +5,11 @@ from rdkit import DataStructs
 import re
 import warnings
 
+def read_compoundDB(data):
+    compoundDB = Chem.SDMolSupplier(data)
+    return compoundDB
+
+
 def get_MolSimilarity(mol1,mol2,metric='Tanimoto'):
     fp1 = Chem.RDKFingerprint(mol1.mol)
     fp2 = Chem.RDKFingerprint(mol2.mol)

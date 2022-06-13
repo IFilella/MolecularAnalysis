@@ -2,8 +2,7 @@ import mol
 import numpy as np
 import warnings
 import multiprocessing as mp
-import time
-from pebble import process, TimeoutError
+import argparse
 
 fn = 'temp.txt'
 
@@ -30,27 +29,14 @@ def listener(q):
 			f.write(str(m) + '\n')
 			f.flush()
 
-"""
-for i,line in enumerate(chemblCompounds):
-    line = line.replace("\n","").split("\t")
-    if len(line) == 4 and i > 0:
-        ID = line[0]
-        SMILE = line[1]
-        InChI = line[2]
-        m = mol.mol(InChI=InChI)
-        m.get_BRICSdecomposition()
-        m.get_clean_fragments()
-        print(i, ID, m.cfragments)
-        for frag in m.cfragments:
-            chemblFragments.write('%s %s\n'%(ID,frag))
-
-    else:
-        warnings.warn(f'There are missing data')
-"""
 if __name__ == '__main__':
-    infile = '/Users/ifilella/BSC/BRICS/data/chemblCompounds/chembl_30_chemreps_5000.txt'
+    parser = argparse.ArgumentParser(description = "Decompose a database of compounds in the format: (ID SMILE InChI InChI_key) into a database of fragments in the format: (ID Fragments(,)). The process is run in parallel.")
+    parser.add_argument('-i', dest="infile", help = "Database of compounds")
+    parser.add_argument('-o', dest="outfile", help = "Output name for the database of fragmenets")
+    args = parser.parse_args()
+    infile = args.infile
     chemblCompounds = open(infile,'r')
-    chemblFragments = open('/Users/ifilella/BSC/BRICS/data/chemblFragments/chembl_30_frags.txt','w')
+    chemblFragments = open(outfile,'w')
     chemblFragments.write('original_chembl_id fragment_smile')
 
     manager = mp.Manager()

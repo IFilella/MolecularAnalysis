@@ -30,15 +30,17 @@ def task_done(future):
 
 if __name__ == '__main__':
     
-    parser = argparse.ArgumentParser(description = "")
-    parser.add_argument('-i', dest="infile", help = "")
+    parser = argparse.ArgumentParser(description = "Decompose a database of compounds in the format: (ID SMILE InChI InChI_key) into a database of fragments in the format: (ID Fragments(,)). The process is run in parallel discarding compounds which take more than maxtime to decompose")
+    parser.add_argument('-i', dest="infile", help = "Database of compounds")
+    parser.add_argument('--maxtime',dest='maxtime',help="maximum time to decompose a compound into their fragments",default=30)
     args = parser.parse_args()
     infile = args.infile
+    maxtime = args.maxtime
     
     chemblCompounds = open(infile,'r')
 
     with ProcessPool(max_workers= mp.cpu_count(),max_tasks=10) as pool:
         for i,line in enumerate(chemblCompounds):
 #            if i<=0: continue
-            future = pool.schedule(get_fragments,args=[line],timeout=30)
+            future = pool.schedule(get_fragments,args=[line],timeout=maxtime)
             future.add_done_callback(task_done)
