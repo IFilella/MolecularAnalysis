@@ -15,7 +15,6 @@ def get_fragments(cpd,ID):
 def task_done(future):
     try:
         result = future.result()
-        print(result[1])
     except TimeoutError as error:
         print('Function took longer than %d seconds'%error.args[1])
     except Exception as error:
@@ -31,13 +30,6 @@ if __name__ == '__main__':
     maxtime = args.maxtime
     
     cpdDB = mol.read_compoundDB(infile)
-
-    #mols = [mol for mol in cpdDB]
-    #print('Total compounds: %s'%str(len(mols)))
-
-#    for cpd in cpdDB:
-#        ID = cpd.GetProp("idnumber")
-#        print(ID)
 
     with ProcessPool(max_workers= mp.cpu_count(),max_tasks=10) as pool:
         for cpd in cpdDB:
