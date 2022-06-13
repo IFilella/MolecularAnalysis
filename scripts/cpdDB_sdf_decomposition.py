@@ -4,6 +4,7 @@ import rdkit.Chem.BRICS as BRICS
 import re
 from pebble import ProcessPool
 import multiprocessing as mp
+import warnings
 
 def get_fragments(cpd,ID):
     fragments = list(BRICS.BRICSDecompose(cpd))
@@ -40,6 +41,9 @@ if __name__ == '__main__':
 
     with ProcessPool(max_workers= mp.cpu_count(),max_tasks=10) as pool:
         for cpd in cpdDB:
-            ID = cpd.GetProp("idnumber")
+            try:
+                ID = cpd.GetProp("idnumber")
+            except:
+                ID = 'unknownID'
             future = pool.schedule(get_fragments,args=[cpd,ID],timeout=maxtime)
             future.add_done_callback(task_done)
