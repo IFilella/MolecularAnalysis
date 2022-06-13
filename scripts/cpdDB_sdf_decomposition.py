@@ -5,6 +5,7 @@ import re
 from pebble import ProcessPool
 import multiprocessing as mp
 import warnings
+import concurrent.futures
 
 def get_fragments(cpd,ID):
     fragments = list(BRICS.BRICSDecompose(cpd))
@@ -15,11 +16,11 @@ def get_fragments(cpd,ID):
 def task_done(future):
     try:
         result = future.result()
-    except TimeoutError as error:
-        print('Function took longer than %d seconds'%error.args[1])
+        print(result[1])
+    except concurrent.futures.TimeoutError as error:
+        print("Function took longer than %.3f seconds"%error.args[1])
     except Exception as error:
-        print('Function raised %s'%error)
-        print(error.traceback)  # traceback of the function
+        print('Function raised error')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = "Decompose a sdf database of compounds into a database of fragments in the format: (ID Fragments(,)). The process is run in parallel discarding compounds which take more than maxtime to decompose")
@@ -27,11 +28,14 @@ if __name__ == '__main__':
     parser.add_argument('--maxtime',dest='maxtime',help="maximum time to decompose a compound into their fragments",default=30)
     args = parser.parse_args()
     infile = args.infile
-    maxtime = args.maxtime
+    maxtime = float(args.maxtime)
     
     cpdDB = mol.read_compoundDB(infile)
 
-    with ProcessPool(max_workers= mp.cpu_count(),max_tasks=10) as pool:
+    #mols = [mol for mol in cpdDB]
+    #print('Total compounds: %s'%str(len(mols)))
+
+    with ProcessPool(max_workers= mp.cpu_count(),max_tasks=0) as pool:
         for cpd in cpdDB:
             try:
                 ID = cpd.GetProp("idnumber")

@@ -5,7 +5,8 @@ import rdkit.Chem as Chem
 import matplotlib.pyplot as plt
 import rdkit.Chem.Lipinski as Lipinski
 
-chemblFra = open('/Users/ifilella/BSC/BRICS/data/enamineFragments/enamine_premium_fragments.txt','r')
+chemblFra = open('../data/enamineFragments/enamine_premium_fragments.txt','r')
+#chemblFra = open('test.txt','r')
 
 #Get total number of fragments of Chembl Fragment database
 count = 0
