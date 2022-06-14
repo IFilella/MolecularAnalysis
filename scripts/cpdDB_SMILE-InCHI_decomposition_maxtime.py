@@ -39,7 +39,7 @@ if __name__ == '__main__':
     
     chemblCompounds = open(infile,'r')
 
-    with ProcessPool(max_workers= mp.cpu_count(),max_tasks=10) as pool:
+    with ProcessPool(max_workers= mp.cpu_count()) as pool:
         for i,line in enumerate(chemblCompounds):
 #            if i<=0: continue
             future = pool.schedule(get_fragments,args=[line],timeout=maxtime)

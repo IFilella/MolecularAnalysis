@@ -4,11 +4,11 @@ import rdkit.Chem as Chem
 import matplotlib.pyplot as plt
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description ='Transform a sdf fragment database to a database of formaat (ID SMILE)')
+    parser = argparse.ArgumentParser(description ='Transform a sdf fragment database to a database of format (ID SMILE) and then analyse, filter and cluster it.')
     parser.add_argument('-i', dest="infile", help = "Database of fragments")
     parser.add_argument('-o', dest="outfile", help = "Database of fragments")
     parser.add_argument('--uniq', default=False, action='store_true', help='Filter the database by uniq SMILES')
-    parser.add_argument('--fsize', default=40, help='Filter the uniq SMILES database by size')
+    parser.add_argument('--fsize', default=30, help='Filter the uniq SMILES database by size')
     parser.add_argument('--hist', default=False, action='store_true', help='Plot a hist of the atom count')
     parser.add_argument('--sim', default=False, action='store_true', help='Cluster by similarity (tanimoto)')
     args = parser.parse_args()

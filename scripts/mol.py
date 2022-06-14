@@ -100,6 +100,31 @@ def get_no_anchoring_frag(frag):
     noanfrag = re.sub("\(\)","",noanfrag)
     return noanfrag
 
+class fragDB(object):
+    """""
+    """""
+    def __init__(self, txtDB = None, dicDB = None):
+        self.txtDB = txtDB
+        self.dicDB = dicDB
+        if self.txtDB != None and self.dicDB == None:
+            self.dicDB = {}
+            db = open(self.txtDB,'r')
+            for line in db:
+                line = line.split()
+                SMILE = line[0]
+                simSMILES = line[1]
+                IDs = line[2]
+                m1 = mol(smile=SMILE)
+                m1_atoms = m1.mol.GetNumAtoms()
+                m1_NOcount = Lipinski.NOCount(m1.mol)
+                m1_NHOHcount = Lipinski.NHOHCount(m1.mol)
+                m1_rings = Lipinski.RingCount(m1.mol)
+                m1_sp3 = Lipinski.FractionCSP3(m1.mol)
+                m1_NumAliphaticRings = Lipinski.NumAliphaticRings(m1.mol)
+                m1_NumAromaticRings = Lipinski.NumAromaticRings(m1.mol)
+                self.dicDB[SMILE] = [simSMILES,]
+            
+
 class mol(object):
     """"""
     """"""
@@ -125,6 +150,27 @@ class mol(object):
     def get_clean_fragments(self):
         if self.fragments == None: self.get_BRICSdecomposition()
         self.cfragments = [re.sub("(\[.*?\])", "[*]", frag) for frag in self.fragments]
+    
+    def get_NumAtoms(self):
+        self.NumAtoms = self.mol.GetNumAtoms()
+
+    def get_NOCount(self):
+        self.NOCount = Lipinski.NOCount(self.mol)
+
+    def get_NHOHcount(self):
+        self.NHOHcount = Lipinski.NHOHCount(self.mol)
+
+    def get_rings(self):
+        self.rings = Lipinski.RingCount(self.mol)
+
+    def get_sp3(self):
+        self.sp3 = Lipinski.FractionCSP3(self.mol)
+
+    def get_NumAliphaticRings(self):
+        self.NumAliphaticRings = Lipinski.NumAliphaticRings(self.mol)
+
+    def get_NumAromaticRings(self):
+        self.NumAromaticRings = Lipinski.NumAromaticRings(self.mol)
         
 if __name__ == '__main__':
     smile = 'Cc1cc(-c2csc(N=C(N)N)n2)cn1C'
