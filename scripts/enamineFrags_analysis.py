@@ -5,13 +5,13 @@ import rdkit.Chem as Chem
 import matplotlib.pyplot as plt
 import rdkit.Chem.Lipinski as Lipinski
 
-chemblFra = open('../data/enamineFragments/enamine_premium_fragments.txt','r')
-#chemblFra = open('test.txt','r')
+enamineFra = open('../data/enamineFragments/enamine_fragments.txt','r')
 
+"""
 #Get total number of fragments of Chembl Fragment database
 count = 0
 errorcount = 0
-for i,line in enumerate(chemblFra):
+for i,line in enumerate(enamineFra):
     line = line.split()
     try:
         frags = line[-1].split(",")
@@ -25,13 +25,14 @@ for i,line in enumerate(chemblFra):
 print('Total number of fragments %d'%count)
 print('Total number of errors in %d compounds'%errorcount)
 exit()
+"""
 
 """
 #Filter Chembl Fragment database by unique smiles
 uniq_smile_frags = {}
 count = 0
-for i, line in enumerate(chemblFra):
-    if 'Function' in line: continue
+for i, line in enumerate(enamineFra):
+    if ('Function' in line) or ('unknownID' in line): continue
     line = line.split()
     ID = line[0]
     frags = line[-1].split(",")
@@ -44,7 +45,7 @@ for i, line in enumerate(chemblFra):
             uniq_smile_frags[frag]=[ID]
         else:
             uniq_smile_frags[frag].append(ID)
-f = open('/Users/ifilella/BSC/BRICS/data/chemblFragments/chembl_fragments_uniqSMILE.txt','w')
+f = open('/Users/ifilella/BSC/BRICS/data/enamineFragments/enamine_fragments_uniqSMILE.txt','w')
 for k in uniq_smile_frags.keys():
     f.write(k + " " + ",".join(uniq_smile_frags[k]) + "\n")
 f.close()
@@ -53,10 +54,10 @@ exit()
 
 """
 #Analyse Chembl Fragment database by unique smiles
-chemblFra_uniqSMILE = open('/Users/ifilella/BSC/BRICS/data/chemblFragments/chembl_fragments_uniqSMILE.txt','r')
+enamineFra_uniqSMILE = open('/Users/ifilella/BSC/BRICS/data/enamineFragments/enamine_fragments_uniqSMILE.txt','r')
 uniq_smile_frags = {}
 counts = {}
-for i, line in enumerate(chemblFra_uniqSMILE):
+for i, line in enumerate(enamineFra_uniqSMILE):
     line = line.split()
     SMILE = line[0]
     IDs = line[-1]
@@ -82,16 +83,15 @@ for i, line in enumerate(chemblFra_uniqSMILE):
 #print(kcounts[ind])
 exit()
 """
-
 """
 #Filter by fragment size
 counts = {}
 kekuleerror = 0
 sizefilter = 0
 x = []
-chemblFra_uniqSMILE = open('/Users/ifilella/BSC/BRICS/data/chemblFragments/chembl_fragments_uniqSMILE.txt','r')
-chemblFra_uniqSMILE_40 = open('/Users/ifilella/BSC/BRICS/data/chemblFragments/chembl_fragments_uniqSMILE_40.txt','w')
-for i, line in enumerate(chemblFra_uniqSMILE):
+enamineFra_uniqSMILE = open('../data/enamineFragments/enamine_fragments_uniqSMILE.txt','r')
+enamineFra_uniqSMILE_40 = open('../data/enamineFragments/enamine_fragments_uniqSMILE_40.txt','w')
+for i, line in enumerate(enamineFra_uniqSMILE):
     line = line.split()
     SMILE = line[0]
     IDs = line[-1]
@@ -109,25 +109,27 @@ for i, line in enumerate(chemblFra_uniqSMILE):
     if numatoms >= 40:
         sizefilter +=1
     else:
-        chemblFra_uniqSMILE_40.write(SMILE + " " + IDs + "\n")
+        enamineFra_uniqSMILE_40.write(SMILE + " " + IDs + "\n")
 
+enamineFra_uniqSMILE.close()
 print(kekuleerror)
 print(sizefilter)
+print(max(x))
 plt.hist(x,bins=100,range=(0,320))
 plt.axvline(x=40,color = 'red',linestyle='--')
 plt.show()
-chemblFra_uniqSMILE_40.close()
+enamineFra_uniqSMILE_40.close()
 exit()
 """
-"""
+
 #Clusterize Chembl Fragment database by similarity
 verbose = True
-chemblFra_uniqSMILE_40 = open('/Users/ifilella/BSC/BRICS/data/chemblFragments/chembl_fragments_uniqSMILE_40.txt','r')
-chemblFra_uniqSMILE_40_sim = open('/Users/ifilella/BSC/BRICS/data/chemblFragments/chembl_fragments_uniqSMILE_40_sim.txt','w')
+enamineFra_uniqSMILE_40 = open('../data/enamineFragments/enamine_fragments_uniqSMILE_40.txt','r')
+enamineFra_uniqSMILE_40_sim = open('../data/enamineFragments/enamine_fragments_uniqSMILE_40_sim.txt','w')
 uniquefrags = {}
 count = 0
-#Loop through all fragments of chemblFra_uniqSMILE_40db
-for i, line in enumerate(chemblFra_uniqSMILE_40):
+#Loop through all fragments of enamineFra_uniqSMILE_40db
+for i, line in enumerate(enamineFra_uniqSMILE_40):
     count+=1
     line = line.split()
     SMILE = line[0]
@@ -198,10 +200,9 @@ for i, line in enumerate(chemblFra_uniqSMILE_40):
     if verbose:
         print('Unique fragments: %d'%len(uniquefrags.keys()))
         print('Analized fragments: %d'%count)
-    if i == 48000: break
+    #if i == 48000: break
 
 print("Saving into file")
 for k in uniquefrags.keys():
-    chemblFra_uniqSMILE_40_sim.write(k + " " + uniquefrags[k][0] + " " +uniquefrags[k][1] + "\n")
-chemblFra_uniqSMILE_40_sim.close()
-"""
+    enamineFra_uniqSMILE_40_sim.write(k + " " + uniquefrags[k][0] + " " +uniquefrags[k][1] + "\n")
+enamineFra_uniqSMILE_40_sim.close()

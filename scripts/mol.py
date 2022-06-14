@@ -4,6 +4,71 @@ from rdkit.Chem import AllChem
 from rdkit import DataStructs
 import re
 import warnings
+import rdkit.Chem.Lipinski as Lipinski
+
+def filter_db_similarity(indb,outdb,verbose=True):
+    inp = open(indb,'r')
+    out = open(outdb,'w')
+    uniquefrags = {}
+    count = 0
+    for i, line in enumerate(inp):
+        count+=1
+        line = line.split()
+        SMILE = line[0]
+        IDs = line[-1]
+        m1 = mol(smile=SMILE)
+        m1_atoms = m1.mol.GetNumAtoms()
+        m1_NOcount = Lipinski.NOCount(m1.mol)
+        m1_NHOHcount = Lipinski.NHOHCount(m1.mol)
+        m1_rings = Lipinski.RingCount(m1.mol)
+        m1_sp3 = Lipinski.FractionCSP3(m1.mol)
+        m1_NumAliphaticRings = Lipinski.NumAliphaticRings(m1.mol)
+        m1_NumAromaticRings = Lipinski.NumAromaticRings(m1.mol)
+        if len(uniquefrags.keys()) == 0:
+            uniquefrags[SMILE] = [SMILE,IDs,m1,m1_atoms,m1_NOcount,m1_NHOHcount,m1_rings,m1_sp3,m1_NumAliphaticRings,m1_NumAromaticRings]
+        for j,k in enumerate(uniquefrags.keys()):
+            m2 = uniquefrags[k][2]
+            m2_atoms = uniquefrags[k][3]
+            m2_NOcount = uniquefrags[k][4]
+            m2_NHOHcount = uniquefrags[k][5]
+            m2_rings = uniquefrags[k][6]
+            m2_sp3 = uniquefrags[k][7]
+            m2_NumAliphaticRings = uniquefrags[k][8]
+            m2_NumAromaticRings = uniquefrags[k][9]
+            if m1_atoms != m2_atoms or m1_NOcount != m2_NOcount or m1_rings != m2_rings or m1_NHOHcount != m2_NHOHcount or m1_sp3 != m2_sp3 or m1_NumAliphaticRings != m2_NumAliphaticRings or  m1_NumAromaticRings != m2_NumAromaticRings:
+                if j == len(uniquefrags.keys())-1:
+                    uniquefrags[SMILE] = [SMILE,IDs,m1,m1_atoms,m1_NOcount,m1_NHOHcount,m1_rings,m1_sp3,m1_NumAliphaticRings,m1_NumAromaticRings]
+                    break
+                else:
+                    continue
+            else:
+                similarity =  get_MolSimilarity(m1,m2)
+                if j == len(uniquefrags.keys())-1 and similarity != 1:
+                    uniquefrags[SMILE] = [SMILE,IDs,m1,m1_atoms,m1_NOcount,m1_NHOHcount,m1_rings,m1_sp3,m1_NumAliphaticRings,m1_NumAromaticRings]
+                    break
+                elif j == len(uniquefrags.keys())-1 and similarity == 1:
+                    print("0: " + uniquefrags[k][0] + " " +SMILE)
+                    uniquefrags[k][0] += ',' + SMILE
+                    uniquefrags[k][1] += ',' + IDs
+                    break
+                elif similarity == 1:
+                    print("1: " + uniquefrags[k][0] + " " +SMILE)
+                    uniquefrags[k][0] += ',' + SMILE
+                    uniquefrags[k][1] += ',' + IDs
+                    break
+                else:
+                    continue
+        if verbose:
+            print('Unique fragments: %d'%len(uniquefrags.keys()))
+            print('Analized fragments: %d'%count)
+        else:
+            if count % 1000 == 0:  print('Analized fragments: %d'%count)
+
+    inp.close()
+    if verbose: print("Saving into file")
+    for k in uniquefrags.keys():
+        out.write(k + " " + uniquefrags[k][0] + " " +uniquefrags[k][1] + "\n")
+    out.close()
 
 def read_compoundDB(data):
     compoundDB = Chem.SDMolSupplier(data)
