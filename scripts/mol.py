@@ -37,7 +37,7 @@ def intersect_molDBs(db1,db2,simt,output=None,verbose=True):
                 if verbose: print(i,'bySimilarity',SMILE1,SMILE2)
                 keepkeys.append(SMILE1)
                 break
-        if i == 500: break
+        #if i == 500: break
     totalhits = hitsSMILE + hitsSimilarity
     sizedb1 = len(db1.dicDB.keys())
     sizedb2 = len(db2.dicDB.keys())
