@@ -10,7 +10,8 @@ import copy
 
 def intersect_molDBs(db1,db2,simt,output=None,verbose=True):
     db3 = copy.deepcopy(db1)
-    keepkeys = []
+    keepkeys_db1 = []
+    keepkeys_db2 = []
     hitsSMILE = 0
     hitsSimilarity = 0
     for i,k1 in enumerate(db1.dicDB.keys()):
@@ -22,7 +23,8 @@ def intersect_molDBs(db1,db2,simt,output=None,verbose=True):
             if SMILE1 == SMILE2:
                 hitsSMILE += 1
                 if verbose: print(i,'bySMILE',SMILE1,SMILE2)
-                keepkeys.append(SMILE1)
+                keepkeys_db1.append(SMILE1)
+                keepkeys_db2.append(SMILE2)
                 break
             if m1.NumAtoms != m2.NumAtoms: continue
             if m1.NOCount != m2.NOCount: continue
@@ -35,27 +37,31 @@ def intersect_molDBs(db1,db2,simt,output=None,verbose=True):
             if similarity >= simt:
                 hitsSimilarity += 1
                 if verbose: print(i,'bySimilarity',SMILE1,SMILE2)
-                keepkeys.append(SMILE1)
+                keepkeys_db1.append(SMILE1)
+                keepkeys_db2.append(SMILE2)
                 break
-        #if i == 500: break
+        if i == 500: break
     totalhits = hitsSMILE + hitsSimilarity
     sizedb1 = len(db1.dicDB.keys())
     sizedb2 = len(db2.dicDB.keys())
-    print(keepkeys)
     print('Hits by SMILE: %d'%hitsSMILE)
     print('Hits by Similarity (threshold %.3f): %d'%(simt,hitsSimilarity))
     print('Total hits: %d'%totalhits)
     print('Total db1 = %d, total db2 = %d'%(sizedb1,sizedb2))
-    print('Percentage of elements of db1 in db2: %f'%(((float(totalhits)/float(sizedb1))*100)))
-    print('Percentage of elements of db2 in db1: %f'%(((float(totalhits)/float(sizedb2))*100)))
+    print('Percentage of elements of db1 in db2: %.3f'%(((float(totalhits)/float(sizedb1))*100)))
+    print('Percentage of elements of db2 in db1: %.3f'%(((float(totalhits)/float(sizedb2))*100)))
     if output != None:
-        set_keepkeys = set(keepkeys)
-        set_db3keys = set(list(db3.dicDB.keys()))
-        delkeys = list(set_db3keys.difference(set_keepkeys))
-        for key in delkeys:
+        for i,k1 in keepkeys_db1:
+            k2 = keepkeys_db2[i]
+            db3.dicDB[k1][0] += ',' + db2.dicDB[k2][0]
+            db3.dicDB[k1][1] += ',' + db2.dicDB[k2][1]
+        set_keepkeys_db3 = set(keepkeys_db1)
+        set_keys_db3 = set(list(db3.dicDB.keys()))
+        delkeys_db3 = list(set_keys_db3.difference(set_keepkeys_db3))
+        for key in delkeys_db3:
             del db3.dicDB[key]
-        print(len(db3.dicDB.keys()))
-        db3.save_molDB(output+'p')
+        db3.print_molDB(output+'.txt')
+        db3.save_molDB(output+'.p')
 
 def filter_db_similarity(indb,outdb,verbose=True):
     inp = open(indb,'r')
