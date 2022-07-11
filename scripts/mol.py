@@ -2,11 +2,18 @@ import rdkit.Chem.BRICS as BRICS
 import rdkit.Chem as Chem
 from rdkit.Chem import AllChem
 from rdkit import DataStructs
+import rdkit.Chem.Lipinski as Lipinski
 import re
 import warnings
-import rdkit.Chem.Lipinski as Lipinski
 import pickle
 import copy
+import numpy as np
+import pandas as pd
+from sklearn.manifold import TSNE
+from sklearn.decomposition import PCA
+import matplotlib.pyplot as plt
+import seaborn as sns
+import random
 
 def intersect_molDBs(db1,db2,simt,output=None,verbose=True):
     db3 = copy.deepcopy(db1)
@@ -40,7 +47,6 @@ def intersect_molDBs(db1,db2,simt,output=None,verbose=True):
                 keepkeys_db1.append(SMILE1)
                 keepkeys_db2.append(SMILE2)
                 break
-        if i == 500: break
     totalhits = hitsSMILE + hitsSimilarity
     sizedb1 = len(db1.dicDB.keys())
     sizedb2 = len(db2.dicDB.keys())
@@ -127,6 +133,52 @@ def filter_db_similarity(indb,outdb,verbose=True):
         out.write(k + " " + uniquefrags[k][0] + " " +uniquefrags[k][1] + "\n")
     out.close()
 
+def plot_TSNE(dbs,names,output=None, random_max = 5000, delimiter = None):
+    X = []
+    Y = []
+    for i,db in enumerate(dbs):
+        if delimiter == None:
+            name = names[i]
+        else:
+            name = names[i].split(delimiter)[0]
+        print(name)
+        fps = db.get_fingerprints(random_max)
+        X.extend(fps)
+        Y.extend([name]*len(fps))
+    X = np.asarray(X)
+    print('Computing TSNE')
+    tsne_results = TSNE(n_components=2, verbose = 1, learning_rate='auto',init='pca').fit_transform(X)
+    df = pd.DataFrame(dict(xaxis=tsne_results[:,0], yaxis=tsne_results[:,1],  molDB = Y))
+    plt.figure()
+    sns.scatterplot('xaxis', 'yaxis', data=df, hue='molDB',alpha = 0.5, s=3,style='molDB')
+    if output != None:
+        plt.savefig(output+'.png')
+    plt.show()
+
+def plot_PCA(dbs,names,output=None, random_max = 5000, delimiter = None):
+    X = []
+    Y = []
+    for i,db in enumerate(dbs):
+        if delimiter == None:
+            name = names[i]
+        else:
+            name = names[i].split(delimiter)[0]
+        print(name)
+        fps = db.get_fingerprints(random_max)
+        X.extend(fps)
+        Y.extend([name]*len(fps))
+    X = np.asarray(X)
+    print('Computing PCA')
+    pca = PCA(n_components=3)
+    pca_results = pca.fit_transform(X)
+    print('Explained variation per principal component: {}'.format(pca.explained_variance_ratio_))
+    df = pd.DataFrame(dict(pca1st=pca_results[:,0], pca2nd=pca_results[:,1],  molDB = Y))
+    plt.figure()
+    sns.scatterplot('pca1st', 'pca2nd', data=df, hue='molDB',alpha = 0.5, s=3,style='molDB')
+    if output != None:
+        plt.savefig(output+'.png')
+    plt.show()
+
 def read_compoundDB(data):
     compoundDB = Chem.SDMolSupplier(data)
     return compoundDB
@@ -185,6 +237,7 @@ class molDB(object):
             raise KeyError('Either a txtDB or a dicDB must be provided')
         else:
             raise KeyError('Provide only a txtDB or a dicDB, not both simultaniusly')
+        self._get_total_mols()
             
     def save_molDB(self,output):
         with open(output+'.p', 'wb') as handle:
@@ -196,6 +249,25 @@ class molDB(object):
             f.write(k + " " + self.dicDB[k][0] + " " + self.dicDB[k][1] + '\n')
         f.close()
 
+    def get_fingerprints(self,random_max=None):
+        fps = []
+        if random_max == None:
+            keys = self.dicDB.keys()
+            total = self.size
+        else:
+            keys = random.sample(list(self.dicDB.keys()), random_max)
+            total = len(keys)
+        for i,k in enumerate(keys):
+            print(str(i) + '/' + str(total))
+            mol = self.dicDB[k][2]
+            molfp = Chem.RDKFingerprint(mol.mol)
+            molfp = np.asarray(list((molfp.ToBitString())))
+            fps.append(molfp)
+        return fps 
+
+    def _get_total_mols(self):
+        self.size = len(self.dicDB.keys())
+        
 
 class mol(object):
     """"""
