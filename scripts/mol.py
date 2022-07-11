@@ -57,7 +57,7 @@ def intersect_molDBs(db1,db2,simt,output=None,verbose=True):
     print('Percentage of elements of db1 in db2: %.3f'%(((float(totalhits)/float(sizedb1))*100)))
     print('Percentage of elements of db2 in db1: %.3f'%(((float(totalhits)/float(sizedb2))*100)))
     if output != None:
-        for i,k1 in keepkeys_db1:
+        for i,k1 in enumerate(keepkeys_db1):
             k2 = keepkeys_db2[i]
             db3.dicDB[k1][0] += ',' + db2.dicDB[k2][0]
             db3.dicDB[k1][1] += ',' + db2.dicDB[k2][1]
@@ -66,8 +66,8 @@ def intersect_molDBs(db1,db2,simt,output=None,verbose=True):
         delkeys_db3 = list(set_keys_db3.difference(set_keepkeys_db3))
         for key in delkeys_db3:
             del db3.dicDB[key]
-        db3.print_molDB(output+'.txt')
-        db3.save_molDB(output+'.p')
+        db3.print_molDB(output)
+        db3.save_molDB(output)
 
 def filter_db_similarity(indb,outdb,verbose=True):
     inp = open(indb,'r')
