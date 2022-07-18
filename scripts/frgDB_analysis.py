@@ -1,7 +1,9 @@
-import mol
 import argparse
 import rdkit.Chem as Chem
 import matplotlib.pyplot as plt
+import sys
+sys.path.insert(1, '../')
+import mol
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description ='Analyse, filter and cluster a fragment database of format (ID fragsSMILES)')

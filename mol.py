@@ -14,6 +14,8 @@ from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 import seaborn as sns
 import random
+from umap import UMAP
+import time
 
 def intersect_molDBs(db1,db2,simt,output=None,verbose=True):
     db3 = copy.deepcopy(db1)
@@ -133,16 +135,42 @@ def filter_db_similarity(indb,outdb,verbose=True):
         out.write(k + " " + uniquefrags[k][0] + " " +uniquefrags[k][1] + "\n")
     out.close()
 
-def plot_TSNE(dbs,names,output=None, random_max = 5000, delimiter = None):
+def plot_UMAP(dbs,names,output=None, random_max = 5000, delimiter = None, fpsalg = 'RDKIT'):
     X = []
     Y = []
     for i,db in enumerate(dbs):
         if delimiter == None:
             name = names[i]
         else:
-            name = names[i].split(delimiter)[0]
+            #name = names[i].split(delimiter)[0]
+            name = '_'.join(names[i].split(delimiter)[0:2])
         print(name)
-        fps = db.get_fingerprints(random_max)
+        fps = db.get_fingerprints(fpsalg, random_max)
+        X.extend(fps)
+        Y.extend([name]*len(fps))
+    X = np.asarray(X)
+    print('Computing UMAP')
+    reducer = UMAP(n_neighbors=100, n_epochs=1000)
+    UMAP_results = reducer.fit_transform(X)
+    print('Shape of UMAP_results: ', UMAP_results.shape)
+    df = pd.DataFrame(dict(xaxis=UMAP_results[:,0], yaxis=UMAP_results[:,1],  molDB = Y))
+    plt.figure()
+    sns.scatterplot('xaxis', 'yaxis', data=df, hue='molDB',alpha = 0.5, s=3,style='molDB')
+    if output != None:
+        plt.savefig(output+'.png',dpi=300)
+    plt.show()
+
+def plot_TSNE(dbs,names,output=None, random_max = 5000, delimiter = None, fpsalg = 'RDKIT'):
+    X = []
+    Y = []
+    for i,db in enumerate(dbs):
+        if delimiter == None:
+            name = names[i]
+        else:
+            #name = names[i].split(delimiter)[0]
+            name = '_'.join(names[i].split(delimiter)[0:2])
+        print(name)
+        fps = db.get_fingerprints(fpsalg, random_max)
         X.extend(fps)
         Y.extend([name]*len(fps))
     X = np.asarray(X)
@@ -152,19 +180,20 @@ def plot_TSNE(dbs,names,output=None, random_max = 5000, delimiter = None):
     plt.figure()
     sns.scatterplot('xaxis', 'yaxis', data=df, hue='molDB',alpha = 0.5, s=3,style='molDB')
     if output != None:
-        plt.savefig(output+'.png')
+        plt.savefig(output+'.png',dpi=300)
     plt.show()
 
-def plot_PCA(dbs,names,output=None, random_max = 5000, delimiter = None):
+def plot_PCA(dbs,names,output=None, random_max = 5000, delimiter = None, fpsalg = 'RDKIT'):
     X = []
     Y = []
     for i,db in enumerate(dbs):
         if delimiter == None:
             name = names[i]
         else:
-            name = names[i].split(delimiter)[0]
+            #name = names[i].split(delimiter)[0:2]
+            name = '_'.join(names[i].split(delimiter)[0:2])
         print(name)
-        fps = db.get_fingerprints(random_max)
+        fps = db.get_fingerprints(fpsalg, random_max)
         X.extend(fps)
         Y.extend([name]*len(fps))
     X = np.asarray(X)
@@ -174,9 +203,9 @@ def plot_PCA(dbs,names,output=None, random_max = 5000, delimiter = None):
     print('Explained variation per principal component: {}'.format(pca.explained_variance_ratio_))
     df = pd.DataFrame(dict(pca1st=pca_results[:,0], pca2nd=pca_results[:,1],  molDB = Y))
     plt.figure()
-    sns.scatterplot('pca1st', 'pca2nd', data=df, hue='molDB',alpha = 0.5, s=3,style='molDB')
+    sns.scatterplot('pca1st', 'pca2nd', data=df, hue='molDB',alpha = 0.8, s=1,style='molDB')
     if output != None:
-        plt.savefig(output+'.png')
+        plt.savefig(output+'.png',dpi=300)
     plt.show()
 
 def read_compoundDB(data):
@@ -184,9 +213,9 @@ def read_compoundDB(data):
     return compoundDB
 
 
-def get_MolSimilarity(mol1,mol2,metric='Tanimoto'):
-    fp1 = Chem.RDKFingerprint(mol1.mol)
-    fp2 = Chem.RDKFingerprint(mol2.mol)
+def get_MolSimilarity(mol1,mol2,fingerprint='RDKIT',metric='Tanimoto'):
+    fp1 = mol1.get_FingerPrint(alg=fingerprint)
+    fp2 = mol2.get_FingerPrint(alg=fingerprint)
     if metric == 'Tanimoto':
         return DataStructs.TanimotoSimilarity(fp1,fp2)
     elif  metric == 'Dice':
@@ -203,11 +232,6 @@ def get_MolSimilarity(mol1,mol2,metric='Tanimoto'):
         return DataStructs.McConnaugheySimilarity(fp1,fp2)
     else:
         raise ValueError('Invalid Metric')
-
-def get_no_anchoring_frag(frag):
-    noanfrag = re.sub("\[.*?\]", "", frag)
-    noanfrag = re.sub("\(\)","",noanfrag)
-    return noanfrag
 
 class molDB(object):
     """""
@@ -249,7 +273,7 @@ class molDB(object):
             f.write(k + " " + self.dicDB[k][0] + " " + self.dicDB[k][1] + '\n')
         f.close()
 
-    def get_fingerprints(self,random_max=None):
+    def get_fingerprints(self, alg='RDKIT', random_max=None):
         fps = []
         if random_max == None:
             keys = self.dicDB.keys()
@@ -258,9 +282,9 @@ class molDB(object):
             keys = random.sample(list(self.dicDB.keys()), random_max)
             total = len(keys)
         for i,k in enumerate(keys):
-            print(str(i) + '/' + str(total))
+            print(alg + ': ' + str(i) + '/' + str(total))
             mol = self.dicDB[k][2]
-            molfp = Chem.RDKFingerprint(mol.mol)
+            molfp = mol.get_FingerPrint(alg)
             molfp = np.asarray(list((molfp.ToBitString())))
             fps.append(molfp)
         return fps 
@@ -268,6 +292,50 @@ class molDB(object):
     def _get_total_mols(self):
         self.size = len(self.dicDB.keys())
         
+    def _remove_anchorings(self):
+        kekuleerror1 = 0
+        kekuleerror2 = 0
+        SMILES = list(self.dicDB.keys())
+        totalsmiles = len(SMILES)
+        for i,SMILE in enumerate(SMILES):
+            print(str(i+1) + "/" + str(totalsmiles))
+            eqSMILES = self.dicDB[SMILE][0].split(',')
+            IDs = self.dicDB[SMILE][1]
+            #Check SMILE
+            new_SMILE = ''
+            auxmol = mol(smile=SMILE)
+            auxerror = auxmol._remove_anchorings()
+            
+            #Check eqSMILES and define new_eqSMILES
+            new_eqSMILES = []
+            for eqSMILE in eqSMILES:
+                auxmol2 = mol(smile=eqSMILE)
+                auxerror2 = auxmol2._remove_anchorings()
+                if auxerror2:
+                    new_eqSMILES.append(auxmol2.smile)
+            
+            #Define new_SMILE and count errors
+            if auxerror:
+                new_SMILE = auxmol.smile
+            else:
+                if len(new_eqSMILES) > 1:
+                    new_SMILE = new_eqSMILES[0]
+                    kekuleerror2+=1
+                else:
+                    kekuleerror1+=1
+            
+            #Modify dicDB
+            del self.dicDB[SMILE]
+            if new_SMILE != '':
+                new_eqSMILES = ','.join(new_eqSMILES)
+                self.dicDB[new_SMILE] = [new_eqSMILES,IDs,auxmol]
+
+            i+=1
+            print('-----------------------------------------------')
+        print('Total analysed smiles: %d'%totalsmiles)
+        print('Total modified smiles: %d'%(totalsmiles-kekuleerror1-kekuleerror2))
+        print('SMILES with kekule error substituted by an eqSMILE: %d'%kekuleerror2)
+        print('SMILES with a kekule error without an eqSMULE: %d'%kekuleerror1)
 
 class mol(object):
     """"""
@@ -305,6 +373,78 @@ class mol(object):
         self.get_NumAliphaticRings()
         self.get_NumAromaticRings()
 
+    def _remove_anchorings(self):
+        print('Old SMILE: ' + self.smile)
+        old_smile = self.smile
+        #Get indeces of the anchoring points in the smile:
+        count = 0
+        new_smile = old_smile
+        while new_smile.startswith('[*].'): new_smile = new_smile[4:]
+        while new_smile.endswith('.[*]'): new_smile = new_smile[:-4]
+        indices = [i for i, c in enumerate(new_smile) if c == '*']
+        new_smile = list(new_smile)
+        for atom in self.mol.GetAtoms():
+            if atom.GetSymbol() == '*' and count < len(indices):
+                valence = atom.GetExplicitValence()
+                if valence == 0:
+                    new_smile[indices[count]] = ''
+                    new_smile[indices[count]-1] = ''
+                    new_smile[indices[count]+1] = ''
+                elif valence == 1:
+                    if atom.GetIsAromatic():
+                        new_smile[indices[count]] = 'h'
+                    else:
+                        new_smile[indices[count]] = 'H'
+                    count+=1
+#                elif valence == 2:
+#                    if atom.GetIsAromatic():
+#                        new_smile[indices[count]] = 'o'
+#                    else:
+#                        new_smile[indices[count]] = 'O'
+#                    count+=1
+#                elif valence == 3:
+#                    if atom.GetIsAromatic():
+#                        new_smile[indices[count]] = 'n'
+#                    else:
+#                        new_smile[indices[count]] = 'N'
+#                    count+=1
+#                elif valence == 4:
+                elif valence > 1 and valence < 5:
+                    if atom.GetIsAromatic():
+                        new_smile[indices[count]] = 'c'
+                    else:
+                        new_smile[indices[count]] = 'C'
+                    count+=1
+                elif valence == 5:
+                    if atom.GetIsAromatic():
+                        new_smile[indices[count]] = 'p'
+                    else:
+                        new_smile[indices[count]] = 'P'
+                    count+=1
+                elif valence == 6:
+                    if atom.GetIsAromatic():
+                        new_smile[indices[count]] = 's'
+                    else:
+                        new_smile[indices[count]] = 'S'
+                    count+=1
+                elif valence > 6:
+                    return False
+                else:
+                    raise ValueError('The anchoring point %d (*) of %s have a valence %d greater than 4. %s'%(count,old_smile,valence,''.join(new_smile)))
+        new_smile = ''.join(new_smile)
+        self.smile = new_smile
+        try:
+            self.mol = Chem.MolFromSmiles(self.smile)
+            if self.mol == None:
+                print('Kekulize ERROR')
+                return False
+            else:
+                print('New Smile: ' + self.smile)
+                return True
+        except:
+            print('Kekulize ERROR')
+            return False
+
     def get_NumAtoms(self):
         self.NumAtoms = self.mol.GetNumAtoms()
         return self.NumAtoms
@@ -332,6 +472,20 @@ class mol(object):
     def get_NumAromaticRings(self):
         self.NumAromaticRings = Lipinski.NumAromaticRings(self.mol)
         return self.NumAromaticRings
+
+    def get_FingerPrint(self,alg='RDKIT'):
+        if alg == 'RDKIT':
+            self.FingerPrint = Chem.RDKFingerprint(self.mol)
+        elif alg == 'Morgan2':
+            self.FingerPrint = AllChem.GetMorganFingerprintAsBitVect(self.mol, 1, nBits=2048)
+        elif alg == 'Morgan4':
+            self.FingerPrint = AllChem.GetMorganFingerprintAsBitVect(self.mol, 2, nBits=2048)
+        elif alg == 'Morgan8':
+            self.FingerPrint = AllChem.GetMorganFingerprintAsBitVect(self.mol, 4, nBits=2048)
+        else:
+            raise ValueError('Invalid fingerprint algorithm')
+        return self.FingerPrint
+
 
 if __name__ == '__main__':
     smile = 'Cc1cc(-c2csc(N=C(N)N)n2)cn1C'

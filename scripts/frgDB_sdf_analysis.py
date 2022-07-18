@@ -1,7 +1,9 @@
-import mol
 import argparse
 import rdkit.Chem as Chem
 import matplotlib.pyplot as plt
+import sys
+sys.path.insert(1, '../')
+import mol
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description ='Transform a sdf fragment database to a database of format (ID SMILE) and then analyse, filter and cluster it.')

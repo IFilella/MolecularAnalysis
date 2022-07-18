@@ -1,4 +1,3 @@
-import mol
 import argparse
 import rdkit.Chem.BRICS as BRICS
 import re
@@ -6,6 +5,9 @@ from pebble import ProcessPool
 import multiprocessing as mp
 import warnings
 import concurrent.futures
+import sys
+sys.path.insert(1, '../')
+import mol
 
 def get_fragments(cpd,ID):
     fragments = list(BRICS.BRICSDecompose(cpd))

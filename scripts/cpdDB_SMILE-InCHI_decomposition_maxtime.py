@@ -1,4 +1,3 @@
-import mol
 import numpy as np
 import warnings
 import multiprocessing as mp
@@ -6,6 +5,9 @@ import time
 from pebble import ProcessPool
 from concurrent.futures import TimeoutError
 import argparse
+import sys
+sys.path.insert(1, '../')
+import mol
 
 def get_fragments(line):
     line = line.replace("\n","").split("\t")

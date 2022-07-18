@@ -1,5 +1,7 @@
-import mol
 import argparse
+import sys
+sys.path.insert(1, '../')
+import mol
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description ='Given two fragment databases with the format (SMILE simSMILES IDs), intersect them')

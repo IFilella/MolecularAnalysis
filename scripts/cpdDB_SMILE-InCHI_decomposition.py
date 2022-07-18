@@ -1,8 +1,10 @@
-import mol
 import numpy as np
 import warnings
 import multiprocessing as mp
 import argparse
+import sys
+sys.path.insert(1, '../')
+import mol
 
 fn = 'temp.txt'
 
