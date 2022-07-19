@@ -16,6 +16,7 @@ import seaborn as sns
 import random
 from umap import UMAP
 import time
+import trimap
 
 def intersect_molDBs(db1,db2,simt,output=None,verbose=True):
     db3 = copy.deepcopy(db1)
@@ -135,7 +136,7 @@ def filter_db_similarity(indb,outdb,verbose=True):
         out.write(k + " " + uniquefrags[k][0] + " " +uniquefrags[k][1] + "\n")
     out.close()
 
-def plot_UMAP(dbs,names,output=None, random_max = 5000, delimiter = None, fpsalg = 'RDKIT'):
+def _prepare_reducer_data(dbs,names,random_max, delimiter, fpsalg):
     X = []
     Y = []
     for i,db in enumerate(dbs):
@@ -149,69 +150,49 @@ def plot_UMAP(dbs,names,output=None, random_max = 5000, delimiter = None, fpsalg
         X.extend(fps)
         Y.extend([name]*len(fps))
     X = np.asarray(X)
+    return X, Y
+
+def _plot_reducer_data(reducer_results,Y,output):
+    df = pd.DataFrame(dict(xaxis=reducer_results[:,0], yaxis=reducer_results[:,1],  molDB = Y))
+    plt.figure()
+    sns.scatterplot('xaxis', 'yaxis', data=df, hue='molDB',alpha = 0.5, s=3,style='molDB')
+    if output != None:
+        plt.savefig(output+'.png',dpi=300)
+    plt.show()
+
+def plot_trimap(dbs,names,output=None, random_max = 5000, delimiter = None, fpsalg = 'RDKIT'):
+    X, Y = _prepare_reducer_data(dbs,names,random_max, delimiter, fpsalg)
+    print('Computing trimap')
+    embedding = trimap.TRIMAP()
+    trimap_results = embedding.fit_transform(X)
+    print('Shape of trimap_results: ', trimap_results.shape)
+    _plot_reducer_data(reducer_results = trimap_results, Y=Y, output=output)
+
+def plot_UMAP(dbs,names,output=None, random_max = 5000, delimiter = None, fpsalg = 'RDKIT'):
+    X, Y = _prepare_reducer_data(dbs,names,random_max, delimiter, fpsalg)
     print('Computing UMAP')
     reducer = UMAP(n_neighbors=100, n_epochs=1000)
     UMAP_results = reducer.fit_transform(X)
     print('Shape of UMAP_results: ', UMAP_results.shape)
-    df = pd.DataFrame(dict(xaxis=UMAP_results[:,0], yaxis=UMAP_results[:,1],  molDB = Y))
-    plt.figure()
-    sns.scatterplot('xaxis', 'yaxis', data=df, hue='molDB',alpha = 0.5, s=3,style='molDB')
-    if output != None:
-        plt.savefig(output+'.png',dpi=300)
-    plt.show()
+    _plot_reducer_data(reducer_results = UMAP_results, Y=Y, output=output)
 
 def plot_TSNE(dbs,names,output=None, random_max = 5000, delimiter = None, fpsalg = 'RDKIT'):
-    X = []
-    Y = []
-    for i,db in enumerate(dbs):
-        if delimiter == None:
-            name = names[i]
-        else:
-            #name = names[i].split(delimiter)[0]
-            name = '_'.join(names[i].split(delimiter)[0:2])
-        print(name)
-        fps = db.get_fingerprints(fpsalg, random_max)
-        X.extend(fps)
-        Y.extend([name]*len(fps))
-    X = np.asarray(X)
+    X, Y = _prepare_reducer_data(dbs,names,random_max, delimiter, fpsalg)
     print('Computing TSNE')
     tsne_results = TSNE(n_components=2, verbose = 1, learning_rate='auto',init='pca').fit_transform(X)
-    df = pd.DataFrame(dict(xaxis=tsne_results[:,0], yaxis=tsne_results[:,1],  molDB = Y))
-    plt.figure()
-    sns.scatterplot('xaxis', 'yaxis', data=df, hue='molDB',alpha = 0.5, s=3,style='molDB')
-    if output != None:
-        plt.savefig(output+'.png',dpi=300)
-    plt.show()
+    _plot_reducer_data(reducer_results = tsne_results, Y=Y, output=output)
 
 def plot_PCA(dbs,names,output=None, random_max = 5000, delimiter = None, fpsalg = 'RDKIT'):
-    X = []
-    Y = []
-    for i,db in enumerate(dbs):
-        if delimiter == None:
-            name = names[i]
-        else:
-            #name = names[i].split(delimiter)[0:2]
-            name = '_'.join(names[i].split(delimiter)[0:2])
-        print(name)
-        fps = db.get_fingerprints(fpsalg, random_max)
-        X.extend(fps)
-        Y.extend([name]*len(fps))
-    X = np.asarray(X)
+    X, Y = _prepare_reducer_data(dbs,names,random_max, delimiter, fpsalg)
     print('Computing PCA')
     pca = PCA(n_components=3)
     pca_results = pca.fit_transform(X)
     print('Explained variation per principal component: {}'.format(pca.explained_variance_ratio_))
-    df = pd.DataFrame(dict(pca1st=pca_results[:,0], pca2nd=pca_results[:,1],  molDB = Y))
-    plt.figure()
-    sns.scatterplot('pca1st', 'pca2nd', data=df, hue='molDB',alpha = 0.8, s=1,style='molDB')
-    if output != None:
-        plt.savefig(output+'.png',dpi=300)
-    plt.show()
+    _plot_reducer_data(reducer_results = pca_results, Y=Y, output=output)
 
 def read_compoundDB(data):
     compoundDB = Chem.SDMolSupplier(data)
     return compoundDB
-
 
 def get_MolSimilarity(mol1,mol2,fingerprint='RDKIT',metric='Tanimoto'):
     fp1 = mol1.get_FingerPrint(alg=fingerprint)

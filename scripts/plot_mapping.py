@@ -5,9 +5,9 @@ sys.path.insert(1, '../')
 import mol
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description ='Given a list of fragment databases with the format (SMILE simSMILES IDs), plot them into a mapping such as t-SNE or UMAP or PCA')
+    parser = argparse.ArgumentParser(description ='Given a list of fragment databases with the format (SMILE simSMILES IDs), plot them into a mapping such as t-SNE, PCA, UMAP or trimap')
     parser.add_argument('-d', dest="dbs", nargs = '+', help = "List of databases of fragments",required=True)
-    parser.add_argument('-m', dest="mapping", default = 'tSNE', help = "Mapping method (tSNE, PCA or UMAP)",required=True)
+    parser.add_argument('-m', dest="mapping", default = 'tSNE', help = "Mapping method (tSNE, PCA, UMAP or trimap)",required=True)
     parser.add_argument('-o', dest="out", default = None, help = "Map output name")    
     parser.add_argument('-r', dest= "random_max", default = 5000, help = "Randomly select X elements of each databse")
     parser.add_argument('--txt',default=False,action='store_true',help='To pass either a txt moldb (if True) or a pickle moldb (if False). False by default')
@@ -17,8 +17,8 @@ if __name__ == '__main__':
     
     fdbs = args.dbs
     mapping = args.mapping
-    if mapping not in ['tSNE','UMAP','PCA']:
-        raise ValueError('%s is not a valid mapping method. Mapping must be either t-SNE, UMAP or PCA.'%mapping)
+    if mapping not in ['tSNE','UMAP','PCA','trimap']:
+        raise ValueError('%s is not a valid mapping method. Mapping must be either t-SNE, PCA, UMAP or trimap.'%mapping)
     out = args.out
     txt = args.txt
     delimiter = args.delt
@@ -46,3 +46,5 @@ if __name__ == '__main__':
         mol.plot_PCA(dbs, names, output = out, random_max = random_max, delimiter = delimiter, fpsalg = fpsalg)
     if mapping == 'UMAP':
         mol.plot_UMAP(dbs, names, output = out, random_max = random_max, delimiter = delimiter, fpsalg = fpsalg)
+    if mapping == 'trimap':
+        mol.plot_trimap(dbs, names, output = out, random_max = random_max, delimiter = delimiter, fpsalg = fpsalg)
