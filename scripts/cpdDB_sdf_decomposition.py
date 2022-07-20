@@ -32,16 +32,17 @@ if __name__ == '__main__':
     infile = args.infile
     maxtime = float(args.maxtime)
     
-    cpdDB = mol.read_compoundDB(infile)
+    cpdDB = mol.MolDB(sdfDB = infile)
 
     #mols = [mol for mol in cpdDB]
     #print('Total compounds: %s'%str(len(mols)))
 
     with ProcessPool(max_workers= mp.cpu_count(),max_tasks=0) as pool:
-        for cpd in cpdDB:
+        for cpd in cpdDB.dicDB.keys():
+            m = cpdDB.dicDB[cpd][-1]
             try:
-                ID = cpd.GetProp("idnumber")
+                ID = m.mol.GetProp("idnumber")
             except:
                 ID = 'unknownID'
-            future = pool.schedule(get_fragments,args=[cpd,ID],timeout=maxtime)
+            future = pool.schedule(get_fragments,args=[m.mol,ID],timeout=maxtime)
             future.add_done_callback(task_done)

@@ -31,10 +31,10 @@ if __name__ == '__main__':
     names = []
     for fdb in fdbs:
         if txt:
-            db = mol.molDB(txtDB=fdb,paramaters=True,verbose=True)
+            db = mol.MolDB(txtDB=fdb,paramaters=True,verbose=True)
             db.save_molDB(fdb.replace('.txt',''))
         else:
-            db = mol.molDB(dicDB=fdb,paramaters=True,verbose=True)
+            db = mol.MolDB(dicDB=fdb,paramaters=True,verbose=True)
         dbs.append(db)
         name = os.path.basename(fdb)
         name = name.split('.')[0]

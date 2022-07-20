@@ -82,7 +82,7 @@ def filter_db_similarity(indb,outdb,verbose=True):
         line = line.split()
         SMILE = line[0]
         IDs = line[-1]
-        m1 = mol(smile=SMILE)
+        m1 = Mol(smile=SMILE)
         m1_atoms = m1.mol.GetNumAtoms()
         m1_NOCount = Lipinski.NOCount(m1.mol)
         m1_NHOHCount = Lipinski.NHOHCount(m1.mol)
@@ -214,15 +214,15 @@ def get_MolSimilarity(mol1,mol2,fingerprint='RDKIT',metric='Tanimoto'):
     else:
         raise ValueError('Invalid Metric')
 
-class molDB(object):
+class MolDB(object):
     """""
     Class to store a database of molecules/fragments.
     It takes as input:
     - txtDB: file  of format 'SMILE equivalentSMILES IDs'
     - sdfDB: molecular DB in sdf format
-    - dicDB: precalculated molDB object
+    - dicDB: precalculated MolDB object
     The main attribute of the class is 'dicDB', a dicctionary with the molecules SMILES as keys and
-    with lists of form [eqSMILES, IDs, mol object] as values.
+    with lists of form [eqSMILES, IDs, Mol object] as values.
     If paramaters flag is given multiple paramaters of each molecule such as NumAtoms or NOCount are
     calculated and stored.
     """""
@@ -238,7 +238,7 @@ class molDB(object):
                 SMILE = line[0]
                 eqSMILES = line[1]
                 IDs = line[2]
-                m1 = mol(smile=SMILE,allparamaters = paramaters)
+                m1 = Mol(smile=SMILE,allparamaters = paramaters)
                 if verbose: print(i+1,SMILE)
                 self.dicDB[SMILE] = [eqSMILES,IDs,m1]
         elif self.txtDB == None and self.dicDB != None and self.sdfDB == None:
@@ -248,8 +248,7 @@ class molDB(object):
             self.dicDB = {}
             DB = Chem.SDMolSupplier(self.sdfDB)
             for i,cpd in enumerate(DB):
-                print(cpd)
-                m1 = mol(mol = cpd, allparamaters = paramaters)
+                m1 = Mol(mol2 = cpd, allparamaters = paramaters)
                 SMILE = m1.smile
                 eqSMILES = None
                 IDs = None
@@ -300,13 +299,13 @@ class molDB(object):
             IDs = self.dicDB[SMILE][1]
             #Check SMILE
             new_SMILE = ''
-            auxmol = mol(smile=SMILE)
+            auxmol = Mol(smile=SMILE)
             auxerror = auxmol._remove_anchorings()
             
             #Check eqSMILES and define new_eqSMILES
             new_eqSMILES = []
             for eqSMILE in eqSMILES:
-                auxmol2 = mol(smile=eqSMILE)
+                auxmol2 = Mol(smile=eqSMILE)
                 auxerror2 = auxmol2._remove_anchorings()
                 if auxerror2:
                     new_eqSMILES.append(auxmol2.smile)
@@ -334,22 +333,22 @@ class molDB(object):
         print('SMILES with kekule error substituted by an eqSMILE: %d'%kekuleerror2)
         print('SMILES with a kekule error without an eqSMULE: %d'%kekuleerror1)
 
-class mol(object):
+class Mol(object):
     """"""
     """"""
-    def __init__(self ,smile = None, InChI = None, mol = None, allparamaters = False):
-        if smile != None and InChI == None and mol == None:
+    def __init__(self ,smile = None, InChI = None, mol2 = None, allparamaters = False):
+        if smile != None and InChI == None and mol2 == None:
             self.smile = smile
             self.mol = Chem.MolFromSmiles(self.smile)
-        elif smile == None and InChI != None and mol == None:
+        elif smile == None and InChI != None and mol2 == None:
             self.InChI = InChI
             self.mol = Chem.MolFromInchi(self.InChI)
             self.smile = Chem.MoltToSmiles(self.mol)
-        elif smile == None and InChI == None and mol != None:
-            self.mol = mol
+        elif smile == None and InChI == None and mol2 != None:
+            self.mol = mol2
             self.smile = Chem.MolToSmiles(self.mol)
         else:
-            warnings.warn(f'Provide only a smile, a InchI or a mol RDKIT object')
+            warnings.warn(f'Provide only a smile, a InchI or a mol2 RDKIT object')
         if allparamaters:
             self.get_AllParamaters()
 
@@ -487,9 +486,9 @@ if __name__ == '__main__':
     smile = 'Cc1cc(-c2csc(N=C(N)N)n2)cn1C'
     inchi = 'InChI=1S/C10H13N5S/c1-6-3-7(4-15(6)2)8-5-16-10(13-8)14-9(11)12/h3-5H,1-2H3,(H4,11,12,13,14)'
     #Testing init
-    m = mol(smile=smile)
-    m = mol(InChI=inchi)
-    m = mol(smile=smile,InChI=inchi)
+    m = Mol(smile=smile)
+    m = Mol(InChI=inchi)
+    m = Mol(smile=smile,InChI=inchi)
     #Testing BRICS decomposition
     m.get_BRICSdecomposition()
     m.get_clean_fragments()

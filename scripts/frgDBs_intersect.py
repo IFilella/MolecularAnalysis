@@ -15,11 +15,11 @@ if __name__ == '__main__':
     simt = float(args.simt)
     out = args.out
 
-    db1 = mol.molDB(txtDB=fdb1,paramaters=True,verbose=True)
+    db1 = mol.MolDB(txtDB=fdb1,paramaters=True,verbose=True)
     #db1.save_molDB(fdb1.replace('.txt',''))
-    db2 = mol.molDB(txtDB=fdb2,paramaters=True,verbose=True) 
+    db2 = mol.MolDB(txtDB=fdb2,paramaters=True,verbose=True) 
     #db2.save_molDB(fdb2.replace('.txt',''))
-    #db1 = mol.molDB(dicDB=fdb1.replace('.txt','.p'),paramaters=True,verbose=True)
-    #db2 = mol.molDB(dicDB=fdb2.replace('.txt','.p'),paramaters=True,verbose=True)
+    #db1 = mol.MolDB(dicDB=fdb1.replace('.txt','.p'),paramaters=True,verbose=True)
+    #db2 = mol.MolDB(dicDB=fdb2.replace('.txt','.p'),paramaters=True,verbose=True)
     
     db3 = mol.intersect_molDBs(db1,db2,simt,out)

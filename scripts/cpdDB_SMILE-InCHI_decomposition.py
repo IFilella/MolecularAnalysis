@@ -13,7 +13,7 @@ def get_fragments(i,line,q):
     ID = line[0]
     SMILE = line[1]
     InChI = line[2]
-    m = mol.mol(InChI=InChI)
+    m = mol.Mol(InChI=InChI)
     m.get_BRICSdecomposition()
     m.get_clean_fragments()
     res = '%d %s %s'%(i, ID,','.join(m.cfragments))

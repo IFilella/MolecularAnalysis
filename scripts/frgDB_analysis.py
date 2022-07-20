@@ -71,7 +71,7 @@ if __name__ == '__main__':
         line = line.split()
         SMILE = line[0]
         IDs = line[-1]
-        m1 = mol.mol(smile=SMILE)
+        m1 = mol.Mol(smile=SMILE)
         try:
             numatoms = m1.mol.GetNumAtoms()
             x.append(numatoms)
