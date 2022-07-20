@@ -190,10 +190,6 @@ def plot_PCA(dbs,names,output=None, random_max = 5000, delimiter = None, fpsalg 
     print('Explained variation per principal component: {}'.format(pca.explained_variance_ratio_))
     _plot_reducer_data(reducer_results = pca_results, Y=Y, output=output)
 
-def read_compoundDB(data):
-    compoundDB = Chem.SDMolSupplier(data)
-    return compoundDB
-
 def get_MolSimilarity(mol1,mol2,fingerprint='RDKIT',metric='Tanimoto'):
     fp1 = mol1.get_FingerPrint(alg=fingerprint)
     fp2 = mol2.get_FingerPrint(alg=fingerprint)

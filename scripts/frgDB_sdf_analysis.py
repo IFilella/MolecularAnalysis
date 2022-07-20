@@ -21,15 +21,16 @@ if __name__ == '__main__':
     hist = args.hist
     sim = args.sim
 
-    cpdDB = mol.read_compoundDB(infile)
-    
+    cpdDB = mol.MolDB(sdfDB = infile)
+
     f = open(outfile+'.txt','w')
     uniq_smile_frags = {}
 
     #Change the format of the database
-    for i,frag in enumerate(cpdDB):
-        SMILE = Chem.MolToSmiles(frag)
-        ID = frag.GetProp("Catalog ID")
+    for i,frag in enumerate(cpdDB.dicDB.keys()):
+        m = cpdDB.dicDB[frag][-1]
+        SMILE = frag 
+        ID = m.mol.GetProp("Catalog ID")
         f.write('%s %s\n'%(ID,SMILE))
         if uniq:
             if SMILE not in uniq_smile_frags.keys():
