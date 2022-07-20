@@ -216,15 +216,21 @@ def get_MolSimilarity(mol1,mol2,fingerprint='RDKIT',metric='Tanimoto'):
 
 class molDB(object):
     """""
-    Object containing a database of molecules/fragments.
-    It reads a file 'txtDB' of format (SMILE equivalentSMILES IDs) and transform it into a dicc 'dicDB'
-    which can also contain physical paramaters of the molecules/fragments if paramaters flag is given.
-    It can also load a precalculated 'dicDB' molDB object.
+    Class to store a database of molecules/fragments.
+    It takes as input:
+    - txtDB: file  of format 'SMILE equivalentSMILES IDs'
+    - sdfDB: molecular DB in sdf format
+    - dicDB: precalculated molDB object
+    The main attribute of the class is 'dicDB', a dicctionary with the molecules SMILES as keys and
+    with lists of form [eqSMILES, IDs, mol object] as values.
+    If paramaters flag is given multiple paramaters of each molecule such as NumAtoms or NOCount are
+    calculated and stored.
     """""
-    def __init__(self, txtDB = None, dicDB = None, paramaters = False, verbose = False):
+    def __init__(self, txtDB = None, dicDB = None, sdfDB = None, paramaters = False, verbose = False):
         self.txtDB = txtDB
         self.dicDB = dicDB
-        if self.txtDB != None and self.dicDB == None:
+        self.sdfDB = sdfDB
+        if self.txtDB != None and self.dicDB == None and self.sdfDB == None:
             self.dicDB = {}
             db = open(self.txtDB,'r')
             for i,line in enumerate(db):
@@ -235,13 +241,23 @@ class molDB(object):
                 m1 = mol(smile=SMILE,allparamaters = paramaters)
                 if verbose: print(i+1,SMILE)
                 self.dicDB[SMILE] = [eqSMILES,IDs,m1]
-        elif self.txtDB == None and self.dicDB != None:
+        elif self.txtDB == None and self.dicDB != None and self.sdfDB == None:
             with open(self.dicDB, 'rb') as handle:
                 self.dicDB = pickle.load(handle)
-        elif self.txtDB == None and self.dicDB == None:
-            raise KeyError('Either a txtDB or a dicDB must be provided')
+        elif self.txtDB == None and self.dicDB == None and self.sdfDB != None:
+            self.dicDB = {}
+            DB = Chem.SDMolSupplier(self.sdfDB)
+            for i,cpd in enumerate(DB):
+                print(cpd)
+                m1 = mol(mol = cpd, allparamaters = paramaters)
+                SMILE = m1.smile
+                eqSMILES = None
+                IDs = None
+                if verbose: print(i+1,SMILE)
+                self.dicDB[SMILE] = [eqSMILES,IDs,m1]
+                #print(self.dicDB[SMILE][-1].mol.GetProp('Value'))
         else:
-            raise KeyError('Provide only a txtDB or a dicDB, not both simultaniusly')
+            raise KeyError('Provide only a txtDB, a dicDB, or a sdfDB')
         self._get_total_mols()
             
     def save_molDB(self,output):
@@ -251,7 +267,7 @@ class molDB(object):
     def print_molDB(self,output):
         f = open(output+'.txt','w')
         for k in self.dicDB.keys():
-            f.write(k + " " + self.dicDB[k][0] + " " + self.dicDB[k][1] + '\n')
+            f.write(k + " " + str(self.dicDB[k][0]) + " " + str(self.dicDB[k][1]) + '\n')
         f.close()
 
     def get_fingerprints(self, alg='RDKIT', random_max=None):
@@ -321,20 +337,19 @@ class molDB(object):
 class mol(object):
     """"""
     """"""
-    def __init__(self ,smile = None, InChI = None, allparamaters = False):
-        if smile != None and InChI == None:
+    def __init__(self ,smile = None, InChI = None, mol = None, allparamaters = False):
+        if smile != None and InChI == None and mol == None:
             self.smile = smile
             self.mol = Chem.MolFromSmiles(self.smile)
-        elif smile == None and InChI != None:
+        elif smile == None and InChI != None and mol == None:
             self.InChI = InChI
             self.mol = Chem.MolFromInchi(self.InChI)
-        elif smile != None and InChI != None:
-            warnings.warn(f'Given that both SMILE and InChI format have been provided the molecule will be read with InChI')
-            self.smile = smile
-            self.InChI = InChI
-            self.mol = Chem.MolFromInchi(self.InChI)
+            self.smile = Chem.MoltToSmiles(self.mol)
+        elif smile == None and InChI == None and mol != None:
+            self.mol = mol
+            self.smile = Chem.MolToSmiles(self.mol)
         else:
-            raise ValueError('To initialize the molecule SMILE or InChI format is required')
+            warnings.warn(f'Provide only a smile, a InchI or a mol RDKIT object')
         if allparamaters:
             self.get_AllParamaters()
 
