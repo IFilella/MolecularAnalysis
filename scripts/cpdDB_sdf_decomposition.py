@@ -7,7 +7,7 @@ import warnings
 import concurrent.futures
 import sys
 sys.path.insert(1, '../')
-import mol
+import mollib
 
 def get_fragments(cpd,ID):
     fragments = list(BRICS.BRICSDecompose(cpd))
@@ -32,10 +32,7 @@ if __name__ == '__main__':
     infile = args.infile
     maxtime = float(args.maxtime)
     
-    cpdDB = mol.MolDB(sdfDB = infile)
-
-    #mols = [mol for mol in cpdDB]
-    #print('Total compounds: %s'%str(len(mols)))
+    cpdDB = mollib.MolDB(sdfDB = infile)
 
     with ProcessPool(max_workers= mp.cpu_count(),max_tasks=0) as pool:
         for cpd in cpdDB.dicDB.keys():

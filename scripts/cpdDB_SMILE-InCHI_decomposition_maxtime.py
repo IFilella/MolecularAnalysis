@@ -7,14 +7,14 @@ from concurrent.futures import TimeoutError
 import argparse
 import sys
 sys.path.insert(1, '../')
-import mol
+import mollib
 
 def get_fragments(line):
     line = line.replace("\n","").split("\t")
     ID = line[0]
     SMILE = line[1]
     InChI = line[2]
-    m = mol.Mol(InChI=InChI)
+    m = mollib.Mol(InChI=InChI)
     m.get_BRICSdecomposition()
     m.get_clean_fragments()
     res = '%s %s'%(ID,','.join(m.cfragments)) 

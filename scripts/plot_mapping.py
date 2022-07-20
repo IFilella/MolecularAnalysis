@@ -2,7 +2,7 @@ import argparse
 import os
 import sys
 sys.path.insert(1, '../')
-import mol
+import mollib
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description ='Given a list of fragment databases with the format (SMILE simSMILES IDs), plot them into a mapping such as t-SNE, PCA, UMAP or trimap')
@@ -31,20 +31,20 @@ if __name__ == '__main__':
     names = []
     for fdb in fdbs:
         if txt:
-            db = mol.MolDB(txtDB=fdb,paramaters=True,verbose=True)
+            db = mollib.MolDB(txtDB=fdb,paramaters=True,verbose=True)
             db.save_MolDB(fdb.replace('.txt',''))
         else:
-            db = mol.MolDB(dicDB=fdb,paramaters=True,verbose=True)
+            db = mollib.MolDB(dicDB=fdb,paramaters=True,verbose=True)
         dbs.append(db)
         name = os.path.basename(fdb)
         name = name.split('.')[0]
         names.append(name)
 
     if mapping == 'tSNE':
-        mol.plot_TSNE(dbs, names, output = out, random_max = random_max, delimiter = delimiter, fpsalg = fpsalg)
+        mollib.plot_TSNE(dbs, names, output = out, random_max = random_max, delimiter = delimiter, fpsalg = fpsalg)
     if mapping == 'PCA':
-        mol.plot_PCA(dbs, names, output = out, random_max = random_max, delimiter = delimiter, fpsalg = fpsalg)
+        mollib.plot_PCA(dbs, names, output = out, random_max = random_max, delimiter = delimiter, fpsalg = fpsalg)
     if mapping == 'UMAP':
-        mol.plot_UMAP(dbs, names, output = out, random_max = random_max, delimiter = delimiter, fpsalg = fpsalg)
+        mollib.plot_UMAP(dbs, names, output = out, random_max = random_max, delimiter = delimiter, fpsalg = fpsalg)
     if mapping == 'trimap':
-        mol.plot_trimap(dbs, names, output = out, random_max = random_max, delimiter = delimiter, fpsalg = fpsalg)
+        mollib.plot_trimap(dbs, names, output = out, random_max = random_max, delimiter = delimiter, fpsalg = fpsalg)

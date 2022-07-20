@@ -1,7 +1,7 @@
 import argparse
 import sys
 sys.path.insert(1, '../')
-import mol
+import mollib
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description ='Given two fragment databases with the format (SMILE simSMILES IDs), intersect them')
@@ -15,11 +15,11 @@ if __name__ == '__main__':
     simt = float(args.simt)
     out = args.out
 
-    db1 = mol.MolDB(txtDB=fdb1,paramaters=True,verbose=True)
+    db1 = mollib.MolDB(txtDB=fdb1,paramaters=True,verbose=True)
     #db1.save_MolDB(fdb1.replace('.txt',''))
-    db2 = mol.MolDB(txtDB=fdb2,paramaters=True,verbose=True) 
+    db2 = mollib.MolDB(txtDB=fdb2,paramaters=True,verbose=True) 
     #db2.save_MolDB(fdb2.replace('.txt',''))
-    #db1 = mol.MolDB(dicDB=fdb1.replace('.txt','.p'),paramaters=True,verbose=True)
-    #db2 = mol.MolDB(dicDB=fdb2.replace('.txt','.p'),paramaters=True,verbose=True)
+    #db1 = mollib.MolDB(dicDB=fdb1.replace('.txt','.p'),paramaters=True,verbose=True)
+    #db2 = mollib.MolDB(dicDB=fdb2.replace('.txt','.p'),paramaters=True,verbose=True)
     
-    db3 = mol.intersect_MolDBs(db1,db2,simt,out)
+    db3 = mollib.intersect_MolDBs(db1,db2,simt,out)

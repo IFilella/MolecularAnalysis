@@ -3,7 +3,7 @@ import rdkit.Chem as Chem
 import matplotlib.pyplot as plt
 import sys
 sys.path.insert(1, '../')
-import mol
+import mollib
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description ='Analyse, filter and cluster a fragment database of format (ID fragsSMILES)')
@@ -71,7 +71,7 @@ if __name__ == '__main__':
         line = line.split()
         SMILE = line[0]
         IDs = line[-1]
-        m1 = mol.Mol(smile=SMILE)
+        m1 = mollib.Mol(smile=SMILE)
         try:
             numatoms = m1.mol.GetNumAtoms()
             x.append(numatoms)
@@ -97,4 +97,4 @@ if __name__ == '__main__':
     if sim:
         filesize = outfile+'_uniqSMILE_' + str(fsize) + '.txt'
         filesim = outfile+'_uniqSMILE_' + str(fsize) + '_simclst.txt'
-        mol.filter_db_similarity(filesize,filesim,verbose=True)
+        mollib.filter_db_similarity(filesize,filesim,verbose=True)
