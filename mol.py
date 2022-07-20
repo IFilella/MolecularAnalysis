@@ -18,7 +18,7 @@ from umap import UMAP
 import time
 import trimap
 
-def intersect_molDBs(db1,db2,simt,output=None,verbose=True):
+def intersect_MolDBs(db1,db2,simt,output=None,verbose=True):
     db3 = copy.deepcopy(db1)
     keepkeys_db1 = []
     keepkeys_db2 = []
@@ -69,8 +69,8 @@ def intersect_molDBs(db1,db2,simt,output=None,verbose=True):
         delkeys_db3 = list(set_keys_db3.difference(set_keepkeys_db3))
         for key in delkeys_db3:
             del db3.dicDB[key]
-        db3.print_molDB(output)
-        db3.save_molDB(output)
+        db3.print_MolDB(output)
+        db3.save_MolDB(output)
 
 def filter_db_similarity(indb,outdb,verbose=True):
     inp = open(indb,'r')
@@ -255,11 +255,11 @@ class MolDB(object):
             raise KeyError('Provide only a txtDB, a dicDB, or a sdfDB')
         self._get_total_mols()
             
-    def save_molDB(self,output):
+    def save_MolDB(self,output):
         with open(output+'.p', 'wb') as handle:
             pickle.dump(self.dicDB, handle)
 
-    def print_molDB(self,output):
+    def print_MolDB(self,output):
         f = open(output+'.txt','w')
         for k in self.dicDB.keys():
             f.write(k + " " + str(self.dicDB[k][0]) + " " + str(self.dicDB[k][1]) + '\n')

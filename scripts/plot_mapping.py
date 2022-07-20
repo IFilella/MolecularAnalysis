@@ -32,7 +32,7 @@ if __name__ == '__main__':
     for fdb in fdbs:
         if txt:
             db = mol.MolDB(txtDB=fdb,paramaters=True,verbose=True)
-            db.save_molDB(fdb.replace('.txt',''))
+            db.save_MolDB(fdb.replace('.txt',''))
         else:
             db = mol.MolDB(dicDB=fdb,paramaters=True,verbose=True)
         dbs.append(db)
