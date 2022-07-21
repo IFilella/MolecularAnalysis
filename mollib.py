@@ -3,6 +3,7 @@ import rdkit.Chem as Chem
 from rdkit.Chem import AllChem
 from rdkit import DataStructs
 import rdkit.Chem.Lipinski as Lipinski
+rdkit.Chem.Descriptors as Descriptors
 import re
 import warnings
 import pickle
@@ -363,6 +364,7 @@ class Mol(object):
         self.get_sp3()
         self.get_NumAliphaticRings()
         self.get_NumAromaticRings()
+        self.get_MolWt()
 
     def _remove_anchorings(self):
         print('Old SMILE: ' + self.smile)
@@ -463,6 +465,10 @@ class Mol(object):
     def get_NumAromaticRings(self):
         self.NumAromaticRings = Lipinski.NumAromaticRings(self.mol)
         return self.NumAromaticRings
+
+    def get_MolWt(self):
+        self.MolWt = Descriptors.ExactMolWt(self.mol)
+        return self.MolWt
 
     def get_FingerPrint(self,alg='RDKIT'):
         if alg == 'RDKIT':
