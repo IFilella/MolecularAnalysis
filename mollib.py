@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA
+from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
 import seaborn as sns
 import random
@@ -156,10 +157,10 @@ def _prepare_reducer_data(dbs,names,random_max, delimiter, fpsalg):
 def _plot_reducer_data(reducer_results,Y,output):
     df = pd.DataFrame(dict(xaxis=reducer_results[:,0], yaxis=reducer_results[:,1],  molDB = Y))
     plt.figure()
-    sns.scatterplot('xaxis', 'yaxis', data=df, hue='molDB',alpha = 0.5, s=3,style='molDB')
+    sns.scatterplot('xaxis', 'yaxis', data=df, hue='molDB',alpha = 0.8, s=5,style='molDB')
     if output != None:
         plt.savefig(output+'.png',dpi=300)
-    plt.show()
+    #plt.show()
 
 def plot_trimap(dbs,names,output=None, random_max = None, delimiter = None, fpsalg = 'RDKIT'):
     X, Y = _prepare_reducer_data(dbs,names,random_max, delimiter, fpsalg)
@@ -177,7 +178,7 @@ def plot_UMAP(dbs,names,output=None, random_max = None, delimiter = None, fpsalg
     print('Shape of UMAP_results: ', UMAP_results.shape)
     _plot_reducer_data(reducer_results = UMAP_results, Y=Y, output=output)
 
-def plot_TSNE(dbs,names,output=None, random_max = None, delimiter = None, fpsalg = 'RDKIT'):
+def plot_tSNE(dbs,names,output=None, random_max = None, delimiter = None, fpsalg = 'RDKIT'):
     X, Y = _prepare_reducer_data(dbs,names,random_max, delimiter, fpsalg)
     print('Computing TSNE')
     tsne_results = TSNE(n_components=2, verbose = 1, learning_rate='auto',init='pca').fit_transform(X)
@@ -186,7 +187,7 @@ def plot_TSNE(dbs,names,output=None, random_max = None, delimiter = None, fpsalg
 def plot_PCA(dbs,names,output=None, random_max = None, delimiter = None, fpsalg = 'RDKIT'):
     X, Y = _prepare_reducer_data(dbs,names,random_max, delimiter, fpsalg)
     print('Computing PCA')
-    pca = PCA(n_components=3)
+    pca = PCA(n_components=2)
     pca_results = pca.fit_transform(X)
     print('Explained variation per principal component: {}'.format(pca.explained_variance_ratio_))
     _plot_reducer_data(reducer_results = pca_results, Y=Y, output=output)
@@ -255,7 +256,49 @@ class MolDB(object):
         else:
             raise KeyError('Provide only a txtDB, a dicDB, or a sdfDB')
         self._get_total_mols()
-            
+
+    def _get_kmeans(self,n_clusters,data):
+        model = KMeans(n_clusters = n_clusters, init = "k-means++")
+        labels = model.fit_predict(data)
+        centroids = model.cluster_centers_
+        return labels,centroids
+
+    def plot_PCA(self, output = None, random_max = None, fpsalg = 'RDKIT', kmeans = False, n_clusters = 1):
+        self.get_fingerprints(fpsalg, random_max)
+        pca = PCA(n_components=2)
+        pca_results = pca.fit_transform(self.fingerprints)
+        self._plot_reducer(pca_results,output,kmeans,n_clusters)
+
+    def plot_tSNE(self, output = None, random_max = None, fpsalg = 'RDKIT', kmeans = False, n_clusters = 1):
+        self.get_fingerprints(fpsalg, random_max)
+        tsne = TSNE(n_components=2, verbose = 1, learning_rate='auto',init='pca', n_iter=2500, perplexity=50,metric='hamming')
+        tsne_results = tsne.fit_transform(np.asarray(self.fingerprints))
+        self._plot_reducer(tsne_results,output,kmeans,n_clusters)
+
+    def plot_UMAP(self, output = None, random_max = None, fpsalg = 'RDKIT', kmeans = False, n_clusters = 1):
+        self.get_fingerprints(fpsalg, random_max)
+        umap = UMAP(n_neighbors=50, n_epochs=5000, min_dist= 0.5,metric='hamming')
+        UMAP_results = umap.fit_transform(self.fingerprints)
+        self._plot_reducer(UMAP_results,output,kmeans,n_clusters)
+
+    def plot_trimap(self, output = None, random_max = None, fpsalg = 'RDKIT', kmeans = False, n_clusters = 1):
+        self.get_fingerprints(fpsalg, random_max)
+        tri = trimap.TRIMAP()
+        tri_results = embedding.fit_transform(self.fingerprints)
+        self._plot_reducer(tri_results,output,kmeans,n_clusters)
+
+    def _plot_reducer(self,reducer_results, output = None, kmeans = False, n_clusters = 1):
+        if kmeans:
+            labels,centroids = self._get_kmeans(n_clusters,reducer_results)
+            df = pd.DataFrame(dict(xaxis=reducer_results[:,0], yaxis=reducer_results[:,1],  cluster = labels))
+            sns.scatterplot('xaxis', 'yaxis', data=df, hue='cluster',alpha = 0.8, s=15,style='cluster')
+            plt.scatter(centroids[:,0], centroids[:,1], marker="x", color='r')
+        else:
+            df = pd.DataFrame(dict(xaxis=reducer_results[:,0], yaxis=reducer_results[:,1]))
+            sns.scatterplot('xaxis', 'yaxis', data=df, alpha = 0.8, s=15)
+        if output != None:
+            plt.savefig(output+'.png',dpi=300)
+
     def save_MolDB(self,output):
         with open(output+'.p', 'wb') as handle:
             pickle.dump(self.dicDB, handle)
@@ -280,6 +323,7 @@ class MolDB(object):
             molfp = mol.get_FingerPrint(alg)
             molfp = np.asarray(list((molfp.ToBitString())))
             fps.append(molfp)
+        self.fingerprints = fps
         return fps 
 
     def _get_total_mols(self):
@@ -477,6 +521,8 @@ class Mol(object):
             self.FingerPrint = AllChem.GetMorganFingerprintAsBitVect(self.mol, 1, nBits=2048)
         elif alg == 'Morgan4':
             self.FingerPrint = AllChem.GetMorganFingerprintAsBitVect(self.mol, 2, nBits=2048)
+        elif alg == 'Morgan6':
+            self.FingerPrint = AllChem.GetMorganFingerprintAsBitVect(self.mol, 3, nBits=2048)
         elif alg == 'Morgan8':
             self.FingerPrint = AllChem.GetMorganFingerprintAsBitVect(self.mol, 4, nBits=2048)
         else:
