@@ -3,7 +3,7 @@ import rdkit.Chem as Chem
 from rdkit.Chem import AllChem
 from rdkit import DataStructs
 import rdkit.Chem.Lipinski as Lipinski
-rdkit.Chem.Descriptors as Descriptors
+import rdkit.Chem.Descriptors as Descriptors
 import re
 import warnings
 import pickle
@@ -161,7 +161,7 @@ def _plot_reducer_data(reducer_results,Y,output):
         plt.savefig(output+'.png',dpi=300)
     plt.show()
 
-def plot_trimap(dbs,names,output=None, random_max = 5000, delimiter = None, fpsalg = 'RDKIT'):
+def plot_trimap(dbs,names,output=None, random_max = None, delimiter = None, fpsalg = 'RDKIT'):
     X, Y = _prepare_reducer_data(dbs,names,random_max, delimiter, fpsalg)
     print('Computing trimap')
     embedding = trimap.TRIMAP()
@@ -169,7 +169,7 @@ def plot_trimap(dbs,names,output=None, random_max = 5000, delimiter = None, fpsa
     print('Shape of trimap_results: ', trimap_results.shape)
     _plot_reducer_data(reducer_results = trimap_results, Y=Y, output=output)
 
-def plot_UMAP(dbs,names,output=None, random_max = 5000, delimiter = None, fpsalg = 'RDKIT'):
+def plot_UMAP(dbs,names,output=None, random_max = None, delimiter = None, fpsalg = 'RDKIT'):
     X, Y = _prepare_reducer_data(dbs,names,random_max, delimiter, fpsalg)
     print('Computing UMAP')
     reducer = UMAP(n_neighbors=100, n_epochs=1000)
@@ -177,13 +177,13 @@ def plot_UMAP(dbs,names,output=None, random_max = 5000, delimiter = None, fpsalg
     print('Shape of UMAP_results: ', UMAP_results.shape)
     _plot_reducer_data(reducer_results = UMAP_results, Y=Y, output=output)
 
-def plot_TSNE(dbs,names,output=None, random_max = 5000, delimiter = None, fpsalg = 'RDKIT'):
+def plot_TSNE(dbs,names,output=None, random_max = None, delimiter = None, fpsalg = 'RDKIT'):
     X, Y = _prepare_reducer_data(dbs,names,random_max, delimiter, fpsalg)
     print('Computing TSNE')
     tsne_results = TSNE(n_components=2, verbose = 1, learning_rate='auto',init='pca').fit_transform(X)
     _plot_reducer_data(reducer_results = tsne_results, Y=Y, output=output)
 
-def plot_PCA(dbs,names,output=None, random_max = 5000, delimiter = None, fpsalg = 'RDKIT'):
+def plot_PCA(dbs,names,output=None, random_max = None, delimiter = None, fpsalg = 'RDKIT'):
     X, Y = _prepare_reducer_data(dbs,names,random_max, delimiter, fpsalg)
     print('Computing PCA')
     pca = PCA(n_components=3)
