@@ -3,6 +3,7 @@ import os
 import sys
 sys.path.insert(1, '../')
 import mollib
+import plotlib
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description ='Given a list of fragment databases with the format (SMILE simSMILES IDs), plot them into a mapping such as t-SNE, PCA, UMAP or trimap')
@@ -41,10 +42,10 @@ if __name__ == '__main__':
         names.append(name)
 
     if mapping == 'tSNE':
-        mollib.plot_TSNE(dbs, names, output = out, random_max = random_max, delimiter = delimiter, fpsalg = fpsalg)
+        plotlib.plot_TSNE(dbs, names, output = out, random_max = random_max, delimiter = delimiter, fpsalg = fpsalg)
     if mapping == 'PCA':
-        mollib.plot_PCA(dbs, names, output = out, random_max = random_max, delimiter = delimiter, fpsalg = fpsalg)
+        plotlib.plot_PCA(dbs, names, output = out, random_max = random_max, delimiter = delimiter, fpsalg = fpsalg)
     if mapping == 'UMAP':
-        mollib.plot_UMAP(dbs, names, output = out, random_max = random_max, delimiter = delimiter, fpsalg = fpsalg)
+        plotlib.plot_UMAP(dbs, names, output = out, random_max = random_max, delimiter = delimiter, fpsalg = fpsalg)
     if mapping == 'trimap':
-        mollib.plot_trimap(dbs, names, output = out, random_max = random_max, delimiter = delimiter, fpsalg = fpsalg)
+        plotlib.plot_trimap(dbs, names, output = out, random_max = random_max, delimiter = delimiter, fpsalg = fpsalg)
