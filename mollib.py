@@ -283,15 +283,15 @@ class MolDB(object):
 
     def plot_trimap(self, output = None, random_max = None, fpsalg = 'RDKIT', kmeans = False, n_clusters = 1):
         self.get_fingerprints(fpsalg, random_max)
-        tri = trimap.TRIMAP()
-        tri_results = embedding.fit_transform(self.fingerprints)
+        tri = trimap.TRIMAP(n_dims=2, distance='hamming', n_iters = 2500, n_inliers = 30, n_outliers = 5,weight_temp=0.6)
+        tri_results = tri.fit_transform(np.asarray(self.fingerprints))
         self._plot_reducer(tri_results,output,kmeans,n_clusters)
 
     def _plot_reducer(self,reducer_results, output = None, kmeans = False, n_clusters = 1):
         if kmeans:
             labels,centroids = self._get_kmeans(n_clusters,reducer_results)
             df = pd.DataFrame(dict(xaxis=reducer_results[:,0], yaxis=reducer_results[:,1],  cluster = labels))
-            sns.scatterplot('xaxis', 'yaxis', data=df, hue='cluster',alpha = 0.8, s=15,style='cluster')
+            sns.scatterplot('xaxis', 'yaxis', data=df, hue='cluster',alpha = 0.8, s=15,style='cluster',palette = sns.color_palette("hls", n_clusters))
             plt.scatter(centroids[:,0], centroids[:,1], marker="x", color='r')
         else:
             df = pd.DataFrame(dict(xaxis=reducer_results[:,0], yaxis=reducer_results[:,1]))
