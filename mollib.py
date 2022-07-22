@@ -207,7 +207,12 @@ class MolDB(object):
         model = KMeans(n_clusters = n_clusters, init = "k-means++")
         labels = model.fit_predict(data)
         centroids = model.cluster_centers_
-        return labels,centroids
+        clusters = []
+        for i in range(n_clusters):
+            indexes = np.where(np.array(labels) == i)[0]
+            clusters.append(indexes)
+        clusters = np.asarray(clusters)
+        return labels, centroids, clusters
 
     def plot_PCA(self, output = None, random_max = None, fpsalg = 'RDKIT', kmeans = False, n_clusters = 1):
         self.get_fingerprints(fpsalg, random_max)
@@ -235,7 +240,7 @@ class MolDB(object):
 
     def _plot_reducer(self,reducer_results, output = None, kmeans = False, n_clusters = 1):
         if kmeans:
-            labels,centroids = self._get_kmeans(n_clusters,reducer_results)
+            labels,centroids,clusters = self._get_kmeans(n_clusters,reducer_results)
             df = pd.DataFrame(dict(xaxis=reducer_results[:,0], yaxis=reducer_results[:,1],  cluster = labels))
             sns.scatterplot('xaxis', 'yaxis', data=df, hue='cluster',alpha = 0.8, s=15,style='cluster',palette = sns.color_palette("hls", n_clusters))
             plt.scatter(centroids[:,0], centroids[:,1], marker="x", color='r')
