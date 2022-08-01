@@ -10,7 +10,7 @@ if __name__ == '__main__':
     parser.add_argument('-d', dest="dbs", nargs = '+', help = "List of databases of fragments",required=True)
     parser.add_argument('-m', dest="mapping", default = 'tSNE', help = "Mapping method (tSNE, PCA, UMAP or trimap)",required=True)
     parser.add_argument('-o', dest="out", default = None, help = "Map output name")    
-    parser.add_argument('-r', dest= "random_max", default = 5000, help = "Randomly select X elements of each databse")
+    parser.add_argument('-r', dest= "random_max", default = None, help = "Randomly select X elements of each databse")
     parser.add_argument('--txt',default=False,action='store_true',help='To pass either a txt moldb (if True) or a pickle moldb (if False). False by default')
     parser.add_argument('--del', dest="delt", default = None, help = "Delimiter for the database name")
     parser.add_argument('--fps', dest="fpsalg", default = 'RDKIT', help = "Algorthim to generate the molecular fingerprints. Must be RDKIT, Morgan2, Morgan4 or Morgan8")
@@ -23,7 +23,9 @@ if __name__ == '__main__':
     out = args.out
     txt = args.txt
     delimiter = args.delt
-    random_max = int(args.random_max)
+    random_max = args.random_max
+    if random_max != None:
+        random_max = int(random_max)
     fpsalg = args.fpsalg
     if fpsalg not in ['RDKIT', 'Morgan2', 'Morgan4', 'Morgan8']:
         raise ValueError('%s is not a valid FingerPrint method. It must be RDKIT, Morgan2, Morgan4 or Morgan8.'%mapping)

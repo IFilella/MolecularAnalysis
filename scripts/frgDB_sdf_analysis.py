@@ -18,6 +18,7 @@ if __name__ == '__main__':
     outfile = args.outfile
     uniq = args.uniq
     fsize = args.fsize
+    fsize = int(args.fsize)
     hist = args.hist
     sim = args.sim
 
@@ -29,8 +30,11 @@ if __name__ == '__main__':
     #Change the format of the database
     for i,frag in enumerate(cpdDB.dicDB.keys()):
         m = cpdDB.dicDB[frag][-1]
-        SMILE = frag 
-        ID = m.mol.GetProp("Catalog ID")
+        SMILE = frag
+        try:
+            ID = m.mol.GetProp("Catalog ID")
+        except:
+            ID = m.mol.GetProp("_Name")
         f.write('%s %s\n'%(ID,SMILE))
         if uniq:
             if SMILE not in uniq_smile_frags.keys():
@@ -54,7 +58,7 @@ if __name__ == '__main__':
         kekuleerror = 0
         sizefilter = 0
         funiq = open(outfile+'_uniqSMILE.txt','r')
-        filesize = open(outfile+'_uniqSMILE_40.txt','w')
+        filesize = open(outfile+'_uniqSMILE_%d.txt'%fsize,'w')
         for i,line in enumerate(funiq):
             line = line.split()
             SMILE = line[0]
@@ -74,12 +78,12 @@ if __name__ == '__main__':
         print("Fragments filtered by size: %d"%sizefilter)
         if hist:
             plt.hist(x,bins=100,range=(0,320))
-            plt.axvline(x=40,color = 'red',linestyle='--')
+            plt.axvline(x=fsize,color = 'red',linestyle='--')
             plt.show()
         funiq.close()
         filesize.close()
     
     if sim:
-        filesize = outfile+'_uniqSMILE_40.txt'
-        filesim = outfile+'_uniqSMILE_40_sim.txt'
+        filesize = outfile+'_uniqSMILE_%d.txt'%fsize
+        filesim = outfile+'_uniqSMILE_%d_sim.txt'%fsize
         mollib.filter_db_similarity(filesize,filesim,verbose=False)

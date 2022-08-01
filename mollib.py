@@ -20,7 +20,7 @@ from umap import UMAP
 import time
 import trimap
 
-def intersect_MolDBs(db1,db2,simt,output=None,verbose=True):
+def intersect_MolDBs(db1,db2,simt,fingerprint='RDKIT',output=None,verbose=True):
     db3 = copy.deepcopy(db1)
     keepkeys_db1 = []
     keepkeys_db2 = []
@@ -45,7 +45,7 @@ def intersect_MolDBs(db1,db2,simt,output=None,verbose=True):
             if m1.sp3 != m2.sp3: continue
             if m1.NumAliphaticRings != m2.NumAliphaticRings: continue
             if m1.NumAromaticRings != m2.NumAromaticRings: continue
-            similarity = get_MolSimilarity(m1,m2)
+            similarity = get_MolSimilarity(m1,m2,fingerprint=fingerprint)
             if similarity >= simt:
                 hitsSimilarity += 1
                 if verbose: print(i,'bySimilarity',SMILE1,SMILE2)
@@ -74,7 +74,7 @@ def intersect_MolDBs(db1,db2,simt,output=None,verbose=True):
         db3.print_MolDB(output)
         db3.save_MolDB(output)
 
-def filter_db_similarity(indb,outdb,verbose=True):
+def filter_db_similarity(indb,outdb,fingerprint='RDKIT',verbose=True):
     inp = open(indb,'r')
     out = open(outdb,'w')
     uniquefrags = {}
@@ -110,7 +110,7 @@ def filter_db_similarity(indb,outdb,verbose=True):
                 else:
                     continue
             else:
-                similarity =  get_MolSimilarity(m1,m2)
+                similarity =  get_MolSimilarity(m1,m2,fingerprint=fingerprint)
                 if j == len(uniquefrags.keys())-1 and similarity != 1:
                     uniquefrags[SMILE] = [SMILE,IDs,m1,m1_atoms,m1_NOCount,m1_NHOHCount,m1_rings,m1_sp3,m1_NumAliphaticRings,m1_NumAromaticRings]
                     break
@@ -479,18 +479,3 @@ class Mol(object):
         else:
             raise ValueError('Invalid fingerprint algorithm')
         return self.FingerPrint
-
-
-if __name__ == '__main__':
-    smile = 'Cc1cc(-c2csc(N=C(N)N)n2)cn1C'
-    inchi = 'InChI=1S/C10H13N5S/c1-6-3-7(4-15(6)2)8-5-16-10(13-8)14-9(11)12/h3-5H,1-2H3,(H4,11,12,13,14)'
-    #Testing init
-    m = Mol(smile=smile)
-    m = Mol(InChI=inchi)
-    m = Mol(smile=smile,InChI=inchi)
-    #Testing BRICS decomposition
-    m.get_BRICSdecomposition()
-    m.get_clean_fragments()
-    #Testing Tanimoto Similarity
-    similarity = get_MolSimilarity(m,m)
-    print(similarity)

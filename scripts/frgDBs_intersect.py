@@ -21,5 +21,5 @@ if __name__ == '__main__':
     #db2.save_MolDB(fdb2.replace('.txt',''))
     #db1 = mollib.MolDB(dicDB=fdb1.replace('.txt','.p'),paramaters=True,verbose=True)
     #db2 = mollib.MolDB(dicDB=fdb2.replace('.txt','.p'),paramaters=True,verbose=True)
-    
-    db3 = mollib.intersect_MolDBs(db1,db2,simt,out)
+   
+    db3 = mollib.intersect_MolDBs(db1 = db1,db2 = db2,simt = simt,fingerprint = 'Morgan4',output=out)
