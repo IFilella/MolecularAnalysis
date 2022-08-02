@@ -226,9 +226,10 @@ class MolDB(object):
         self.table = None
     
     def _get_allmols_paramaters(self):
-        if self.paramaters = True: return
-        for k in self.dicDB
-
+        if self.paramaters: return
+        for k in self.dicDB.keys():
+            mol = self.dicDB[k][2].mol
+            mol.get_AllParmaters()
 
     def _get_kmeans(self,n_clusters,data):
         model = KMeans(n_clusters = n_clusters, init = "k-means++")
@@ -512,40 +513,39 @@ class MolDB(object):
         print('SMILES with a kekule error without an eqSMULE: %d'%kekuleerror1)
 
     def get_properties_table(self):
+        if self.paramaters: return
+        else: self._get_allmols_paramaters()
+        
         table = pd.DataFrame()
-        mols = [self.dicDB[k][2].mol for k in self.dicDB.keys()]
-        for i,mol in enumerate(mols):
-            Chem.SanitizeMol(mol)
-            try:
-                table.loc[i,'id'] = mol.GetProp('_Name')
-            except:
-                pass
-            table.loc[i,'smiles']=Chem.MolToSmiles(mol)
+        for i,k in enumerate(self.dicDB.keys()):
+            mol = self.dicDB[k][2].mol 
+            table.loc[i,'id'] = self.dicDB[k][1]
+            table.loc[i,'smile']=k
             try:
                 table.loc[i,'IC50'] = float(mol.GetProp('Value'))/1000000000
                 table.loc[i,'pIC50'] = -np.log10(float(mol.GetProp('Value'))/1000000000)
             except:
                 pass
-            table.loc[i,'MolWt']=Chem.Descriptors.MolWt(mol)
-            table.loc[i,'LogP']=Chem.Descriptors.MolLogP(mol)
-            table.loc[i,'NumHAcceptors']=Chem.Descriptors.NumHAcceptors(mol)
-            table.loc[i,'NumHDonors']=Chem.Descriptors.NumHDonors(mol)
-            table.loc[i,'NumHeteroatoms']=Chem.Descriptors.NumHeteroatoms(mol)
-            table.loc[i,'NumRotatableBonds']=Chem.Descriptors.NumRotatableBonds(mol)
-            table.loc[i,'NumHeavyAtoms']=Chem.Descriptors.HeavyAtomCount (mol)
-            table.loc[i,'NumAliphaticCarbocycles']=Chem.Descriptors.NumAliphaticCarbocycles(mol)
-            table.loc[i,'NumAliphaticHeterocycles']=Chem.Descriptors.NumAliphaticHeterocycles(mol)
-            table.loc[i,'NumAliphaticRings']=Chem.Descriptors.NumAliphaticRings(mol)
-            table.loc[i,'NumAromaticCarbocycles']=Chem.Descriptors.NumAromaticCarbocycles(mol)
-            table.loc[i,'NumAromaticHeterocycles']=Chem.Descriptors.NumAromaticHeterocycles(mol)
-            table.loc[i,'NumAromaticRings']=Chem.Descriptors.NumAromaticRings(mol)
-            table.loc[i,'RingCount']=Chem.Descriptors.RingCount(mol)
-            table.loc[i,'FractionCSP3']=Chem.Descriptors.FractionCSP3(mol)
-            table.loc[i,'TPSA']=Chem.Descriptors.TPSA(mol)
-            table.loc[i,'NPR1']=Chem.rdMolDescriptors.CalcNPR1(mol)
-            table.loc[i,'NPR2']=Chem.rdMolDescriptors.CalcNPR2(mol)
-            table.loc[i,'InertialShapeFactor']=Chem.Descriptors3D.InertialShapeFactor(mol)
-            table.loc[i,'RadiusOfGyration']=Chem.Descriptors3D.RadiusOfGyration(mol)
+            table.loc[i,'MolWt']=mol.MolWt()
+            table.loc[i,'LogP']=mol.MolLogP()
+            table.loc[i,'NumHAcceptors']=mol.NumHAcceptors()
+            table.loc[i,'NumHDonors']=mol.NumHDonors()
+            table.loc[i,'NumHeteroatoms']=mol.NumHeteroatoms()
+            table.loc[i,'NumRotatableBonds']=mol.NumRotatableBonds()
+            table.loc[i,'NumHeavyAtoms']=mol.HeavyAtomCount ()
+            table.loc[i,'NumAliphaticCarbocycles']=mol.NumAliphaticCarbocycles()
+            table.loc[i,'NumAliphaticHeterocycles']=mol.NumAliphaticHeterocycles()
+            table.loc[i,'NumAliphaticRings']=mol.NumAliphaticRings()
+            table.loc[i,'NumAromaticCarbocycles']=mol.NumAromaticCarbocycles()
+            table.loc[i,'NumAromaticHeterocycles']=mol.NumAromaticHeterocycles()
+            table.loc[i,'NumAromaticRings']=mol.NumAromaticRings()
+            table.loc[i,'RingCount']=mol.RingCount()
+            table.loc[i,'FractionCSP3']=mol.FractionCSP3()
+            table.loc[i,'TPSA']=mol.TPSA()
+            table.loc[i,'NPR1']=Chem.rdMolDescriptors.CalcNPR1()
+            table.loc[i,'NPR2']=Chem.rdMolDescriptors.CalcNPR2()
+            table.loc[i,'InertialShapeFactor']=mol3D.InertialShapeFactor()
+            table.loc[i,'RadiusOfGyration']=mol3D.RadiusOfGyration()
         self.table = table
 
     def filter_props(self,prop=''):
@@ -587,6 +587,7 @@ class Mol(object):
         self.cfragments = [re.sub("(\[.*?\])", "[*]", frag) for frag in self.fragments]
    
     def get_AllParamaters(self):
+        Chem.SanitizeMol(self.mol)
         self.get_NumAtoms()
         self.get_NOCount()
         self.get_NHOHCount()
@@ -595,6 +596,21 @@ class Mol(object):
         self.get_NumAliphaticRings()
         self.get_NumAromaticRings()
         self.get_MolWt()
+        self.get_LogP()
+        self.get_NumHAcceptors()
+        self.get_NumHDonors()
+        self.get_NumHeteroatoms()
+        self.get_NumRotatableBonds()
+        self.get_NumHeavyAtoms()
+        self.get_NumAliphaticCarbocycles()
+        self.get_NumAliphaticHeterocycles()
+        self.get_NumAromaticCarbocycles()
+        self.get_NumAromaticHeterocycles()
+        self.get_TPSA()
+        self.get_NPR1()
+        self.get_NPR2()
+        self.get_InertialShapeFactor()
+        self.get_RadiusOfGyration()
 
     def _remove_anchorings(self):
         print('Old SMILE: ' + self.smile)
@@ -670,35 +686,72 @@ class Mol(object):
 
     def get_NumAtoms(self):
         self.NumAtoms = self.mol.GetNumAtoms()
-        return self.NumAtoms
 
     def get_NOCount(self):
         self.NOCount = Lipinski.NOCount(self.mol)
-        return self.NOCount
 
     def get_NHOHCount(self):
         self.NHOHCount = Lipinski.NHOHCount(self.mol)
-        return self.NHOHCount
 
     def get_RingCount(self):
         self.RingCount = Lipinski.RingCount(self.mol)
-        return self.RingCount
 
     def get_sp3(self):
         self.FractionCSP3 = Lipinski.FractionCSP3(self.mol)
-        return self.sp3
 
     def get_NumAliphaticRings(self):
         self.NumAliphaticRings = Lipinski.NumAliphaticRings(self.mol)
-        return self.NumAliphaticRings
 
     def get_NumAromaticRings(self):
         self.NumAromaticRings = Lipinski.NumAromaticRings(self.mol)
-        return self.NumAromaticRings
 
     def get_MolWt(self):
         self.MolWt = Descriptors.ExactMolWt(self.mol)
-        return self.MolWt
+
+    def get_LogP(self):
+        self.LogP = Chem.Descriptors.MolLogP(self.mol)
+
+    def get_NumHAcceptors(self):
+        self.NumHAcceptors = Chem.Descriptors.NumHAcceptors(self.mol)
+
+    def get_NumHDonors(self):
+        self.NumHDonors = Chem.Descriptors.NumHDonors(self.mol)
+
+    def get_NumHeteroatoms(self):
+        self.NumHeteroatoms = Chem.Descriptors.NumHeteroatoms(self.mol)
+
+    def get_NumRotatableBonds(self):
+        self.NumRotatableBonds = Chem.Descriptors.NumRotatableBonds(self.mol)
+
+    def get_NumHeavyAtoms(self):
+        self.NumHeavyAtoms = Chem.Descriptors.NumHeavyAtoms(self.mol)
+
+    def get_NumAliphaticCarbocycles(self):
+        self.NumAliphaticCarbocycles = Chem.Descriptors.NumAliphaticCarbocycles(self.mol)
+
+    def get_NumAliphaticHeterocycles(self):
+        self.NumAliphaticHeterocycles = Chem.Descriptors.NumAliphaticHeterocycles(self.mol)
+
+    def get_NumAromaticCarbocycles(self):
+        self.NumAromaticCarbocycles = Chem.Descriptors.NumAromaticCarbocycles(self.mol)
+
+    def get_NumAromaticHeterocycles(self):
+        self.NumAromaticHeterocycles = Chem.Descriptors.NumAromaticHeterocycles(self.mol)
+
+    def get_TPSA(self):
+        self.TPSA = Chem.Descriptors.TPSA(self.mol)
+
+    def get_NPR1(self):
+        self.NPR1 = Chem.Descriptors.NPR1(self.mol)
+
+    def get_NPR2(self):
+        self.NPR2 = Chem.Descriptors.NPR2(self.mol)
+
+    def get_InertialShapeFactor(self):
+        self.InertialShapeFactor = Chem.Descriptors.InertialShapeFactor(self.mol)
+
+    def get_RadiusOfGyration(self):
+        self.RadiusOfGyration = Chem.Descriptors.RadiusOfGyration(self.mol)
 
     def get_FingerPrint(self,alg='RDKIT'):
         if alg == 'RDKIT':
