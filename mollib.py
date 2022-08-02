@@ -228,8 +228,8 @@ class MolDB(object):
     def _get_allmols_paramaters(self):
         if self.paramaters: return
         for k in self.dicDB.keys():
-            mol = self.dicDB[k][2].mol
-            mol.get_AllParmaters()
+            mol = self.dicDB[k][2]
+            mol.get_AllParamaters()
 
     def _get_kmeans(self,n_clusters,data):
         model = KMeans(n_clusters = n_clusters, init = "k-means++")
@@ -518,34 +518,34 @@ class MolDB(object):
         
         table = pd.DataFrame()
         for i,k in enumerate(self.dicDB.keys()):
-            mol = self.dicDB[k][2].mol 
+            mol = self.dicDB[k][2]
             table.loc[i,'id'] = self.dicDB[k][1]
             table.loc[i,'smile']=k
             try:
-                table.loc[i,'IC50'] = float(mol.GetProp('Value'))/1000000000
-                table.loc[i,'pIC50'] = -np.log10(float(mol.GetProp('Value'))/1000000000)
+                table.loc[i,'IC50'] = float(mol.mol.GetProp('Value'))/1000000000
+                table.loc[i,'pIC50'] = -np.log10(float(mol.mol.GetProp('Value'))/1000000000)
             except:
                 pass
-            table.loc[i,'MolWt']=mol.MolWt()
-            table.loc[i,'LogP']=mol.MolLogP()
-            table.loc[i,'NumHAcceptors']=mol.NumHAcceptors()
-            table.loc[i,'NumHDonors']=mol.NumHDonors()
-            table.loc[i,'NumHeteroatoms']=mol.NumHeteroatoms()
-            table.loc[i,'NumRotatableBonds']=mol.NumRotatableBonds()
-            table.loc[i,'NumHeavyAtoms']=mol.HeavyAtomCount ()
-            table.loc[i,'NumAliphaticCarbocycles']=mol.NumAliphaticCarbocycles()
-            table.loc[i,'NumAliphaticHeterocycles']=mol.NumAliphaticHeterocycles()
-            table.loc[i,'NumAliphaticRings']=mol.NumAliphaticRings()
-            table.loc[i,'NumAromaticCarbocycles']=mol.NumAromaticCarbocycles()
-            table.loc[i,'NumAromaticHeterocycles']=mol.NumAromaticHeterocycles()
-            table.loc[i,'NumAromaticRings']=mol.NumAromaticRings()
-            table.loc[i,'RingCount']=mol.RingCount()
-            table.loc[i,'FractionCSP3']=mol.FractionCSP3()
-            table.loc[i,'TPSA']=mol.TPSA()
-            table.loc[i,'NPR1']=Chem.rdMolDescriptors.CalcNPR1()
-            table.loc[i,'NPR2']=Chem.rdMolDescriptors.CalcNPR2()
-            table.loc[i,'InertialShapeFactor']=mol3D.InertialShapeFactor()
-            table.loc[i,'RadiusOfGyration']=mol3D.RadiusOfGyration()
+            table.loc[i,'MolWt']=mol.MolWt
+            table.loc[i,'LogP']=mol.LogP
+            table.loc[i,'NumHAcceptors']=mol.NumHAcceptors
+            table.loc[i,'NumHDonors']=mol.NumHDonors
+            table.loc[i,'NumHeteroatoms']=mol.NumHeteroatoms
+            table.loc[i,'NumRotatableBonds']=mol.NumRotatableBonds
+            table.loc[i,'NumHeavyAtoms']=mol.NumHeavyAtoms
+            table.loc[i,'NumAliphaticCarbocycles']=mol.NumAliphaticCarbocycles
+            table.loc[i,'NumAliphaticHeterocycles']=mol.NumAliphaticHeterocycles
+            table.loc[i,'NumAliphaticRings']=mol.NumAliphaticRings
+            table.loc[i,'NumAromaticCarbocycles']=mol.NumAromaticCarbocycles
+            table.loc[i,'NumAromaticHeterocycles']=mol.NumAromaticHeterocycles
+            table.loc[i,'NumAromaticRings']=mol.NumAromaticRings
+            table.loc[i,'RingCount']=mol.RingCount
+            table.loc[i,'FractionCSP3']=mol.FractionCSP3
+            table.loc[i,'TPSA']=mol.TPSA
+            table.loc[i,'NPR1']=mol.NPR1
+            table.loc[i,'NPR2']=mol.NPR2
+            table.loc[i,'InertialShapeFactor']=mol.InertialShapeFactor
+            table.loc[i,'RadiusOfGyration']=mol.RadiusOfGyration
         self.table = table
 
     def filter_props(self,prop=''):
@@ -724,7 +724,7 @@ class Mol(object):
         self.NumRotatableBonds = Chem.Descriptors.NumRotatableBonds(self.mol)
 
     def get_NumHeavyAtoms(self):
-        self.NumHeavyAtoms = Chem.Descriptors.NumHeavyAtoms(self.mol)
+        self.NumHeavyAtoms = Chem.Descriptors.HeavyAtomCount(self.mol)
 
     def get_NumAliphaticCarbocycles(self):
         self.NumAliphaticCarbocycles = Chem.Descriptors.NumAliphaticCarbocycles(self.mol)
@@ -742,16 +742,16 @@ class Mol(object):
         self.TPSA = Chem.Descriptors.TPSA(self.mol)
 
     def get_NPR1(self):
-        self.NPR1 = Chem.Descriptors.NPR1(self.mol)
+        self.NPR1 = Chem.rdMolDescriptors.CalcNPR1(self.mol)
 
     def get_NPR2(self):
-        self.NPR2 = Chem.Descriptors.NPR2(self.mol)
+        self.NPR2 = Chem.rdMolDescriptors.CalcNPR2(self.mol)
 
     def get_InertialShapeFactor(self):
-        self.InertialShapeFactor = Chem.Descriptors.InertialShapeFactor(self.mol)
+        self.InertialShapeFactor = Chem.Descriptors3D.InertialShapeFactor(self.mol)
 
     def get_RadiusOfGyration(self):
-        self.RadiusOfGyration = Chem.Descriptors.RadiusOfGyration(self.mol)
+        self.RadiusOfGyration = Chem.Descriptors3D.RadiusOfGyration(self.mol)
 
     def get_FingerPrint(self,alg='RDKIT'):
         if alg == 'RDKIT':
