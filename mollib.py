@@ -76,6 +76,26 @@ def intersect_MolDBs(db1,db2,simt,fingerprint='RDKIT',output=None,verbose=True):
         db3.print_MolDB(output)
         db3.save_MolDB(output)
 
+def get_MolSimilarity(mol1,mol2,fingerprint='RDKIT',metric='Tanimoto'):
+    fp1 = mol1.get_FingerPrint(alg=fingerprint)
+    fp2 = mol2.get_FingerPrint(alg=fingerprint)
+    if metric == 'Tanimoto':
+        return DataStructs.TanimotoSimilarity(fp1,fp2)
+    elif  metric == 'Dice':
+        return DataStructs.DiceSimilarity(fp1,fp2)
+    elif metric == 'Cosine':
+        return DataStructs.CosineSimilarity(fp1,fp2)
+    elif metric == 'Sokal':
+        return DataStructs.SokalSimilarity(fp1,fp2)
+    elif metric == 'Russel':
+        return DataStructs.RusselSimilarity(fp1,fp2)
+    elif metric == 'Kulczynski':
+        return DataStructs.KulczynskiSimilarity(fp1,fp2)
+    elif metric == 'McConnaughey':
+        return DataStructs.McConnaugheySimilarity(fp1,fp2)
+    else:
+        raise ValueError('Invalid Metric')
+
 class MolDB(object):
     """""
     Class to store a database of molecules/fragments.
