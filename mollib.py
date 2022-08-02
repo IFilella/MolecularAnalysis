@@ -123,6 +123,7 @@ class MolDB(object):
                 eqSMILES = line[1]
                 IDs = line[2]
                 mol = Mol(smile=SMILE,allparamaters = self.paramaters)
+                if mol.error == -1: continue
                 if SMILE not in self.dicDB:
                     self.dicDB[SMILE] = [eqSMILES,IDs,mol]
                 else:
@@ -143,12 +144,18 @@ class MolDB(object):
             counteq = 0
             for i,cpd in enumerate(DB):
                 mol = Mol(mol2 = cpd, allparamaters = self.paramaters)
+                if mol.error == -1: continue
                 SMILE = mol.smile
                 eqSMILES = SMILE
                 try:
                     IDs = mol.mol.GetProp("_Name")
                 except:
                     IDs = 'None'
+                if IDs == '' or IDs == 'None':
+                    try:
+                        IDs = mol.mol.GetProp("Catalog ID")
+                    except:
+                        pass
                 if SMILE not in self.dicDB:
                     self.dicDB[SMILE] = [eqSMILES,IDs,mol]
                 else:
@@ -553,17 +560,21 @@ class Mol(object):
         if smile != None and InChI == None and mol2 == None:
             self.smile = smile
             self.mol = Chem.MolFromSmiles(self.smile)
+            if self.mol == None: self.error = -1
         elif smile == None and InChI != None and mol2 == None:
             self.InChI = InChI
             self.mol = Chem.MolFromInchi(self.InChI)
+            if self.mol == None: self.error = -1
             self.smile = Chem.MoltToSmiles(self.mol)
         elif smile == None and InChI == None and mol2 != None:
             self.mol = mol2
+            if self.mol == None: self.error = -1
             self.smile = Chem.MolToSmiles(self.mol)
         else:
             warnings.warn(f'Provide only a smile, a InchI or a mol2 RDKIT object')
         if allparamaters:
             self.get_AllParamaters()
+        if self.error != -1: self.error = 0
 
     def get_BRICSdecomposition(self):
         self.fragments = list(BRICS.BRICSDecompose(self.mol))
@@ -573,7 +584,11 @@ class Mol(object):
         self.cfragments = [re.sub("(\[.*?\])", "[*]", frag) for frag in self.fragments]
    
     def get_AllParamaters(self):
-        Chem.SanitizeMol(self.mol)
+        try:
+            Chem.SanitizeMol(self.mol)
+        except:
+            self.error = -1
+            return
         self.get_NumAtoms()
         self.get_NOCount()
         self.get_NHOHCount()
@@ -671,73 +686,100 @@ class Mol(object):
             return False
 
     def get_NumAtoms(self):
-        self.NumAtoms = self.mol.GetNumAtoms()
+        try:
+            self.NumAtoms = self.mol.GetNumAtoms()
+        except:
+            self.NumAtoms = None
 
     def get_NOCount(self):
-        self.NOCount = Lipinski.NOCount(self.mol)
+        try:
+            self.NOCount = Lipinski.NOCount(self.mol)
+        except:
+            self.NOCount = None
 
     def get_NHOHCount(self):
-        self.NHOHCount = Lipinski.NHOHCount(self.mol)
+        try: self.NHOHCount = Lipinski.NHOHCount(self.mol)
+        except: self.NHOHCount = None
 
     def get_RingCount(self):
-        self.RingCount = Lipinski.RingCount(self.mol)
+        try: self.RingCount = Lipinski.RingCount(self.mol)
+        except: None
 
     def get_sp3(self):
-        self.FractionCSP3 = Lipinski.FractionCSP3(self.mol)
+        try: self.FractionCSP3 = Lipinski.FractionCSP3(self.mol)
+        except: None
 
     def get_NumAliphaticRings(self):
-        self.NumAliphaticRings = Lipinski.NumAliphaticRings(self.mol)
+        try: self.NumAliphaticRings = Lipinski.NumAliphaticRings(self.mol)
+        except: None
 
     def get_NumAromaticRings(self):
-        self.NumAromaticRings = Lipinski.NumAromaticRings(self.mol)
+        try: self.NumAromaticRings = Lipinski.NumAromaticRings(self.mol)
+        except: None
 
     def get_MolWt(self):
-        self.MolWt = Descriptors.ExactMolWt(self.mol)
+        try: self.MolWt = Descriptors.ExactMolWt(self.mol)
+        except: None
 
     def get_LogP(self):
-        self.LogP = Chem.Descriptors.MolLogP(self.mol)
+        try: self.LogP = Chem.Descriptors.MolLogP(self.mol)
+        except: None
 
     def get_NumHAcceptors(self):
-        self.NumHAcceptors = Chem.Descriptors.NumHAcceptors(self.mol)
+        try: self.NumHAcceptors = Chem.Descriptors.NumHAcceptors(self.mol)
+        except: None
 
     def get_NumHDonors(self):
-        self.NumHDonors = Chem.Descriptors.NumHDonors(self.mol)
+        try: self.NumHDonors = Chem.Descriptors.NumHDonors(self.mol)
+        except: None
 
     def get_NumHeteroatoms(self):
-        self.NumHeteroatoms = Chem.Descriptors.NumHeteroatoms(self.mol)
+        try: self.NumHeteroatoms = Chem.Descriptors.NumHeteroatoms(self.mol)
+        except: None
 
     def get_NumRotatableBonds(self):
-        self.NumRotatableBonds = Chem.Descriptors.NumRotatableBonds(self.mol)
+        try: self.NumRotatableBonds = Chem.Descriptors.NumRotatableBonds(self.mol)
+        except: None
 
     def get_NumHeavyAtoms(self):
-        self.NumHeavyAtoms = Chem.Descriptors.HeavyAtomCount(self.mol)
+        try: self.NumHeavyAtoms = Chem.Descriptors.HeavyAtomCount(self.mol)
+        except: None
 
     def get_NumAliphaticCarbocycles(self):
-        self.NumAliphaticCarbocycles = Chem.Descriptors.NumAliphaticCarbocycles(self.mol)
+        try: self.NumAliphaticCarbocycles = Chem.Descriptors.NumAliphaticCarbocycles(self.mol)
+        except: None
 
     def get_NumAliphaticHeterocycles(self):
-        self.NumAliphaticHeterocycles = Chem.Descriptors.NumAliphaticHeterocycles(self.mol)
+        try: self.NumAliphaticHeterocycles = Chem.Descriptors.NumAliphaticHeterocycles(self.mol)
+        except: None
 
     def get_NumAromaticCarbocycles(self):
-        self.NumAromaticCarbocycles = Chem.Descriptors.NumAromaticCarbocycles(self.mol)
+        try: self.NumAromaticCarbocycles = Chem.Descriptors.NumAromaticCarbocycles(self.mol)
+        except: None
 
     def get_NumAromaticHeterocycles(self):
-        self.NumAromaticHeterocycles = Chem.Descriptors.NumAromaticHeterocycles(self.mol)
+        try: self.NumAromaticHeterocycles = Chem.Descriptors.NumAromaticHeterocycles(self.mol)
+        except: None
 
     def get_TPSA(self):
-        self.TPSA = Chem.Descriptors.TPSA(self.mol)
+        try: self.TPSA = Chem.Descriptors.TPSA(self.mol)
+        except: None
 
     def get_NPR1(self):
-        self.NPR1 = Chem.rdMolDescriptors.CalcNPR1(self.mol)
+        try: self.NPR1 = Chem.rdMolDescriptors.CalcNPR1(self.mol)
+        except: None
 
     def get_NPR2(self):
-        self.NPR2 = Chem.rdMolDescriptors.CalcNPR2(self.mol)
+        try: self.NPR2 = Chem.rdMolDescriptors.CalcNPR2(self.mol)
+        except: None
 
     def get_InertialShapeFactor(self):
-        self.InertialShapeFactor = Chem.Descriptors3D.InertialShapeFactor(self.mol)
+        try: self.InertialShapeFactor = Chem.Descriptors3D.InertialShapeFactor(self.mol)
+        except: None
 
     def get_RadiusOfGyration(self):
-        self.RadiusOfGyration = Chem.Descriptors3D.RadiusOfGyration(self.mol)
+        try: self.RadiusOfGyration = Chem.Descriptors3D.RadiusOfGyration(self.mol)
+        except: None
 
     def get_FingerPrint(self,alg='RDKIT'):
         if alg == 'RDKIT':

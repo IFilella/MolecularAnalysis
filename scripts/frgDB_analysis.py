@@ -62,12 +62,13 @@ if __name__ == '__main__':
     print("------------------------------------------------------------------------------------")
 
     #Filter the database by size
-    frgDB = mollib.MolDB(txtDB=outfile+'_uniqSMILE.txt',paramaters=True)
+    frgDB = mollib.MolDB(txtDB=outfile+'_uniqSMILE.txt',paramaters=False)
     sizefilter = 0
     x = []
     keys_to_delete = []
     for i,k in enumerate(frgDB.dicDB.keys()):
         mol = frgDB.dicDB[k][2]
+        mol.get_NumAtoms()
         numatoms = mol.NumAtoms
         x.append(numatoms)
         if numatoms >= fsize:

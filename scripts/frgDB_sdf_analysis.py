@@ -33,6 +33,7 @@ if __name__ == '__main__':
     keys_to_delete = []
     for i,k in enumerate(cpdDB.dicDB.keys()):
         mol = cpdDB.dicDB[k][2]
+        mol.get_NumAtoms()
         numatoms = mol.NumAtoms
         x.append(numatoms)
         if numatoms >= fsize:
