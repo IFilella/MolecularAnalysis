@@ -13,12 +13,14 @@ import pandas as pd
 from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 import seaborn as sns
 import random
 from umap import UMAP
 import time
 import trimap
+from math import pi
 
 def intersect_MolDBs(db1,db2,simt,fingerprint='RDKIT',output=None,verbose=True):
     db3 = copy.deepcopy(db1)
@@ -202,6 +204,7 @@ class MolDB(object):
         else:
             raise KeyError('Provide only a txtDB, a dicDB, or a sdfDB')
         self._get_total_mols()
+        self.table = None
 
     def _get_kmeans(self,n_clusters,data):
         model = KMeans(n_clusters = n_clusters, init = "k-means++")
@@ -249,6 +252,165 @@ class MolDB(object):
             sns.scatterplot('xaxis', 'yaxis', data=df, alpha = 0.8, s=15)
         if output != None:
             plt.savefig(output+'.png',dpi=300)
+
+    def plot_NPR(self,output=None,zkey=None):
+        if isinstance(self.table, pd.DataFrame):
+            pass
+        else:
+            self.get_properties_table()
+        
+        plt.rcParams['axes.linewidth'] = 1.5
+        plt.figure()
+        
+        if zkey == None:
+            ax=sns.scatterplot(x='NPR1',y='NPR2',data=self.table,s=25,linewidth=0.5,alpha=1)
+        else:
+            x = self.table['NPR1'].tolist()
+            y = self.table['NPR2'].tolist()
+            z = self.table[zkey].tolist()
+            ax= plt.scatter(x=x,y=y,c=z,data=self.table,s=8,linewidth=0.5,alpha=0.75)
+            plt.colorbar()
+        
+        x1, y1 = [0.5, 0], [0.5, 1]
+        x2, y2 = [0.5, 1], [0.5, 1]
+        x3, y3 = [0,1],[1,1]
+
+        plt.plot(x1, y1,x2,y2,x3,y3,c='gray',ls='--',lw=1)
+        plt.xlabel ('NPR1',fontsize=15,fontweight='bold')
+
+        plt.ylabel ('NPR2',fontsize=15,fontweight='bold')
+
+        if zkey == None:
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
+        else:
+            pass
+        
+        plt.text(0, 1.01,s='Rod',fontsize=16,horizontalalignment='center',verticalalignment='center',fontweight='bold')
+        plt.text(1, 1.01,s='Sphere',fontsize=16,horizontalalignment='center',verticalalignment='center',fontweight='bold')
+        plt.text(0.5, 0.49,s='Disc',fontsize=16,horizontalalignment='center',verticalalignment='center',fontweight='bold')
+
+        plt.tick_params ('both',width=2,labelsize=14)
+        plt.tight_layout()
+        if output != None:
+            plt.savefig(output+'.png',dpi=300)
+
+    def plot_paramaters_PCA(self,output=None):
+        if isinstance(self.table, pd.DataFrame):
+            pass
+        else:
+            self.get_properties_table()
+
+        descriptors = self.table[['MolWt', 'LogP','NumHeteroatoms','RingCount','FractionCSP3', 'TPSA','RadiusOfGyration']].values
+        descriptors_std = StandardScaler().fit_transform(descriptors)
+        pca = PCA()
+        descriptors_2d = pca.fit_transform(descriptors_std)
+        descriptors_pca= pd.DataFrame(descriptors_2d)
+        descriptors_pca.index = self.table.index
+        descriptors_pca.columns = ['PC{}'.format(i+1) for i in descriptors_pca.columns]
+        descriptors_pca.head(5)
+
+        print(pca.explained_variance_ratio_) #Let's plot PC1 vs PC2
+        print(sum(pca.explained_variance_ratio_))
+
+        scale1 = 1.0/(max(descriptors_pca['PC1']) - min(descriptors_pca['PC1']))
+        scale2 = 1.0/(max(descriptors_pca['PC2']) - min(descriptors_pca['PC2']))
+
+        descriptors_pca['PC1_normalized']=[i*scale1 for i in descriptors_pca['PC1']]
+        descriptors_pca['PC2_normalized']=[i*scale2 for i in descriptors_pca['PC2']]
+
+        plt.rcParams['axes.linewidth'] = 1.5
+        plt.figure(figsize=(6,6))
+
+        ax=sns.scatterplot(x='PC1_normalized',y='PC2_normalized',data=descriptors_pca,s=20,palette=sns.color_palette("Set2", 3),linewidth=0.2,alpha=1)
+
+        plt.xlabel ('PC1',fontsize=20,fontweight='bold')
+        ax.xaxis.set_label_coords(0.98, 0.45)
+        plt.ylabel ('PC2',fontsize=20,fontweight='bold')
+        ax.yaxis.set_label_coords(0.45, 0.98)
+
+        ax.spines['left'].set_position(('data', 0))
+        ax.spines['bottom'].set_position(('data', 0))
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+
+        lab=['MolWt', 'LogP','NumHeteroatoms','RingCount','FractionCSP3','TPSA','RadiusOfGyration']
+
+        l=np.transpose(pca.components_[0:2, :])
+        print(lab)
+        print(l)
+        print(np.linalg.norm(l,axis=1))
+        
+        n = l.shape[0]
+        for i in range(n):
+            plt.arrow(0, 0, l[i,0], l[i,1],color= 'k',alpha=0.5,linewidth=1.8,head_width=0.025)
+            plt.text(l[i,0]*1.25, l[i,1]*1.25, lab[i], color = 'k',va = 'center', ha = 'center',fontsize=16)
+        
+        circle = plt.Circle((0,0), 1, color='gray', fill=False,clip_on=True,linewidth=1.5,linestyle='--')
+        plt.tick_params ('both',width=2,labelsize=18)
+
+        ax.add_artist(circle)
+        plt.xlim(-1.2,1.2)
+        plt.ylim(-1.2,1.2)
+        plt.tight_layout()
+        
+        if output != None:
+            plt.savefig(output+'.png',dpi=300)
+
+    def plot_radar(self,output=None):
+        if isinstance(self.table, pd.DataFrame):
+            pass
+        else:
+            self.get_properties_table()
+
+        data=pd.DataFrame()
+
+        data['MolWt']=[i/500 for i in self.table['MolWt']]
+        data['LogP']=[i/5 for i in self.table['LogP']]
+        data['nHA']=[i/10 for i in self.table['NumHAcceptors']]
+        data['nHD']=[i/3 for i in self.table['NumHDonors']]
+        data['nRotB']=[i/10 for i in self.table['NumRotatableBonds']]
+        data['TPSA']=[i/140 for i in self.table['TPSA']]
+        
+        categories=list(data.columns) 
+        N = len(categories)
+        values=data[categories].values[0]
+        values=np.append(values,values[:1])
+        angles = [n / float(N) * 2 * pi for n in range(N)]
+        angles += angles[:1]
+
+        Ro5_up=[1,1,1,1,1,1,1] #The upper limit for bRo5
+        Ro5_low=[0.5,0.1,0,0.25,0.1,0.5,0.5]  #The lower limit for bRo5
+    
+        fig = plt.figure()
+        
+        fig, ax = plt.subplots(subplot_kw={'projection': 'polar'})
+        
+        plt.xticks(angles[:-1], categories,color='k',size=15,ha='center',va='top',fontweight='book')
+
+        plt.tick_params(axis='y',width=4,labelsize=6, grid_alpha=0.05)
+
+        ax.set_rlabel_position(0)
+
+        all_values = []
+        for i in data.index:
+            values=data[categories].values[i]
+            values=np.append(values,values[:1])
+            all_values.append(values)
+            plt.plot(angles, values, linewidth=0.6 ,color='steelblue',alpha=0.5)
+
+        all_values = np.asarray(all_values)
+        average_values  = np.mean(all_values,axis=0)
+        plt.plot(angles, average_values, linewidth=1 ,linestyle='-',color='orange')
+
+        ax.grid(axis='y',linewidth=1.5,linestyle='dotted',alpha=0.8)
+        ax.grid(axis='x',linewidth=2,linestyle='-',alpha=1)
+        
+        plt.plot(angles, Ro5_up, linewidth=2, linestyle='-',color='red')
+        plt.plot(angles, Ro5_low, linewidth=2, linestyle='-',color='red')
+        
+        if output != None:
+            plt.savefig(output,dpi=300)
 
     def save_MolDB(self,output):
         with open(output+'.p', 'wb') as handle:
@@ -324,6 +486,43 @@ class MolDB(object):
         print('Total modified smiles: %d'%(totalsmiles-kekuleerror1-kekuleerror2))
         print('SMILES with kekule error substituted by an eqSMILE: %d'%kekuleerror2)
         print('SMILES with a kekule error without an eqSMULE: %d'%kekuleerror1)
+
+    def get_properties_table(self):
+        table = pd.DataFrame()
+        mols = [self.dicDB[k][2].mol for k in self.dicDB.keys()]
+        for i,mol in enumerate(mols):
+            Chem.SanitizeMol(mol)
+            try:
+                table.loc[i,'id'] = mol.GetProp('_Name')
+            except:
+                pass
+            table.loc[i,'smiles']=Chem.MolToSmiles(mol)
+            try:
+                table.loc[i,'IC50'] = float(mol.GetProp('Value'))/1000000000
+                table.loc[i,'pIC50'] = -np.log10(float(mol.GetProp('Value'))/1000000000)
+            except:
+                pass
+            table.loc[i,'MolWt']=Chem.Descriptors.MolWt(mol)
+            table.loc[i,'LogP']=Chem.Descriptors.MolLogP(mol)
+            table.loc[i,'NumHAcceptors']=Chem.Descriptors.NumHAcceptors(mol)
+            table.loc[i,'NumHDonors']=Chem.Descriptors.NumHDonors(mol)
+            table.loc[i,'NumHeteroatoms']=Chem.Descriptors.NumHeteroatoms(mol)
+            table.loc[i,'NumRotatableBonds']=Chem.Descriptors.NumRotatableBonds(mol)
+            table.loc[i,'NumHeavyAtoms']=Chem.Descriptors.HeavyAtomCount (mol)
+            table.loc[i,'NumAliphaticCarbocycles']=Chem.Descriptors.NumAliphaticCarbocycles(mol)
+            table.loc[i,'NumAliphaticHeterocycles']=Chem.Descriptors.NumAliphaticHeterocycles(mol)
+            table.loc[i,'NumAliphaticRings']=Chem.Descriptors.NumAliphaticRings(mol)
+            table.loc[i,'NumAromaticCarbocycles']=Chem.Descriptors.NumAromaticCarbocycles(mol)
+            table.loc[i,'NumAromaticHeterocycles']=Chem.Descriptors.NumAromaticHeterocycles(mol)
+            table.loc[i,'NumAromaticRings']=Chem.Descriptors.NumAromaticRings(mol)
+            table.loc[i,'RingCount']=Chem.Descriptors.RingCount(mol)
+            table.loc[i,'FractionCSP3']=Chem.Descriptors.FractionCSP3(mol)
+            table.loc[i,'TPSA']=Chem.Descriptors.TPSA(mol)
+            table.loc[i,'NPR1']=Chem.rdMolDescriptors.CalcNPR1(mol)
+            table.loc[i,'NPR2']=Chem.rdMolDescriptors.CalcNPR2(mol)
+            table.loc[i,'InertialShapeFactor']=Chem.Descriptors3D.InertialShapeFactor(mol)
+            table.loc[i,'RadiusOfGyration']=Chem.Descriptors3D.RadiusOfGyration(mol)
+        self.table = table
 
 class Mol(object):
     """"""
