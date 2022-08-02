@@ -43,7 +43,7 @@ def intersect_MolDBs(db1,db2,simt,fingerprint='RDKIT',output=None,verbose=True):
             if m1.NumAtoms != m2.NumAtoms: continue
             if m1.NOCount != m2.NOCount: continue
             if m1.NHOHCount != m2.NHOHCount: continue
-            if m1.rings != m2.rings: continue
+            if m1.RingCount != m2.RingCount: continue
             if m1.sp3 != m2.sp3: continue
             if m1.NumAliphaticRings != m2.NumAliphaticRings: continue
             if m1.NumAromaticRings != m2.NumAromaticRings: continue
@@ -90,31 +90,31 @@ def filter_db_similarity(indb,outdb,fingerprint='RDKIT',verbose=True):
         m1_atoms = m1.mol.GetNumAtoms()
         m1_NOCount = Lipinski.NOCount(m1.mol)
         m1_NHOHCount = Lipinski.NHOHCount(m1.mol)
-        m1_rings = Lipinski.RingCount(m1.mol)
+        m1_RingCount = Lipinski.RingCount(m1.mol)
         m1_sp3 = Lipinski.FractionCSP3(m1.mol)
         m1_NumAliphaticRings = Lipinski.NumAliphaticRings(m1.mol)
         m1_NumAromaticRings = Lipinski.NumAromaticRings(m1.mol)
         if len(uniquefrags.keys()) == 0:
-            uniquefrags[SMILE] = [SMILE,IDs,m1,m1_atoms,m1_NOCount,m1_NHOHCount,m1_rings,m1_sp3,m1_NumAliphaticRings,m1_NumAromaticRings]
+            uniquefrags[SMILE] = [SMILE,IDs,m1,m1_atoms,m1_NOCount,m1_NHOHCount,m1_RingCount,m1_sp3,m1_NumAliphaticRings,m1_NumAromaticRings]
         for j,k in enumerate(uniquefrags.keys()):
             m2 = uniquefrags[k][2]
             m2_atoms = uniquefrags[k][3]
             m2_NOCount = uniquefrags[k][4]
             m2_NHOHCount = uniquefrags[k][5]
-            m2_rings = uniquefrags[k][6]
+            m2_RingCount = uniquefrags[k][6]
             m2_sp3 = uniquefrags[k][7]
             m2_NumAliphaticRings = uniquefrags[k][8]
             m2_NumAromaticRings = uniquefrags[k][9]
-            if m1_atoms != m2_atoms or m1_NOCount != m2_NOCount or m1_rings != m2_rings or m1_NHOHCount != m2_NHOHCount or m1_sp3 != m2_sp3 or m1_NumAliphaticRings != m2_NumAliphaticRings or  m1_NumAromaticRings != m2_NumAromaticRings:
+            if m1_atoms != m2_atoms or m1_NOCount != m2_NOCount or m1_RingCount != m2_RingCount or m1_NHOHCount != m2_NHOHCount or m1_sp3 != m2_sp3 or m1_NumAliphaticRings != m2_NumAliphaticRings or  m1_NumAromaticRings != m2_NumAromaticRings:
                 if j == len(uniquefrags.keys())-1:
-                    uniquefrags[SMILE] = [SMILE,IDs,m1,m1_atoms,m1_NOCount,m1_NHOHCount,m1_rings,m1_sp3,m1_NumAliphaticRings,m1_NumAromaticRings]
+                    uniquefrags[SMILE] = [SMILE,IDs,m1,m1_atoms,m1_NOCount,m1_NHOHCount,m1_RingCount,m1_sp3,m1_NumAliphaticRings,m1_NumAromaticRings]
                     break
                 else:
                     continue
             else:
                 similarity =  get_MolSimilarity(m1,m2,fingerprint=fingerprint)
                 if j == len(uniquefrags.keys())-1 and similarity != 1:
-                    uniquefrags[SMILE] = [SMILE,IDs,m1,m1_atoms,m1_NOCount,m1_NHOHCount,m1_rings,m1_sp3,m1_NumAliphaticRings,m1_NumAromaticRings]
+                    uniquefrags[SMILE] = [SMILE,IDs,m1,m1_atoms,m1_NOCount,m1_NHOHCount,m1_RingCount,m1_sp3,m1_NumAliphaticRings,m1_NumAromaticRings]
                     break
                 elif j == len(uniquefrags.keys())-1 and similarity == 1:
                     print("0: " + uniquefrags[k][0] + " " +SMILE)
@@ -172,39 +172,63 @@ class MolDB(object):
     If paramaters flag is given multiple paramaters of each molecule such as NumAtoms or NOCount are
     calculated and stored.
     """""
-    def __init__(self, txtDB = None, dicDB = None, sdfDB = None, paramaters = False, verbose = False):
+    def __init__(self, txtDB = None, dicDB = None, sdfDB = None, paramaters = False, verbose = True):
         self.txtDB = txtDB
         self.dicDB = dicDB
         self.sdfDB = sdfDB
+        self.paramaters = paramaters
         if self.txtDB != None and self.dicDB == None and self.sdfDB == None:
             self.dicDB = {}
             db = open(self.txtDB,'r')
+            counteq = 0
             for i,line in enumerate(db):
                 line = line.split()
                 SMILE = line[0]
                 eqSMILES = line[1]
                 IDs = line[2]
-                m1 = Mol(smile=SMILE,allparamaters = paramaters)
-                if verbose: print(i+1,SMILE)
-                self.dicDB[SMILE] = [eqSMILES,IDs,m1]
+                mol = Mol(smile=SMILE,allparamaters = self.paramaters)
+                if SMILE not in self.dicDB:
+                    self.dicDB[SMILE] = [eqSMILES,IDs,mol]
+                else:
+                    counteq+=1
+                    old_eqSMILES = self.dicDB[SMILE][0].split(',')
+                    new_eqSMILES = eqSMILES.split(',')
+                    total_eqSMILES = ','.join(list(set(old_eqSMILES + new_eqSMILES)))
+                    self.dicDB[SMILE][1]+=',%s'%IDs
+                    self.dicDB[SMILE][0] = total_eqSMILES
+                if verbose: print(i+1,IDs,SMILE)
+            if verbose: print('Repeated SMILES: %d'%counteq)
         elif self.txtDB == None and self.dicDB != None and self.sdfDB == None:
             with open(self.dicDB, 'rb') as handle:
                 self.dicDB = pickle.load(handle)
         elif self.txtDB == None and self.dicDB == None and self.sdfDB != None:
             self.dicDB = {}
             DB = Chem.SDMolSupplier(self.sdfDB)
+            counteq = 0
             for i,cpd in enumerate(DB):
-                m1 = Mol(mol2 = cpd, allparamaters = paramaters)
-                SMILE = m1.smile
-                eqSMILES = None
-                IDs = None
-                if verbose: print(i+1,SMILE)
-                self.dicDB[SMILE] = [eqSMILES,IDs,m1]
-                #print(self.dicDB[SMILE][-1].mol.GetProp('Value'))
+                mol = Mol(mol2 = cpd, allparamaters = self.paramaters)
+                SMILE = mol.smile
+                eqSMILES = SMILE
+                try:
+                    IDs = mol.mol.GetProp("_Name")
+                except:
+                    IDs = 'None'
+                if SMILE not in self.dicDB:
+                    self.dicDB[SMILE] = [eqSMILES,IDs,mol]
+                else:
+                    counteq+=1
+                    self.dicDB[SMILE][1]+=',%s'%IDs
+                if verbose: print(i+1,IDs,SMILE)
+            if verbose: print('Repeated SMILES: %d'%counteq)
         else:
             raise KeyError('Provide only a txtDB, a dicDB, or a sdfDB')
         self._get_total_mols()
         self.table = None
+    
+    def _get_allmols_paramaters(self):
+        if self.paramaters = True: return
+        for k in self.dicDB
+
 
     def _get_kmeans(self,n_clusters,data):
         model = KMeans(n_clusters = n_clusters, init = "k-means++")
@@ -524,6 +548,18 @@ class MolDB(object):
             table.loc[i,'RadiusOfGyration']=Chem.Descriptors3D.RadiusOfGyration(mol)
         self.table = table
 
+    def filter_props(self,prop=''):
+        pass
+
+    def filter_similarity(self,simthreshold=1,fingerprint='RDKIT',prefilters=True,verbose=True):
+        new_dicDB = {}
+        for i,key in enumerate(self.dicDB.keys()):
+            SMILE = key
+            eqSMILES = self.dicDB[key][0]
+            IDs = self.dicDB[key][1]
+            mol = self.dicDB[key][2]
+
+
 class Mol(object):
     """"""
     """"""
@@ -554,7 +590,7 @@ class Mol(object):
         self.get_NumAtoms()
         self.get_NOCount()
         self.get_NHOHCount()
-        self.get_rings()
+        self.get_RingCount()
         self.get_sp3()
         self.get_NumAliphaticRings()
         self.get_NumAromaticRings()
@@ -644,12 +680,12 @@ class Mol(object):
         self.NHOHCount = Lipinski.NHOHCount(self.mol)
         return self.NHOHCount
 
-    def get_rings(self):
-        self.rings = Lipinski.RingCount(self.mol)
-        return self.rings
+    def get_RingCount(self):
+        self.RingCount = Lipinski.RingCount(self.mol)
+        return self.RingCount
 
     def get_sp3(self):
-        self.sp3 = Lipinski.FractionCSP3(self.mol)
+        self.FractionCSP3 = Lipinski.FractionCSP3(self.mol)
         return self.sp3
 
     def get_NumAliphaticRings(self):
