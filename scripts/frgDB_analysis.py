@@ -56,45 +56,36 @@ if __name__ == '__main__':
     #Generate filtered database by uniq smiles
     funiq = open(outfile+'_uniqSMILE.txt','w',)
     for k in uniq_smile_frags.keys():
-        funiq.write(k + " " + ",".join(uniq_smile_frags[k]) + "\n")
+        funiq.write(k + " None " + ",".join(uniq_smile_frags[k]) + "\n") #None eqSMILEs
     funiq.close()
 
     print("------------------------------------------------------------------------------------")
 
     #Filter the database by size
-    x = []
-    kekuleerror = 0
+    frgDB = mollib.MolDB(txtDB=outfile+'_uniqSMILE.txt',paramaters=True)
     sizefilter = 0
-    funiq = open(outfile+'_uniqSMILE.txt','r')
-    filesize = open(outfile+'_uniqSMILE_%d.txt'%fsize,'w')
-    for i,line in enumerate(funiq):
-        line = line.split()
-        SMILE = line[0]
-        IDs = line[-1]
-        m1 = mollib.Mol(smile=SMILE)
-        try:
-            numatoms = m1.mol.GetNumAtoms()
-            x.append(numatoms)
-        except:
-             kekuleerror += 1
-             continue
-        if numatoms > fsize:
+    x = []
+    keys_to_delete = []
+    for i,k in enumerate(frgDB.dicDB.keys()):
+        mol = frgDB.dicDB[k][2]
+        numatoms = mol.NumAtoms
+        x.append(numatoms)
+        if numatoms >= fsize:
             sizefilter +=1
-        else:
-            filesize.write(SMILE + " " + IDs + "\n")
-    print("Number of fragments discarded due to error while computing the number of atoms (kekuleerror): %d"%kekuleerror)
+            keys_to_delete.append(k)
+    
+    for k in keys_to_delete:
+        del frgDB.dicDB[k]
+
     print("Number of fragments filtered by size(%d): %d"%(fsize,sizefilter))
+    print("DB size after filtering: %d"%len(frgDB.dicDB.keys()))
     if hist:
         plt.hist(x,bins=100,range=(0,320))
         plt.axvline(x=fsize,color = 'red',linestyle='--')
         plt.show()
-    funiq.close()
-    filesize.close()
- 
-    print("------------------------------------------------------------------------------------")
+    frgDB.print_MolDB(output=outfile+'_uniqSMILE_%d'%fsize)
 
     #Clusterize by similarity
     if sim:
-        filesize = outfile+'_uniqSMILE_' + str(fsize) + '.txt'
-        filesim = outfile+'_uniqSMILE_' + str(fsize) + '_simclst.txt'
-        mollib.filter_db_similarity(filesize,filesim,verbose=True)
+        frgDB.filter_similarity(fingerprint='Morgan4')
+        frgDB.print_MolDB(output=outfile+'_uniqSMILE_%d_sim'%fsize)

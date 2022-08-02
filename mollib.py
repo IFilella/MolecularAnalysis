@@ -514,8 +514,10 @@ class MolDB(object):
 
     def get_properties_table(self):
         if self.paramaters: return
-        else: self._get_allmols_paramaters()
-        
+        else:
+            self._get_allmols_paramaters()
+            self.paramaters = True
+
         table = pd.DataFrame()
         for i,k in enumerate(self.dicDB.keys()):
             mol = self.dicDB[k][2]
@@ -548,16 +550,64 @@ class MolDB(object):
             table.loc[i,'RadiusOfGyration']=mol.RadiusOfGyration
         self.table = table
 
-    def filter_props(self,prop=''):
-        pass
-
     def filter_similarity(self,simthreshold=1,fingerprint='RDKIT',prefilters=True,verbose=True):
+        if not self.paramaters:
+            self._get_allmols_paramaters()
+            self.paramaters = True
+
         new_dicDB = {}
-        for i,key in enumerate(self.dicDB.keys()):
-            SMILE = key
-            eqSMILES = self.dicDB[key][0]
-            IDs = self.dicDB[key][1]
-            mol = self.dicDB[key][2]
+        count = 0
+        for i,key1 in enumerate(self.dicDB.keys()):
+            count+=1
+            SMILE1 = key1
+            eqSMILES1 = self.dicDB[key1][0]
+            IDs1 = self.dicDB[key1][1]
+            mol1 = self.dicDB[key1][2]
+            if len(new_dicDB.keys()) == 0:
+                new_dicDB[SMILE1] = [eqSMILES1,IDs1,mol1]
+            for j,key2 in enumerate(new_dicDB.keys()):
+                SMILE2 = key2
+                eqSMILES2 = new_dicDB[key2][0]
+                IDs2 = new_dicDB[key2][1]
+                mol2 = new_dicDB[key2][2]
+                if mol1.NumAtoms != mol2.NumAtoms or mol1.NOCount != mol2.NOCount or mol1.RingCount != mol2.RingCount or mol1.NHOHCount != mol2.NHOHCount or mol1.FractionCSP3 != mol2.FractionCSP3 or mol1.NumAliphaticRings != mol2.NumAliphaticRings or  mol1.NumAromaticRings != mol2.NumAromaticRings:
+                    if j == len(new_dicDB.keys())-1:
+                        new_dicDB[SMILE1] = [eqSMILES1,IDs1,mol1]
+                        break
+                    else:
+                        continue
+                else:
+                    similarity = get_MolSimilarity(mol1,mol2,fingerprint=fingerprint)
+                    if j == len(new_dicDB.keys())-1 and similarity >= simthreshold:
+                        if verbose: print("0:" + new_dicDB[SMILE2][0] + " " + SMILE1)
+                        _eqSMILES1 = eqSMILES1.split(',')
+                        _eqSMILES2 = eqSMILES2.split(',')
+                        new_eqSMILES = ','.join(list(set(_eqSMILES1 + _eqSMILES2)))
+                        new_dicDB[SMILE2][0] = new_eqSMILES
+                        _IDs1 = IDs1.split(',')
+                        _IDs2 = IDs2.split(',')
+                        new_IDs = ','.join(list(set(_IDs1 + _IDs2)))
+                        new_dicDB[SMILE2][1] = new_IDs
+                    elif similarity >= simthreshold:
+                        if verbose: print("1:" + new_dicDB[SMILE2][0] + " " + SMILE1)
+                        _eqSMILES1 = eqSMILES1.split(',')
+                        _eqSMILES2 = eqSMILES2.split(',')
+                        new_eqSMILES = ','.join(list(set(_eqSMILES1 + _eqSMILES2)))
+                        new_dicDB[SMILE2][0] = new_eqSMILES
+                        _IDs1 = IDs1.split(',')
+                        _IDs2 = IDs2.split(',')
+                        new_IDs = ','.join(list(set(_IDs1 + _IDs2)))
+                        new_dicDB[SMILE2][1] = new_IDs
+                        break
+                    else:
+                        continue
+            if verbose:
+                print('Unique molecules after filtering: %d'%len(new_dicDB.keys()))
+                print('Analized molecules: %d'%count)
+            else:
+                if count % 500 == 0:  print('Analized compounds: %d'%count)
+        self.dicDB = new_dicDB
+
 
 
 class Mol(object):
