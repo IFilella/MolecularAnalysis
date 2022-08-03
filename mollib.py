@@ -390,6 +390,14 @@ class MolDB(object):
             f.write(k + " " + str(self.dicDB[k][0]) + " " + str(self.dicDB[k][1]) + '\n')
         f.close()
 
+    def save_MolDB_sdf(self,output):
+        with Chem.SDWriter(output) as w:
+            for k in self.dicDB.keys():
+                mol = self.dicDB[k][2].mol
+                ID = self.dicDB[k][1]
+                mol.SetProp("_Name",ID)
+                w.write(mol,)
+
     def get_fingerprints(self, alg='RDKIT', random_max=None):
         fps = []
         if random_max == None:
@@ -560,21 +568,29 @@ class Mol(object):
         if smile != None and InChI == None and mol2 == None:
             self.smile = smile
             self.mol = Chem.MolFromSmiles(self.smile)
-            if self.mol == None: self.error = -1
+            if self.mol == None:
+                self.error = -1
+            else:
+                self.error = 0
         elif smile == None and InChI != None and mol2 == None:
             self.InChI = InChI
             self.mol = Chem.MolFromInchi(self.InChI)
-            if self.mol == None: self.error = -1
+            if self.mol == None:
+                self.error = -1
+            else:
+                self.error = 0
             self.smile = Chem.MoltToSmiles(self.mol)
         elif smile == None and InChI == None and mol2 != None:
             self.mol = mol2
-            if self.mol == None: self.error = -1
+            if self.mol == None:
+                self.error = -1
+            else:
+                self.error = 0
             self.smile = Chem.MolToSmiles(self.mol)
         else:
             warnings.warn(f'Provide only a smile, a InchI or a mol2 RDKIT object')
         if allparamaters:
             self.get_AllParamaters()
-        if self.error != -1: self.error = 0
 
     def get_BRICSdecomposition(self):
         self.fragments = list(BRICS.BRICSDecompose(self.mol))
