@@ -40,13 +40,13 @@ def intersect_MolDBs(db1,db2,simt,fingerprint='RDKIT',output=None,verbose=True):
                 keepkeys_db1.append(SMILE1)
                 keepkeys_db2.append(SMILE2)
                 break
-            if m1.NumAtoms != m2.NumAtoms: continue
-            if m1.NOCount != m2.NOCount: continue
-            if m1.NHOHCount != m2.NHOHCount: continue
-            if m1.RingCount != m2.RingCount: continue
-            if m1.sp3 != m2.sp3: continue
-            if m1.NumAliphaticRings != m2.NumAliphaticRings: continue
-            if m1.NumAromaticRings != m2.NumAromaticRings: continue
+            #if m1.NumAtoms != m2.NumAtoms: continue
+            #if m1.NOCount != m2.NOCount: continue
+            #if m1.NHOHCount != m2.NHOHCount: continue
+            #if m1.RingCount != m2.RingCount: continue
+            #if m1.FractionCSP3 != m2.FractionCSP3: continue
+            #if m1.NumAliphaticRings != m2.NumAliphaticRings: continue
+            #if m1.NumAromaticRings != m2.NumAromaticRings: continue
             similarity = get_MolSimilarity(m1,m2,fingerprint=fingerprint)
             if similarity >= simt:
                 hitsSimilarity += 1
