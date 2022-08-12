@@ -1,0 +1,81 @@
+REMARK   4      COMPLIES WITH FORMAT V. 3.0, 1-DEC-2006
+REMARK 888
+REMARK 888 WRITTEN BY MAESTRO (A PRODUCT OF SCHRODINGER, LLC)
+TITLE     1B38
+HETATM    1  PG  ATP A 381      -3.904  24.971  15.435  1.00 34.03           P  
+HETATM    2  O1G ATP A 381      -4.443  24.771  16.773  1.00 31.74           O  
+HETATM    3  O2G ATP A 381      -3.510  26.367  15.111  1.00 31.67           O1-
+HETATM    4  O3G ATP A 381      -5.021  24.580  14.486  1.00 34.15           O1-
+HETATM    5  PB  ATP A 381      -1.539  24.124  14.051  1.00 26.96           P  
+HETATM    6  O1B ATP A 381      -1.019  25.507  14.007  1.00 24.99           O  
+HETATM    7  O2B ATP A 381      -0.564  23.045  14.136  1.00 26.27           O1-
+HETATM    8  O3B ATP A 381      -2.713  23.985  15.119  1.00 30.69           O  
+HETATM    9  PA  ATP A 381      -2.808  25.087  11.645  1.00 28.45           P  
+HETATM   10  O1A ATP A 381      -3.918  24.413  10.871  1.00 29.15           O  
+HETATM   11  O2A ATP A 381      -3.073  26.408  12.152  1.00 25.70           O1-
+HETATM   12  O3A ATP A 381      -2.494  23.945  12.771  1.00 28.02           O  
+HETATM   13  O5' ATP A 381      -1.528  25.116  10.700  1.00 29.13           O  
+HETATM   14  C5' ATP A 381      -1.323  24.047   9.756  1.00 30.43           C  
+HETATM   15  C4' ATP A 381       0.147  24.224   9.353  1.00 31.53           C  
+HETATM   16  O4' ATP A 381       0.267  25.324   8.443  1.00 30.60           O  
+HETATM   17  C3' ATP A 381       1.002  24.581  10.574  1.00 33.70           C  
+HETATM   18  O3' ATP A 381       2.298  23.979  10.395  1.00 32.98           O  
+HETATM   19  C2' ATP A 381       1.157  26.137  10.454  1.00 32.71           C  
+HETATM   20  O2' ATP A 381       2.524  26.414  10.854  1.00 35.33           O  
+HETATM   21  C1' ATP A 381       1.104  26.330   8.923  1.00 30.76           C  
+HETATM   22  N9  ATP A 381       0.481  27.594   8.542  1.00 27.75           N  
+HETATM   23  C8  ATP A 381      -0.528  28.141   9.258  1.00 25.73           C  
+HETATM   24  N7  ATP A 381      -0.708  29.377   9.057  1.00 26.50           N  
+HETATM   25  C5  ATP A 381       0.200  29.740   8.175  1.00 24.80           C  
+HETATM   26  C6  ATP A 381       0.435  30.983   7.580  1.00 23.93           C  
+HETATM   27  N6  ATP A 381      -0.195  32.128   7.775  1.00 18.86           N  
+HETATM   28  N1  ATP A 381       1.453  31.003   6.691  1.00 21.44           N  
+HETATM   29  C2  ATP A 381       2.120  29.859   6.398  1.00 21.19           C  
+HETATM   30  N3  ATP A 381       1.978  28.672   6.931  1.00 22.74           N  
+HETATM   31  C4  ATP A 381       0.963  28.657   7.804  1.00 24.84           C  
+CONECT    1    2    3    4    8
+CONECT    1    2
+CONECT    2    1
+CONECT    2    1
+CONECT    3    1
+CONECT    4    1
+CONECT    5    6    7    8   12
+CONECT    5    6
+CONECT    6    5
+CONECT    6    5
+CONECT    7    5
+CONECT    8    1    5
+CONECT    9   10   11   12   13
+CONECT    9   10
+CONECT   10    9
+CONECT   10    9
+CONECT   11    9
+CONECT   12    5    9
+CONECT   13    9   14
+CONECT   14   13   15
+CONECT   15   14   16   17
+CONECT   16   15   21
+CONECT   17   15   18   19
+CONECT   18   17
+CONECT   19   17   20   21
+CONECT   20   19
+CONECT   21   16   19   22
+CONECT   22   21   23   31
+CONECT   23   22   24
+CONECT   23   24
+CONECT   24   23   25
+CONECT   24   23
+CONECT   25   24   26   31
+CONECT   25   31
+CONECT   26   25   27   28
+CONECT   26   28
+CONECT   27   26
+CONECT   28   26   29
+CONECT   28   26
+CONECT   29   28   30
+CONECT   29   30
+CONECT   30   29   31
+CONECT   30   29
+CONECT   31   22   25   30
+CONECT   31   25
+END   

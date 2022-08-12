@@ -1,0 +1,68 @@
+[bsclife078]
+
+################################################################################
+###                                                                          ###
+###                         SiteMap v5.0.011                                 ###
+###        Copyright (c) Schrodinger, LLC - All Rights Reserved              ###
+###                                                                          ###
+################################################################################
+
+Job started: Wed Aug 10 16:35:10 2022
+
+
+SCHRODINGER:  /data/general_software/schrodinger2019-1
+IMPACT_EXEC:  /data/general_software/schrodinger2019-1/impact-v8.2/bin/Linux-x86_64
+MMSHARE_EXEC: /data/general_software/schrodinger2019-1/mmshare-v4.5/bin/Linux-x86_64
+
+Architecture: 
+
+Command line:  -sitebox 12 -resolution standard -reportsize 100 -writestructs no -maxsites 1 -siteasl (res.num 33) AND ((atom.ptype ' NZ ')) -prot ../tests/prepWizard/CDK2_3pxrA_prep.mae -j CDK2_3pxrA
+grid size 0.7
+
+SiteMap Jobid: bsclife078-3-62f3c21d
+
+Site finding job started:  Wed Aug 10 16:35:10 2022
+(Unsuccessful subjobs will be retried up to 2 time(s).)
+
+Launched subjob bsclife078-1-62f3c21f on localhost (1/1)
+Site finding job "CDK2_3pxrA_find" completed.Wed Aug 10 16:35:22 2022
+
+Working on sites...
+
+These jobs will be run serially.
+
+1 job will be run.
+[ Hostpool contains 1 nodes]
+(Unsuccessful subjobs will be retried up to 2 time(s).)
+
+Launched subjob bsclife078-4-62f3c22b on localhost (2/2)
+
+Job bsclife078-1-62f3c21f finished
+
+Site mapping jobs of "CDK2_3pxrA" are completed.
+Wed Aug 10 16:35:28 2022
+
+Started site evaluation jobs...
+
+These jobs will be run serially.
+
+1 job will be run.
+[ Hostpool contains 1 nodes]
+(Unsuccessful subjobs will be retried up to 2 time(s).)
+
+Launched subjob bsclife078-1-62f3c231 on localhost (3/3)
+
+Job bsclife078-4-62f3c22b finished
+
+Site evaluation jobs of "CDK2_3pxrA" are completed.
+Wed Aug 10 16:35:32 2022
+ ... cleaning up
+
+Sorting CDK2_3pxrA_out.maegz by SiteScore...
+
+Job finished: bsclife078-3-62f3c21d
+Wed Aug 10 16:35:32 2022
+
+Elapsed user time:       3.66 seconds
+Elapsed system time:     0.51 seconds
+
