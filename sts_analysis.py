@@ -118,7 +118,7 @@ def get_ROC(data,RealClass,PredClass,RealThrs,thresholds=None,whole=True,n_iter=
         tprs = (tprs.mean(axis=0), tprs.std(axis=0))
         return tprs, fprs, thresholds, neg_invariance
 
-def plot_ROC(data,RealClass,PredClass,RealThrs,thresholds=None,whole=True,n_iter=100):
+def plot_ROC(data,RealClass,PredClass,RealThrs,thresholds=None,label=None,whole=True,n_iter=100):
     tprs, fprs, thresholds, neg_invariance = get_ROC(data,RealClass,PredClass,RealThrs,thresholds,whole,n_iter)
     if not whole:
         if neg_invariance:
@@ -134,8 +134,10 @@ def plot_ROC(data,RealClass,PredClass,RealThrs,thresholds=None,whole=True,n_iter
     fprs = np.asarray(fprs)
     tprs = np.asarray(tprs)
     thresholds = np.asarray(thresholds)
+    auc = np.trapz(tprs, x=fprs)
     
-    plt.plot(fprs, tprs, marker='.', markersize=4,label='Logistic')
+    if label==None: label='Logistic'
+    plt.plot(fprs, tprs, marker='.', markersize=4,label=label+' AUC=%.3f'%auc)
    
     if not whole:
         if neg_invariance:
@@ -151,12 +153,28 @@ def plot_ROC(data,RealClass,PredClass,RealThrs,thresholds=None,whole=True,n_iter
     axes.set_xlim([0, 1])
     axes.set_ylim([0, 1])
     
-    precission = 1-fprs
-    recall = tprs
-    gmeans = np.square(np.multiply(precission,recall))
-    ix = np.argmax(gmeans)
-    print('Best Threshold=%f, G-Mean=%.3f' % (thresholds[ix], gmeans[ix]))
-    plt.scatter(fprs[ix], tprs[ix], marker='o', color='black', label='Best',s=30)
+    specificity = 1-fprs
+    recalls = tprs
+    gmeans = np.square(np.multiply(specificity,recalls))
+    ix1 = np.argmax(gmeans)
+    
+    sthresholds = -np.sort(-thresholds)
+    optprecision = 0
+    for threshold in sthresholds:
+        dicClass = get_stsClassification(data, RealClass, PredClass, RealThrs, threshold)
+        precision = dicClass['TP']/(dicClass['TP']+dicClass['FP'])
+        if dicClass['FP'] == 0 or precision == 1:
+            optprecision = precision
+            optthreshold = threshold
+            break
+        else:
+            if precision > optprecision:
+                optprecision = precision
+                optthreshold = threshold
+    
+    print('- %s \t #Observations=%d \t AUC= %.3f \t Max_GMean=%.3f \t Thr_GMean=%.3f \t OptPrecision=%.3f \t Thr_Precision=%.3f' % (label,data.shape[0],auc, gmeans[ix1],thresholds[ix1],optprecision,optthreshold))
+    
+    plt.scatter(fprs[ix1], tprs[ix1], marker='o', color='black',s=30)
    
     plt.legend()
 
