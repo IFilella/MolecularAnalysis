@@ -162,6 +162,8 @@ def plot_ROC(data,RealClass,PredClass,RealThrs,thresholds=None,label=None,whole=
     optprecision = 0
     for threshold in sthresholds:
         dicClass = get_stsClassification(data, RealClass, PredClass, RealThrs, threshold)
+        if dicClass['TP']+dicClass['FP'] ==0:
+            continue
         precision = dicClass['TP']/(dicClass['TP']+dicClass['FP'])
         if dicClass['FP'] == 0 or precision == 1:
             optprecision = precision
