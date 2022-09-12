@@ -159,22 +159,30 @@ def plot_ROC(data,RealClass,PredClass,RealThrs,thresholds=None,label=None,whole=
     ix1 = np.argmax(gmeans)
     
     sthresholds = -np.sort(-thresholds)
+    optaccuracy, thr_accuracy= 0,0
+    for threshold in sthresholds:
+        dicClass = get_stsClassification(data, RealClass, PredClass, RealThrs, threshold)
+        accuracy = (dicClass['TP']+dicClass['TN'])/(dicClass['TP']+dicClass['TN']+dicClass['FP']+dicClass['FN'])
+        if accuracy > optaccuracy:
+            optaccuracy = accuracy
+            thr_accuracy = threshold
+
     optprecision = 0
     for threshold in sthresholds:
         dicClass = get_stsClassification(data, RealClass, PredClass, RealThrs, threshold)
-        if dicClass['TP']+dicClass['FP'] ==0:
+        if dicClass['TP']+dicClass['FP'] == 0:
             continue
         precision = dicClass['TP']/(dicClass['TP']+dicClass['FP'])
         if dicClass['FP'] == 0 or precision == 1:
             optprecision = precision
-            optthreshold = threshold
+            thr_precision = threshold
             break
         else:
             if precision > optprecision:
                 optprecision = precision
-                optthreshold = threshold
+                thr_precision = threshold
     
-    print('- %s \t #Observations=%d \t AUC= %.3f \t Max_GMean=%.3f \t Thr_GMean=%.3f \t OptPrecision=%.3f \t Thr_Precision=%.3f' % (label,data.shape[0],auc, gmeans[ix1],thresholds[ix1],optprecision,optthreshold))
+    print('- %s \t #Observations=%d \t AUC= %.3f \t Max_GMean=%.3f \t Thr_GMean=%.3f \t OptPrecision=%.3f \t Thr_Precision=%.3f \t OptAccuracy=%.3f \t Thr_Accuracy=%.3f' % (label,data.shape[0],auc, gmeans[ix1],thresholds[ix1],optprecision,thr_precision,optaccuracy,thr_accuracy))
     
     plt.scatter(fprs[ix1], tprs[ix1], marker='o', color='black',s=30)
    
@@ -225,7 +233,7 @@ def plot_multBinaryClass(data, RealClass, PredClass, RealThrs, PredThrs,disc=Non
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
         ax.spines['left'].set_visible(False)
-        #fig.autofmt_xdate() 
+        fig.autofmt_xdate() 
 
         plt.show()
 
