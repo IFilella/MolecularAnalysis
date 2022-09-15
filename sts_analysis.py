@@ -7,6 +7,9 @@ def load_maestro_data(file):
     """
     """
     data = pd.read_csv(file)
+    data = data[data['Stars'].isna()]
+    data = data[data['Job Name'].notna()]
+    data = data.reset_index(drop=True)
     return data
 
 def get_stsClassification(data, RealClass, PredClass, RealThrs, PredThrs):
