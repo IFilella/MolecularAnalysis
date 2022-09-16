@@ -5,7 +5,8 @@ import pandas as pd
 import seaborn as sns
 from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA
-from umap import UMAP
+#from umap import UMAP
+import umap as mp
 import trimap
 
 def plot_trimap(dbs,names,output=None, random_max = None, delimiter = None, fpsalg = 'RDKIT'):
@@ -19,7 +20,7 @@ def plot_trimap(dbs,names,output=None, random_max = None, delimiter = None, fpsa
 def plot_UMAP(dbs,names,output=None, random_max = None, delimiter = None, fpsalg = 'RDKIT'):
     X, Y = _prepare_reducer(dbs,names,random_max, delimiter, fpsalg)
     print('Computing UMAP')
-    umap = UMAP(n_neighbors=100, n_epochs=1000)
+    umap = mp.UMAP(n_neighbors=100, n_epochs=1000)
     UMAP_results = umap.fit_transform(X)
     print('Shape of UMAP_results: ', UMAP_results.shape)
     _plot_reducer(reducer_results = UMAP_results, Y=Y, output=output)

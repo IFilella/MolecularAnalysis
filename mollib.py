@@ -17,7 +17,8 @@ from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 import seaborn as sns
 import random
-from umap import UMAP
+#from umap import UMAP
+import umap as mp
 import time
 import trimap
 from math import pi
@@ -199,7 +200,7 @@ class MolDB(object):
 
     def plot_UMAP(self, output = None, random_max = None, fpsalg = 'RDKIT', kmeans = False, n_clusters = 1):
         self.get_fingerprints(fpsalg, random_max)
-        umap = UMAP(n_neighbors=50, n_epochs=5000, min_dist= 0.5,metric='hamming')
+        umap = mp.UMAP(n_neighbors=50, n_epochs=5000, min_dist= 0.5,metric='hamming')
         UMAP_results = umap.fit_transform(self.fingerprints)
         self._plot_reducer(UMAP_results,output,kmeans,n_clusters)
 
