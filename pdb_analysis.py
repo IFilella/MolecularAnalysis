@@ -50,7 +50,7 @@ def pdb_superimpose(mob_pdb,fix_pdb,outdir,verbose=True):
     nameMOB = os.path.basename(mob_pdb).replace(".pdb","")
     try:
         matchAlign(structureMOB,structureFIX)
-        writePDB('%s/%s_super.pdb'%(outdir,nameMOB))
+        writePDB('%s/%s_super.pdb'%(outdir,nameMOB),structureMOB)
         return 0
     except:
         print('Superimposition between %s and %s failed'%(mob_pdb,fix_pdb))
@@ -64,7 +64,10 @@ def pdbs_superimposition(pdbs,fix_pdb,outdir,verbose=True):
     outdir: 'str'. Directory to store all the superimposed PDBs
     """ 
     errors = 0
+    name_fix = os.path.basename(fix_pdb)
     for pdb in pdbs:
+        name_mobile = os.path.basename(pdb)
+        print('Superimposition between fix PDB %s and mobile PDB %s'%(name_fix,name_mobile))
         aux_error = pdb_superimpose(pdb,fix_pdb,outdir,verbose)
         errors += aux_error
     print('%d couldn\'t be superimpose'%-errors)
