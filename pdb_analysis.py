@@ -67,7 +67,7 @@ def pdbs_superimposition(pdbs,fix_pdb,outdir,verbose=True):
     for pdb in pdbs:
         aux_error = pdb_superimpose(pdb,fix_pdb,outdir,verbose)
         errors += aux_error
-    print('% couldn\'t be superimpose'%errors)
+    print('%d couldn\'t be superimpose'%-errors)
     
     #for i, pdb in enumerate(pdbs):
     #    #Superimpose using TMalign
