@@ -44,37 +44,52 @@ def get_protChains(pdbs,outname,delimiter=None,upresfilter=None,lowresfilter=Non
                     continue
             writePDB('%s_%s%s.pdb'%(outname,IDs[i],chain),hvPDB[chain].select('protein')) #Save only protein
 
+def pdb_superimpose(mob_pdb,fix_pdb,outdir,verbose=True):
+    structureFIX = parsePDB(fix_pdb)
+    structureMOB = parsePDB(mob_pdb)
+    nameMOB = os.path.basename(mob_pdb).replace(".pdb","")
+    try:
+        matchAlign(structureMOB,structureFIX)
+        writePDB('%s/%s_super.pdb'%(outdir,nameMOB))
+        return 0
+    except:
+        print('Superimposition between %s and %s failed'%(mob_pdb,fix_pdb))
+        return -1
+
 def pdbs_superimposition(pdbs,fix_pdb,outdir,verbose=True):
     """
     Given a list of mobile pdbs and a fix superimpose all mobile elements to the fix pdb
     pdbs: 'list'. PDBs list of mobile elements
     fix_pdb: 'str'. Single PDB which will be fixed during the multiple superimpositions (fix element)
     outdir: 'str'. Directory to store all the superimposed PDBs
-    """
-    PDBnames = [os.path.basename(pdb) for pdb in pdbs]
-    IDs = [ pdbname.replace(".pdb","") for pdbname in PDBnames]
+    """ 
+    errors = 0
+    for pdb in pdbs:
+        aux_error = pdb_superimpose(pdb,fix_pdb,outdir,verbose)
+        errors += aux_error
+    print('% couldn\'t be superimpose'%errors)
     
-    for i, pdb in enumerate(pdbs):
-        #Superimpose using TMalign
-        pdbname = PDBnames[i]
-        if verbose: print(pdbname)
-        outname = '%s/%s'%(outdir,IDs[i])
-        outname = outname.replace('//','/')
-        TMalign_cmd = 'TMalign %s %s -o %s'%(pdb, fix_pdb,outname)
-        print(TMalign_cmd)
-        os.system(TMalign_cmd)
-        os.system('rm %s %s_all %s_all_atm_lig %s_atm'%(outname,outname,outname,outname))
-        os.system('mv %s_all_atm %s_all_atm.pdb'%(outname,outname))
-        
-        #Extract mobile pdb from the TMalign output
-        structurePDB = parsePDB('%s_all_atm.pdb'%(outname))
-        #Load Prody Hierarchical Views
-        hvPDB = structurePDB.getHierView()
-        #Write superimpose mobile element as a pdb
-        aux = '%s/%s_super.pdb'%(outdir,IDs[i])
-        aux = aux.replace("//","/")
-        writePDB(aux,hvPDB['A'])
-        os.system('rm %s_all_atm.pdb'%(outname))
+    #for i, pdb in enumerate(pdbs):
+    #    #Superimpose using TMalign
+    #    pdbname = PDBnames[i]
+    #    if verbose: print(pdbname)
+    #    outname = '%s/%s'%(outdir,IDs[i])
+    #    outname = outname.replace('//','/')
+    #    TMalign_cmd = 'TMalign %s %s -o %s'%(pdb, fix_pdb,outname)
+    #    print(TMalign_cmd)
+    #    os.system(TMalign_cmd)
+    #    os.system('rm %s %s_all %s_all_atm_lig %s_atm'%(outname,outname,outname,outname))
+    #    os.system('mv %s_all_atm %s_all_atm.pdb'%(outname,outname))
+    #    
+    #    #Extract mobile pdb from the TMalign output
+    #    structurePDB = parsePDB('%s_all_atm.pdb'%(outname))
+    #    #Load Prody Hierarchical Views
+    #    hvPDB = structurePDB.getHierView()
+    #    #Write superimpose mobile element as a pdb
+    #    aux = '%s/%s_super.pdb'%(outdir,IDs[i])
+    #    aux = aux.replace("//","/")
+    #    writePDB(aux,hvPDB['A'])
+    #    os.system('rm %s_all_atm.pdb'%(outname))
 
 def prepWizard(pdbs,schroodinger_path,delimiter=None,outfmt='mae',max_processes=4):
     """
