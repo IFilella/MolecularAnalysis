@@ -44,12 +44,12 @@ def get_protChains(pdbs,outname,delimiter=None,upresfilter=None,lowresfilter=Non
                     continue
             writePDB('%s_%s%s.pdb'%(outname,IDs[i],chain),hvPDB[chain].select('protein')) #Save only protein
 
-def pdb_extract(pdb_dir):
+def pdb_extract(pdb_dir,schrodinger_path):
     """This function extracts the target structure (receptor), the ligands,
     the waters and the ions/cofactors of the list of pdb files."""
 
     os.chdir(pdb_dir)
-    PDBs = glob.glob("*_super.pdb*")
+    PDBs = glob.glob("%s/*.pdb"%pdb_dir)
     for PDB in PDBs:
         if '.pdb.gz' in PDB:
             cmd1 = "gunzip %s"%PDB
