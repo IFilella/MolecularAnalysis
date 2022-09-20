@@ -22,6 +22,7 @@ import umap as mp
 import time
 import trimap
 from math import pi
+import os
 
 def intersect_MolDBs(db1,db2,simt,fingerprint='RDKIT',output=None,verbose=True):
     db3 = copy.deepcopy(db1)
@@ -104,17 +105,20 @@ class MolDB(object):
     - txtDB: file  of format 'SMILE equivalentSMILES IDs'
     - sdfDB: molecular DB in sdf format
     - dicDB: precalculated MolDB object
+    - pdbList: 
+    - chirality:
     The main attribute of the class is 'dicDB', a dicctionary with the molecules SMILES as keys and
     with lists of form [eqSMILES, IDs, Mol object] as values.
     If paramaters flag is given multiple paramaters of each molecule such as NumAtoms or NOCount are
     calculated and stored.
     """""
-    def __init__(self, txtDB = None, dicDB = None, sdfDB = None, paramaters = False, verbose = True):
+    def __init__(self, txtDB = None, dicDB = None, sdfDB = None, pdbList = None, paramaters = False, chirality = True, verbose = True):
         self.txtDB = txtDB
         self.dicDB = dicDB
         self.sdfDB = sdfDB
         self.paramaters = paramaters
-        if self.txtDB != None and self.dicDB == None and self.sdfDB == None:
+        self.chirality = chirality
+        if self.txtDB != None and self.dicDB == None and self.sdfDB == None and pdbList == None:
             self.dicDB = {}
             db = open(self.txtDB,'r')
             counteq = 0
@@ -123,7 +127,7 @@ class MolDB(object):
                 SMILE = line[0]
                 eqSMILES = line[1]
                 IDs = line[2]
-                mol = Mol(smile=SMILE,allparamaters = self.paramaters)
+                mol = Mol(smile=SMILE,allparamaters = self.paramaters, chirality = self.chirality)
                 if mol.error == -1: continue
                 if SMILE not in self.dicDB:
                     self.dicDB[SMILE] = [eqSMILES,IDs,mol]
@@ -136,15 +140,15 @@ class MolDB(object):
                     self.dicDB[SMILE][0] = total_eqSMILES
                 if verbose: print(i+1,IDs,SMILE)
             if verbose: print('Repeated SMILES: %d'%counteq)
-        elif self.txtDB == None and self.dicDB != None and self.sdfDB == None:
+        elif self.txtDB == None and self.dicDB != None and self.sdfDB == None and pdbList == None:
             with open(self.dicDB, 'rb') as handle:
                 self.dicDB = pickle.load(handle)
-        elif self.txtDB == None and self.dicDB == None and self.sdfDB != None:
+        elif self.txtDB == None and self.dicDB == None and self.sdfDB != None and pdbList == None:
             self.dicDB = {}
             DB = Chem.SDMolSupplier(self.sdfDB)
             counteq = 0
             for i,cpd in enumerate(DB):
-                mol = Mol(mol2 = cpd, allparamaters = self.paramaters)
+                mol = Mol(mol2 = cpd, allparamaters = self.paramaters, chirality = self.chirality)
                 if mol.error == -1: continue
                 SMILE = mol.smile
                 eqSMILES = SMILE
@@ -164,6 +168,22 @@ class MolDB(object):
                     self.dicDB[SMILE][1]+=',%s'%IDs
                 if verbose: print(i+1,IDs,SMILE)
             if verbose: print('Repeated SMILES: %d'%counteq)
+        elif self.txtDB == None and self.dicDB == None and self.sdfDB == None and pdbList != None:
+            self.dicDB = {}
+            counteq = 0
+            for i,pdb in enumerate(pdbList):
+                mol =  Mol(pdb = pdb, allparamaters = self.paramaters, chirality = self.chirality)
+                if mol.error == -1: continue
+                SMILE = mol.smile
+                eqSMILES = SMILE
+                IDs = os.path.basename(pdb).replace(".pdb","")
+                if SMILE not in self.dicDB:
+                    self.dicDB[SMILE] = [eqSMILES,IDs,mol]
+                else:
+                    counteq+=1
+                    self.dicDB[SMILE][1]+=',%s'%IDs
+                if verbose: print(i+1,IDs,SMILE)
+            if verbose: print('Unique molecules %d.\nRepeated SMILES: %d'%(len(self.dicDB.keys()),counteq)) 
         else:
             raise KeyError('Provide only a txtDB, a dicDB, or a sdfDB')
         self._get_total_mols()
@@ -502,7 +522,7 @@ class MolDB(object):
             table.loc[i,'RadiusOfGyration']=mol.RadiusOfGyration
         self.table = table
 
-    def filter_similarity(self,simthreshold=1,fingerprint='RDKIT',prefilters=True,verbose=True):
+    def filter_similarity(self,simthreshold=1,fingerprint='RDKIT',verbose=True):
         if not self.paramaters:
             self._get_allmols_paramaters()
             self.paramaters = True
@@ -565,31 +585,46 @@ class MolDB(object):
 class Mol(object):
     """"""
     """"""
-    def __init__(self ,smile = None, InChI = None, mol2 = None, allparamaters = False):
-        if smile != None and InChI == None and mol2 == None:
+    def __init__(self ,smile = None, InChI = None, mol2 = None, pdb= None,allparamaters = False, chirality = True):
+        if smile != None and InChI == None and mol2 == None and pdb == None:
             self.smile = smile
+            if not chirality:
+                self.smile = self.smile.replace("@","")
             self.mol = Chem.MolFromSmiles(self.smile)
             if self.mol == None:
                 self.error = -1
             else:
                 self.error = 0
-        elif smile == None and InChI != None and mol2 == None:
+        elif smile == None and InChI != None and mol2 == None and pdb == None:
             self.InChI = InChI
             self.mol = Chem.MolFromInchi(self.InChI)
             if self.mol == None:
                 self.error = -1
             else:
                 self.error = 0
-            self.smile = Chem.MoltToSmiles(self.mol)
-        elif smile == None and InChI == None and mol2 != None:
+            self.smile = Chem.MolToSmiles(self.mol)
+            if not chirality:
+                self.smile = self.smile.replace("@","")
+        elif smile == None and InChI == None and mol2 != None and pdb == None:
             self.mol = mol2
             if self.mol == None:
                 self.error = -1
             else:
                 self.error = 0
             self.smile = Chem.MolToSmiles(self.mol)
+            if not chirality:
+                self.smile = self.smile.replace("@","")
+        elif smile == None and InChI == None and mol2 == None and pdb != None:
+            self.mol = Chem.MolFromPDBFile(pdb)
+            if self.mol == None:
+                self.error = -1
+            else:
+                self.error = 0
+            self.smile = Chem.MolToSmiles(self.mol)
+            if not chirality:
+                self.smile = self.smile.replace("@","")
         else:
-            warnings.warn(f'Provide only a smile, a InchI or a mol2 RDKIT object')
+            warnings.warn(f'Provide only a smile, a InchI, a mol2 or a pdb')
         if allparamaters:
             self.get_AllParamaters()
 
