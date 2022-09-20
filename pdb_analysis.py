@@ -44,6 +44,48 @@ def get_protChains(pdbs,outname,delimiter=None,upresfilter=None,lowresfilter=Non
                     continue
             writePDB('%s_%s%s.pdb'%(outname,IDs[i],chain),hvPDB[chain].select('protein')) #Save only protein
 
+def pdb_extract(pdb_dir):
+    """This function extracts the target structure (receptor), the ligands,
+    the waters and the ions/cofactors of the list of pdb files."""
+
+    os.chdir(pdb_dir)
+    PDBs = glob.glob("*_super.pdb*")
+    for PDB in PDBs:
+        if '.pdb.gz' in PDB:
+            cmd1 = "gunzip %s"%PDB
+            os.system(cmd1)
+            PDB = PDB.replace('.pdb.gz','.pdb')
+            ID = PDB.replace(".pdb","")
+        elif '.pdb' in PDB:
+            ID = PDB.replace(".pdb","")
+        print('Extracting %s ligands...' %(ID))
+        cmd2 = '%srun split_structure.py -m pdb %s %s.pdb -many_files'%(schrodinger_path,PDB,ID)
+        #print(cmd2)
+        os.system(cmd2)
+
+def _organize_extraction_files(pdb_dir, out_dir):
+    """This function organize all the output files obtained in the pdb extraction
+    into their respective directories."""
+
+    cwd = os.getcwd()
+    os.chdir(out_dir)
+    os.mkdir("ligand")
+    os.mkdir("receptor")
+    os.mkdir("water")
+    os.mkdir("cof_ion")
+    os.chdir(cwd)
+
+    for filename in os.listdir(pdb_dir):
+        if re.search("ligand", filename):
+            shutil.move("%s/%s"%(pdb_dir, filename), "%s/ligand/%s"%(out_dir, filename))
+        if re.search("receptor", filename):
+            shutil.move("%s/%s"%(pdb_dir, filename), "%s/receptor/%s"%(out_dir, filename))
+        if re.search("water", filename):
+            shutil.move("%s/%s"%(pdb_dir, filename), "%s/water/%s"%(out_dir, filename))
+        if re.search("cof_ion", filename):
+            shutil.move("%s/%s"%(pdb_dir, filename), "%s/cof_ion/%s"%(out_dir, filename))
+
+
 def pdb_superimpose(mob_pdb,fix_pdb,outdir,verbose=True):
     structureFIX = parsePDB(fix_pdb)
     structureMOB = parsePDB(mob_pdb)
