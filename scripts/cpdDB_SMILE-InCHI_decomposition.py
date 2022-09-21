@@ -15,8 +15,7 @@ def get_fragments(i,line,q):
     InChI = line[2]
     m = mollib.Mol(InChI=InChI)
     m.get_BRICSdecomposition()
-    m.get_clean_fragments()
-    res = '%d %s %s'%(i, ID,','.join(m.cfragments))
+    res = '%d %s %s'%(i, ID,','.join(m.fragments))
     print(i, ID)
     q.put(res)
     return res

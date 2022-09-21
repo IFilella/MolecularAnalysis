@@ -628,13 +628,11 @@ class Mol(object):
         if allparamaters:
             self.get_AllParamaters()
 
-    def get_BRICSdecomposition(self):
+    def get_BRICSdecomposition(self,clean=True):
         self.fragments = list(BRICS.BRICSDecompose(self.mol))
+        if clean:
+            self.fragments = [re.sub("(\[.*?\])", "[*]", frag) for frag in self.fragments]
 
-    def get_clean_fragments(self):
-        if self.fragments == None: self.get_BRICSdecomposition()
-        self.cfragments = [re.sub("(\[.*?\])", "[*]", frag) for frag in self.fragments]
-   
     def get_AllParamaters(self):
         try:
             Chem.SanitizeMol(self.mol)
