@@ -424,6 +424,9 @@ class MolDB(object):
         if random_max == None:
             keys = self.dicDB.keys()
             total = self.size
+        elif random_max > self.size:
+            keys = self.dicDB.keys()
+            total = self.size
         else:
             keys = random.sample(list(self.dicDB.keys()), random_max)
             total = len(keys)
