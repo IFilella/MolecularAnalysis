@@ -1,4 +1,5 @@
-import mollib
+#import mollib
+from MolecularAnalysis import mollib
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -25,12 +26,12 @@ def plot_UMAP(dbs,names,output=None, random_max = None, delimiter = None, fpsalg
     print('Shape of UMAP_results: ', UMAP_results.shape)
     _plot_reducer(reducer_results = UMAP_results, Y=Y, output=output)
 
-def plot_tSNE(dbs,names,output=None, random_max = None, delimiter = None, fpsalg = 'RDKIT'):
-    X, Y = _prepare_reducer(dbs,names,random_max, delimiter, fpsalg)
+def plot_tSNE(dbs,names,output=None, random_max = None, delimiter = None, fpsalg = 'RDKIT',colors = None, sizes=None, alphas = None, n_iter=1000, perplexity=30):
+    X, Y, S, A = _prepare_reducer(dbs,names,random_max, delimiter, fpsalg, sizes, alphas)
     print('Computing TSNE')
-    tsne = TSNE(n_components=2, verbose = 1, learning_rate='auto',init='pca')
+    tsne = TSNE(n_components=2, verbose = 1, learning_rate='auto', init='pca', perplexity=perplexity, n_iter=n_iter, metric='hamming')
     tsne_results = tsne.fit_transform(X)
-    _plot_reducer(reducer_results = tsne_results, Y=Y, output=output)
+    _plot_reducer(reducer_results = tsne_results, Y=Y, output=output, colors=colors, sizes=S, alphas=A)
 
 def plot_PCA(dbs,names,output=None, random_max = None, delimiter = None, fpsalg = 'RDKIT'):
     X, Y = _prepare_reducer(dbs,names,random_max, delimiter, fpsalg)
@@ -41,9 +42,11 @@ def plot_PCA(dbs,names,output=None, random_max = None, delimiter = None, fpsalg 
     _plot_reducer(reducer_results = pca_results, Y=Y, output=output)
 
 
-def _prepare_reducer(dbs,names,random_max, delimiter, fpsalg):
+def _prepare_reducer(dbs,names,random_max, delimiter, fpsalg, sizes,alphas):
     X = []
     Y = []
+    S = []
+    A = []
     for i,db in enumerate(dbs):
         if delimiter == None:
             name = names[i]
@@ -54,12 +57,27 @@ def _prepare_reducer(dbs,names,random_max, delimiter, fpsalg):
         fps = db.get_fingerprints(fpsalg, random_max)
         X.extend(fps)
         Y.extend([name]*len(fps))
+        if sizes == None:
+            S.extend([float(5)]*len(fps))
+        else:
+            S.extend([float(sizes[i])]*len(fps))
+        if alphas == None:
+            A.extend([float(0.8)]*len(fps))
+        else:
+            A.extend([float(alphas[i])]*len(fps))
     X = np.asarray(X)
-    return X, Y
+    return X, Y, S, A
 
-def _plot_reducer(reducer_results,Y,output):
-    df = pd.DataFrame(dict(xaxis=reducer_results[:,0], yaxis=reducer_results[:,1],  molDB = Y))
+def _plot_reducer(reducer_results,Y,output,colors,sizes,alphas):
+    df = pd.DataFrame(dict(xaxis=reducer_results[:,0], yaxis=reducer_results[:,1],  molDB = Y, sizes=sizes, alphas=alphas))
     plt.figure()
-    sns.scatterplot('xaxis', 'yaxis', data=df, hue='molDB',alpha = 0.8, s=5,style='molDB')
+    if colors == None:
+        g = sns.scatterplot('xaxis', 'yaxis', data=df, hue='molDB', alpha=alphas, size='sizes')#,style='molDB')
+    else:
+        g = sns.scatterplot('xaxis', 'yaxis', data=df, hue='molDB', palette=colors ,alpha=alphas, size='sizes')
+    h,l = g.get_legend_handles_labels()
+    n = len(set(df['molDB'].values.tolist()))
+    plt.legend(h[0:n+1],l[0:n+1])#,bbox_to_anchor=(1.05, 1)), loc=2, borderaxespad=0.)
+    plt.tight_layout()
     if output != None:
-        plt.savefig(output+'.png',dpi=300)
+        plt.savefig(output+'.pdf',dpi=300)

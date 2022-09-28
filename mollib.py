@@ -579,7 +579,7 @@ class MolDB(object):
             else:
                 if count % 500 == 0:  print('Analized compounds: %d'%count)
         self.dicDB = new_dicDB
-
+        self._get_total_mols()
 
 
 class Mol(object):
