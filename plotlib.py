@@ -10,18 +10,18 @@ from sklearn.decomposition import PCA
 import umap as mp
 import trimap
 
-def plot_trimap(dbs,names,output=None, random_max = None, delimiter = None, fpsalg = 'RDKIT'):
-    X, Y = _prepare_reducer(dbs,names,random_max, delimiter, fpsalg)
+def plot_trimap(dbs,names,output=None, random_max = None, delimiter = None, fpsalg = 'RDKIT', colors = None, sizes = None, alphas = None):
+    X, Y, S, A = _prepare_reducer(dbs,names,random_max, delimiter, fpsalg, sizes, alphas)
     print('Computing trimap')
     tri = trimap.TRIMAP()
     trimap_results = tri.fit_transform(X)
     print('Shape of trimap_results: ', trimap_results.shape)
-    _plot_reducer(reducer_results = trimap_results, Y=Y, output=output)
+    _plot_reducer(reducer_results = trimap_results, Y=Y, output=output, colors=colors, sizes=S, alphas=A)
 
 def plot_UMAP(dbs,names,output=None, random_max = None, delimiter = None, fpsalg = 'RDKIT', colors = None, sizes = None, alphas = None, min_dist = 0.1, n_neighbors = 100, n_epochs = 1000):
-    X, Y, S, A = _prepare_reducer(dbs, names, random_max, delimiter, fpsalg, csizes, alphas)
+    X, Y, S, A = _prepare_reducer(dbs, names, random_max, delimiter, fpsalg, sizes, alphas)
     print('Computing UMAP')
-    umap = mp.UMAP(n_neighbors=n_neighbors, n_epochs=n_epochs, min_dist=min_dist)
+    umap = mp.UMAP(n_neighbors=n_neighbors, n_epochs=n_epochs, min_dist=min_dist,metric='hamming')
     UMAP_results = umap.fit_transform(X)
     print('Shape of UMAP_results: ', UMAP_results.shape)
     _plot_reducer(reducer_results = UMAP_results, Y=Y, output=output, colors=colors, sizes=S, alphas=A)
