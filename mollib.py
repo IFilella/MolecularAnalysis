@@ -399,6 +399,7 @@ class MolDB(object):
         plt.plot(angles, Ro5_low, linewidth=2, linestyle='-',color='red')
         
         if output != None:
+            plt.tight_layout()
             plt.savefig(output,dpi=300)
 
     def save_MolDB(self,output):
