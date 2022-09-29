@@ -33,13 +33,13 @@ def plot_tSNE(dbs,names,output=None, random_max = None, delimiter = None, fpsalg
     tsne_results = tsne.fit_transform(X)
     _plot_reducer(reducer_results = tsne_results, Y=Y, output=output, colors=colors, sizes=S, alphas=A)
 
-def plot_PCA(dbs,names,output=None, random_max = None, delimiter = None, fpsalg = 'RDKIT'):
-    X, Y = _prepare_reducer(dbs,names,random_max, delimiter, fpsalg)
+def plot_PCA(dbs,names,output=None, random_max = None, delimiter = None, fpsalg = 'RDKIT', colors = None, sizes=None, alphas = None):
+    X, Y, S, A = _prepare_reducer(dbs,names,random_max, delimiter, fpsalg, sizes, alphas)
     print('Computing PCA')
     pca = PCA(n_components=2)
     pca_results = pca.fit_transform(X)
     print('Explained variation per principal component: {}'.format(pca.explained_variance_ratio_))
-    _plot_reducer(reducer_results = pca_results, Y=Y, output=output)
+    _plot_reducer(reducer_results = pca_results, Y=Y, output=output, colors=colors, sizes=S, alphas=A)
 
 
 def _prepare_reducer(dbs,names,random_max, delimiter, fpsalg, sizes,alphas):
