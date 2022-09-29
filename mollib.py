@@ -488,7 +488,7 @@ class MolDB(object):
         print('SMILES with a kekule error without an eqSMULE: %d'%kekuleerror1)
 
     def get_properties_table(self):
-        if self.paramaters: return
+        if self.paramaters: pass
         else:
             self._get_allmols_paramaters()
             self.paramaters = True
@@ -519,10 +519,22 @@ class MolDB(object):
             table.loc[i,'RingCount']=mol.RingCount
             table.loc[i,'FractionCSP3']=mol.FractionCSP3
             table.loc[i,'TPSA']=mol.TPSA
-            table.loc[i,'NPR1']=mol.NPR1
-            table.loc[i,'NPR2']=mol.NPR2
-            table.loc[i,'InertialShapeFactor']=mol.InertialShapeFactor
-            table.loc[i,'RadiusOfGyration']=mol.RadiusOfGyration
+            try:
+                table.loc[i,'NPR1']=mol.NPR1
+            except:
+                table.loc[i,'NPR1']=None
+            try:
+                table.loc[i,'NPR2']=mol.NPR2
+            except:
+                table.loc[i,'NPR2']=None
+            try:
+                table.loc[i,'InertialShapeFactor']=mol.InertialShapeFactor
+            except:
+                table.loc[i,'InertialShapeFactor']=None
+            try:
+                table.loc[i,'RadiusOfGyration']=mol.RadiusOfGyration
+            except:
+                table.loc[i,'RadiusOfGyration']=None
         self.table = table
 
     def filter_similarity(self,simthreshold=1,fingerprint='RDKIT',verbose=True):
