@@ -46,7 +46,7 @@ def get_protChains(pdbs,outname,delimiter=None,upresfilter=None,lowresfilter=Non
                     continue
             writePDB('%s_%s%s.pdb'%(outname,IDs[i],chain),hvPDB[chain].select('protein')) #Save only protein
 
-def pdb_extract(pdb_dir,schrodinger_path,outdir=None):
+def pdb_extract(pdb_dir,schrodinger_path):
     """This function extracts the target structure (receptor), the ligands,
     the waters and the ions/cofactors of the list of pdb files."""
 
@@ -63,9 +63,9 @@ def pdb_extract(pdb_dir,schrodinger_path,outdir=None):
         print('Extracting %s ligands...' %(ID))
         cmd2 = '%srun split_structure.py -m pdb %s %s.pdb -many_files'%(schrodinger_path,PDB,ID)
         os.system(cmd2)
-    _organize_extraction_files(pdb_dir)
+    _organize_extraction_files()
 
-def _organize_extraction_files(pdb_dir):
+def _organize_extraction_files():
     """This function organize all the output files obtained in the pdb extraction
     into their respective directories."""
 
@@ -74,16 +74,15 @@ def _organize_extraction_files(pdb_dir):
     os.mkdir("water")
     os.mkdir("cof_ion")
 
-    for filename in os.listdir(pdb_dir):
+    for filename in os.listdir(os.getcwd()):
         if re.search("ligand", filename):
-            shutil.move("%s/%s"%(pdb_dir, filename), "ligand/%s"%(filename))
+            shutil.move("%s"%(filename), "ligand/%s"%(filename))
         if re.search("receptor", filename):
-            shutil.move("%s/%s"%(pdb_dir, filename), "receptor/%s"%(filename))
+            shutil.move("%s"%(filename), "receptor/%s"%(filename))
         if re.search("water", filename):
-            shutil.move("%s/%s"%(pdb_dir, filename), "water/%s"%(filename))
+            shutil.move("%s"%(filename), "water/%s"%(filename))
         if re.search("cof_ion", filename):
-            shutil.move("%s/%s"%(pdb_dir, filename), "cof_ion/%s"%(filename))
-
+            shutil.move("%s"%(filename), "cof_ion/%s"%(filename))
 
 def pdb_superimpose(mob_pdb,fix_pdb,outdir,verbose=True):
     structureFIX = parsePDB(fix_pdb)
