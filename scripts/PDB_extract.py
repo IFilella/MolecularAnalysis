@@ -5,7 +5,7 @@ import subprocess
 import time
 import argparse
 
-shrodinger_path = '/data/general_software/schrodinger2019-1/'
+shrodinger_path = '/data/Sergi/general_software/schrodinger2019-1/'
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description ='Given a directory with .pdb.gz/pdb files, extract all the ligands from them')

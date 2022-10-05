@@ -49,7 +49,7 @@ def pdb_extract(pdb_dir,schrodinger_path):
     the waters and the ions/cofactors of the list of pdb files."""
 
     os.chdir(pdb_dir)
-    PDBs = glob.glob("%s/*.pdb"%pdb_dir)
+    PDBs = glob.glob("%s/*.pdb*"%pdb_dir)
     for PDB in PDBs:
         if '.pdb.gz' in PDB:
             cmd1 = "gunzip %s"%PDB
