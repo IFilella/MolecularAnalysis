@@ -73,8 +73,11 @@ def _organize_extraction_files():
     os.mkdir("receptor")
     os.mkdir("water")
     os.mkdir("cof_ion")
+    
+    currentdir = os.getcwd()
+    files = glob.glob("%s/*pdb*"%currentdir)
 
-    for filename in os.listdir(os.getcwd()):
+    for filename in files:
         if re.search("ligand", filename):
             shutil.move("%s"%(filename), "ligand/%s"%(filename))
         if re.search("receptor", filename):
