@@ -10,6 +10,8 @@ import matplotlib.pyplot as plt
 from scipy.cluster.hierarchy import dendrogram, linkage, cophenet, fcluster 
 from scipy.spatial.distance import pdist
 import pickle
+import re
+import shutil
 
 def get_protChains(pdbs,outname,delimiter=None,upresfilter=None,lowresfilter=None,verbose=True):
     """
