@@ -12,6 +12,7 @@ from scipy.spatial.distance import pdist
 import pickle
 import re
 import shutil
+import distinctipy
 
 def get_protChains(pdbs,outname,delimiter=None,upresfilter=None,lowresfilter=None,verbose=True):
     """
@@ -282,24 +283,94 @@ def _uncompress_maegz(inp,schroodinger_path):
     print(cmd)
     os.system(cmd)
 
+
 class VolumeOverlappingMatrix(object):
     """""
     """""
-    def __init__(self,csv,IDs=None):
+    def __init__(self, csv, IDs=None, IDs_shroodinger=None, identifier = None, delimiter = '', del_position=0):
         """
+        csv: 'str'. csv file containing the volume overlapping matrix
+        IDs: 'list'. list of IDs to replace csv indices 
+        IDs_shroodinger: 'str'. Input file used to compute the volume overlpaping matrix with SiteMap
         """
         self.matrix = pd.read_csv(csv,delimiter=',',index_col=0)
-        self.IDs = IDs
-        if self.IDs!=None:
+        if IDs != None and IDs_shroodinger == None:
+            if len(IDs) != self.matrix.shape[0]:
+                raise ValueError('IDs should have the same length as rows/cols of csv file')
+            self.IDs = IDs
             self.matrix.set_axis(self.IDs, axis=1, inplace=True)
             self.matrix.set_axis(self.IDs, axis=0, inplace=True)
+        elif IDs == None and IDs_shroodinger != None:
+            if identifier == None:
+                raise ValueError('To select the IDs from IDs_shroodinger an identifier is needed')
+            self._get_IDs_shroodinger(IDs_shroodinger,identifier,delimiter,del_position) 
+        if IDs != None and IDs_shroodinger != None:
+            raise ValueError('Pass either an IDs list or a IDs_shroodinger file') 
 
+    def _get_IDs_shroodinger(self, vm_input, identifier, delimiter='',del_position=0):
+        """
+        Get the IDs needed for the volume overlapping matrix from the input file used to compute it.
+        vm_input: 'str'. Input file used to compute the volume overlapping matrix (mae)
+        identifier: 'str'.
+        """
+        f = open(vm_input,'r')
+        IDs = []
+        for line in f:
+            if identifier in line:
+                ID = line.split(delimiter)[del_position]
+                if ID not in IDs:
+                    IDs.append(ID)
+        self.matrix.set_axis(IDs, axis=1, inplace=True)
+        self.matrix.set_axis(IDs, axis=0, inplace=True)
+    
     def plot_hierarchical(self,out,fontsize=1):
         """
         """
         sns.set(font_scale=fontsize)
         cg = sns.clustermap(self.matrix,cmap="RdBu_r",yticklabels=True,xticklabels=True,vmin=0,vmax=1)
         plt.savefig(out,dpi=300)
+
+    def plot_hierarchical_labeled(self, properties_df, features, out, fontsize = 1, printlabels = False):
+        """
+        Hierarchical clustermap with color and row coloring according to a given feature of
+        properties_df. 'pandas DataFrame'
+        features. 'list'. Columns/properties to be used during the coloring
+        out. 'str'. Outname
+        fontsize. 'int'. Fontsize
+        """
+        Ncolors = 0
+        for feature in features:
+            Ncolors += len(properties_df[feature].unique())
+        rgb_colors = distinctipy.get_colors(Ncolors)
+        columns = self.matrix.columns.tolist()
+        colorindex = 0
+        list_dfcolors = []
+        list_luts = []
+        for i,feature in enumerate(features):
+            colors = []
+            nflavours = len(properties_df[feature].unique())
+            lut = dict(zip(properties_df[feature].unique(),rgb_colors[colorindex:colorindex+nflavours]))
+            list_luts.append(lut)
+            colorindex += nflavours
+            print(lut)
+            for j,column in enumerate(columns):
+                ptype = properties_df.loc[column,feature]
+                colors.append(lut[ptype])
+            _dfcolors = pd.DataFrame({feature: colors}, index=columns)
+            list_dfcolors.append(_dfcolors)
+        dfcolors = pd.concat(list_dfcolors,axis=1)
+
+        sns.set(font_scale = fontsize)
+        cg = sns.clustermap(self.matrix,cmap="RdBu_r", row_colors=dfcolors, col_colors=dfcolors, yticklabels=printlabels,xticklabels=printlabels,vmin=0,vmax=1)
+        
+        #Plot legend
+        for i,feature in enumerate(features):
+            for flavour in properties_df[feature].unique():
+                cg.ax_col_dendrogram.bar(0, 0, color=list_luts[i][flavour], label=flavour, linewidth=0)
+                cg.ax_col_dendrogram.legend(loc='lower left', bbox_to_anchor=(0.9, 0.5) ,ncol=1)
+
+        plt.savefig(out+'.pdf',dpi=300)
+         
 
     def get_dendrogram(self,verbose=True):
         """
