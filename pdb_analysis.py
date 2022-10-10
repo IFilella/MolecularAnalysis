@@ -382,7 +382,43 @@ class VolumeOverlappingMatrix(object):
             print('center cluster%d: '%cluster, center)
             clustersCenters[cluster] = center
         self.clustersCenters = clustersCenters 
+    
+    def remove_cluster_outliers(self, list_clusters):
+        outlayer_clusters = list_clusters
 
+        for cluster in self.clusters_dic.keys():
+            if cluster in outlayer_clusters:
+                #print(cluster)
+                outlayers = self.clusters_dic[cluster]
+                #print(outlayers)
+                self.matrix.drop(labels=outlayers,axis=1,inplace=True)
+                self.matrix.drop(labels=outlayers,axis=0,inplace=True)
+                for outlayer in outlayers:
+                    self.IDs.remove(outlayer)
+
+    def organize_cluster_structures(self, results_dir, struct_dir, site_dir):
+        if not os.path.isdir('%s/clusters'%results_dir):
+            os.system('mkdir %s/clusters'%results_dir)
+
+        for cluster in self.clusters_dic.keys():
+            cluster_elements = self.clusters_dic[cluster]
+            for struct in cluster_elements:
+                element_site = '%s/Mpro_%s_super_out.maegz'%(site_dir, struct)
+                element_prep = "%s/Mpro_%s_super_prep.mae"%(struct_dir, struct)
+                if not os.path.isdir('%s/clusters/%d'%(results_dir, cluster)):
+                    os.system('mkdir %s/clusters/%d'%(results_dir, cluster))
+                cmd1 = 'cp %s %s/clusters/%d'%(element_site, results_dir, cluster)
+                cmd2 = 'cp %s %s/clusters/%d'%(element_prep, results_dir, cluster)
+                os.system(cmd1)
+                os.system(cmd2)
+
+    def get_closest_elements_cluster_center(self, num_elements):
+        for cluster in self.clusters_dic.keys():
+            print('Cluster %s:' %cluster)
+            center = self.clustersCenters[cluster]
+            elements = self.clusters_dic[cluster]
+            submatrix = self.matrix.loc[elements,elements]
+            print(submatrix.nlargest(num_elements, [center])[center])
 
 if __name__ == '__main__':
     schroodinger_path = '/data/general_software/schrodinger2019-1'
