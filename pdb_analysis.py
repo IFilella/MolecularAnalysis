@@ -330,18 +330,24 @@ class VolumeOverlappingMatrix(object):
         cg = sns.clustermap(self.matrix,cmap="RdBu_r",yticklabels=True,xticklabels=True,vmin=0,vmax=1)
         plt.savefig(out,dpi=300)
 
-    def plot_hierarchical_labeled(self, properties_df, features, out, fontsize = 1, printlabels = False):
+    def plot_hierarchical_labeled(self, properties_df, features, out, fontsize = 1, printlabels = False, ucolors = None):
         """
         Hierarchical clustermap with color and row coloring according to a given feature of
         properties_df. 'pandas DataFrame'
         features. 'list'. Columns/properties to be used during the coloring
         out. 'str'. Outname
         fontsize. 'int'. Fontsize
+        ucolors. 'list'.
         """
         Ncolors = 0
         for feature in features:
             Ncolors += len(properties_df[feature].unique())
-        rgb_colors = distinctipy.get_colors(Ncolors)
+        if ucolors == None:
+            rgb_colors = distinctipy.get_colors(Ncolors)
+        else:
+            if len(ucolors) != Ncolors: raise ValueError('Incorrect number of colors')
+            else:
+                rgb_colors = ucolors
         columns = self.matrix.columns.tolist()
         colorindex = 0
         list_dfcolors = []
