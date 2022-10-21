@@ -7,7 +7,7 @@ import subprocess
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-from scipy.cluster.hierarchy import dendrogram, linkage, cophenet, fcluster 
+from scipy.cluster.hierarchy import dendrogram, linkage, cophenet, fcluster
 from scipy.spatial.distance import pdist
 import pickle
 import re
@@ -74,7 +74,7 @@ def _organize_extraction_files():
     os.mkdir("receptor")
     os.mkdir("water")
     os.mkdir("cof_ion")
-    
+
     currentdir = os.getcwd()
     files = glob.glob("%s/*pdb*"%currentdir)
 
@@ -106,7 +106,7 @@ def pdbs_superimposition(pdbs,fix_pdb,outdir,verbose=True):
     pdbs: 'list'. PDBs list of mobile elements
     fix_pdb: 'str'. Single PDB which will be fixed during the multiple superimpositions (fix element)
     outdir: 'str'. Directory to store all the superimposed PDBs
-    """ 
+    """
     errors = 0
     name_fix = os.path.basename(fix_pdb)
     for pdb in pdbs:
@@ -115,7 +115,7 @@ def pdbs_superimposition(pdbs,fix_pdb,outdir,verbose=True):
         aux_error = pdb_superimpose(pdb,fix_pdb,outdir,verbose)
         errors += aux_error
     print('%d couldn\'t be superimpose'%-errors)
-    
+
     #for i, pdb in enumerate(pdbs):
     #    #Superimpose using TMalign
     #    pdbname = PDBnames[i]
@@ -127,7 +127,7 @@ def pdbs_superimposition(pdbs,fix_pdb,outdir,verbose=True):
     #    os.system(TMalign_cmd)
     #    os.system('rm %s %s_all %s_all_atm_lig %s_atm'%(outname,outname,outname,outname))
     #    os.system('mv %s_all_atm %s_all_atm.pdb'%(outname,outname))
-    #    
+    #
     #    #Extract mobile pdb from the TMalign output
     #    structurePDB = parsePDB('%s_all_atm.pdb'%(outname))
     #    #Load Prody Hierarchical Views
@@ -142,7 +142,7 @@ def prepWizard(pdbs,schroodinger_path,delimiter=None,outfmt='mae',max_processes=
     """
     Given a list of pdbs, use PrepWizard from the Schroodinger premium package to preapre the PDB(protonate, add missing side chains etc...)
     pdbs: 'list'. PDB list of elements to prepare
-    schroodinger_path: 'str'. Global path of Schroodinger 
+    schroodinger_path: 'str'. Global path of Schroodinger
     delimiter: 'str'. Delimiter to obtain an identifier from each PDB name
     outfmt: 'str'. Outfile format. Either .mae or .pdb
     max_processes: Number of processors used to paralalize the different executions
@@ -154,7 +154,7 @@ def prepWizard(pdbs,schroodinger_path,delimiter=None,outfmt='mae',max_processes=
         IDs = [ pdbname.replace(".pdb","").split(delimiter)[0] for pdbname in PDBnames]
     else:
         IDs = [ pdbname.replace(".pdb","") for pdbname in PDBnames]
-    
+
     cmd_prepW = ['%s/utilities/prepwizard -fillsidechains -WAIT %s %s_prep.%s'%(schroodinger_path,pdb,IDs[i],outfmt) for i,pdb in enumerate(pdbs)]
     cmd_prepW = [cmd.replace('//','/') for cmd in cmd_prepW]
     processes = set()
@@ -197,7 +197,7 @@ def siteMap(maes,asl,schroodinger_path,delimiter=None,outfmt='mae',max_processes
         IDs = [ maename.replace(".mae","").split(delimiter)[0] for maename in MAEnames]
     else:
         IDs = [ maename.replace(".mae","") for maename in MAEnames]
-    
+
     cmd_SiteMap = ['%s/sitemap -j %s -prot %s -sitebox 12 -resolution standard -reportsize 100 -writestructs no -maxsites 1 -siteasl "%s" -WAIT'%(schroodinger_path,IDs[i],mae,asl) for i,mae in enumerate(maes)]
     cmd_SiteMap = [cmd.replace("//","/") for cmd in cmd_SiteMap]
 
@@ -290,7 +290,7 @@ class VolumeOverlappingMatrix(object):
     def __init__(self, csv, IDs=None, IDs_shroodinger=None, identifier = None, delimiter = '', del_position=0):
         """
         csv: 'str'. csv file containing the volume overlapping matrix
-        IDs: 'list'. list of IDs to replace csv indices 
+        IDs: 'list'. list of IDs to replace csv indices
         IDs_shroodinger: 'str'. Input file used to compute the volume overlpaping matrix with SiteMap
         """
         self.matrix = pd.read_csv(csv,delimiter=',',index_col=0)
@@ -303,9 +303,9 @@ class VolumeOverlappingMatrix(object):
         elif IDs == None and IDs_shroodinger != None:
             if identifier == None:
                 raise ValueError('To select the IDs from IDs_shroodinger an identifier is needed')
-            self._get_IDs_shroodinger(IDs_shroodinger,identifier,delimiter,del_position) 
+            self._get_IDs_shroodinger(IDs_shroodinger,identifier,delimiter,del_position)
         if IDs != None and IDs_shroodinger != None:
-            raise ValueError('Pass either an IDs list or a IDs_shroodinger file') 
+            raise ValueError('Pass either an IDs list or a IDs_shroodinger file')
 
     def _get_IDs_shroodinger(self, vm_input, identifier, delimiter='',del_position=0):
         """
@@ -322,7 +322,8 @@ class VolumeOverlappingMatrix(object):
                     IDs.append(ID)
         self.matrix.set_axis(IDs, axis=1, inplace=True)
         self.matrix.set_axis(IDs, axis=0, inplace=True)
-    
+        self.IDs = IDs
+
     def plot_hierarchical(self,out,fontsize=1):
         """
         """
@@ -330,18 +331,24 @@ class VolumeOverlappingMatrix(object):
         cg = sns.clustermap(self.matrix,cmap="RdBu_r",yticklabels=True,xticklabels=True,vmin=0,vmax=1)
         plt.savefig(out,dpi=300)
 
-    def plot_hierarchical_labeled(self, properties_df, features, out, fontsize = 1, printlabels = False):
+    def plot_hierarchical_labeled(self, properties_df, features, out, fontsize = 1, printlabels = False, ucolors = None):
         """
         Hierarchical clustermap with color and row coloring according to a given feature of
         properties_df. 'pandas DataFrame'
         features. 'list'. Columns/properties to be used during the coloring
         out. 'str'. Outname
         fontsize. 'int'. Fontsize
+        ucolors. 'list'.
         """
         Ncolors = 0
         for feature in features:
             Ncolors += len(properties_df[feature].unique())
-        rgb_colors = distinctipy.get_colors(Ncolors)
+        if ucolors == None:
+            rgb_colors = distinctipy.get_colors(Ncolors)
+        else:
+            if len(ucolors) != Ncolors: raise ValueError('Incorrect number of colors')
+            else:
+                rgb_colors = ucolors
         columns = self.matrix.columns.tolist()
         colorindex = 0
         list_dfcolors = []
@@ -362,7 +369,7 @@ class VolumeOverlappingMatrix(object):
 
         sns.set(font_scale = fontsize)
         cg = sns.clustermap(self.matrix,cmap="RdBu_r", row_colors=dfcolors, col_colors=dfcolors, yticklabels=printlabels,xticklabels=printlabels,vmin=0,vmax=1)
-        
+
         #Plot legend
         for i,feature in enumerate(features):
             for flavour in properties_df[feature].unique():
@@ -370,7 +377,7 @@ class VolumeOverlappingMatrix(object):
                 cg.ax_col_dendrogram.legend(loc='lower left', bbox_to_anchor=(0.9, 0.5) ,ncol=1)
 
         plt.savefig(out+'.pdf',dpi=300)
-         
+
 
     def get_dendrogram(self,verbose=True):
         """
@@ -383,7 +390,7 @@ class VolumeOverlappingMatrix(object):
         if verbose:
             print('Cophenetic Correlation Coefficient: ', str(c))
 
-    def fancy_dendrogram(self,*args, **kwargs):
+    def _fancy_dendrogram(self,*args, **kwargs):
         max_d = kwargs.pop('max_d', None)
         if max_d and 'color_threshold' not in kwargs:
             kwargs['color_threshold'] = max_d
@@ -414,9 +421,9 @@ class VolumeOverlappingMatrix(object):
         plt.xlabel('sample index',fontsize=16)
         plt.ylabel('distance',fontsize=16)
         if p==None:
-            self.fancy_dendrogram(self.dendrogram,leaf_rotation=90., leaf_font_size=8.,labels=self.IDs,max_d=max_d,annotate_above=annotate_above)
+            self._fancy_dendrogram(self.dendrogram,leaf_rotation=90., leaf_font_size=8.,labels=self.IDs,max_d=max_d,annotate_above=annotate_above)
         else:
-            self.fancy_dendrogram(self.dendrogram,leaf_rotation=90., leaf_font_size=8.,labels=self.IDs,max_d=max_d,annotate_above=annotate_above,p=p,truncate_mode='lastp',show_contracted=True)
+            self._fancy_dendrogram(self.dendrogram,leaf_rotation=90., leaf_font_size=8.,labels=self.IDs,max_d=max_d,annotate_above=annotate_above,p=p,truncate_mode='lastp',show_contracted=True)
         ax = plt.gca()
         ax.tick_params(axis='x', which='major', labelsize=5)
         ax.tick_params(axis='y', which='major', labelsize=14)
@@ -434,12 +441,12 @@ class VolumeOverlappingMatrix(object):
                 clusters_dic[cluster].append(id)
         self.clusters_dic = clusters_dic
 
-    def save_dendrogram_clusters(self,out,verbose=True): 
+    def save_dendrogram_clusters(self,out,verbose=True):
         if verbose:
             print(self.clusters_dic)
             for cluster in self.clusters_dic.keys():
                 print(cluster,len(self.clusters_dic[cluster]))
-        
+
         with open(out+'.p', 'wb') as handle:
             pickle.dump(self.clusters_dic, handle)
 
@@ -449,11 +456,11 @@ class VolumeOverlappingMatrix(object):
             cluster_elements = self.clusters_dic[cluster]
             volume_matrix_cluster = self.matrix.loc[cluster_elements,cluster_elements]
             volume_matrix_cluster['mean'] = volume_matrix_cluster.mean(axis=1)
-            center = volume_matrix_cluster['mean'].idxmax() 
+            center = volume_matrix_cluster['mean'].idxmax()
             print('center cluster%d: '%cluster, center)
             clustersCenters[cluster] = center
-        self.clustersCenters = clustersCenters 
-    
+        self.clustersCenters = clustersCenters
+
     def remove_cluster_outliers(self, list_clusters):
         outlayer_clusters = list_clusters
 
@@ -497,36 +504,36 @@ if __name__ == '__main__':
     #1: Get all target chains (filtered if asked) into individual pdbs
     #TARGs = glob.glob('tests/PDBs/*receptor*')
     #get_protChains(pdbs=TARGs,outname='tests/PDBs/CDK2',delimiter='_',upresfilter=300,lowresfilter=280)
-    
+
     #2: Superimpose all targets to a fix target
     #TARGs = glob.glob('tests/PDBs/CDK2*')
     #pdbs_superimposition(pdbs=TARGs,fix_pdb='tests/PDBs/CDK2_1b38A.pdb',outdir='tests/superimpositions/')
-    
-    #3: Prepare the targets with PrepWizard from Schroodinger premium package 
+
+    #3: Prepare the targets with PrepWizard from Schroodinger premium package
     #TARGs = glob.glob('tests/superimpositions/CDK2*')
     #prepWizard(pdbs=TARGs,delimiter='_super',schroodinger_path=schroodinger_path,outfmt='pdb',max_processes=30)
     #_clean_prepWizard(outdir='tests/prepWizard',outfmt='pdb')
-    
+
     #4: Compute the volume of each target specific binding site (single one sourranding LYS33 NZ)
-    #TARGs = glob.glob('tests/prepWizard/*_prep.mae') 
+    #TARGs = glob.glob('tests/prepWizard/*_prep.mae')
     #siteMap(maes=TARGs,asl = "(res.num 33) AND ((atom.ptype \' NZ \'))", schroodinger_path=schroodinger_path,delimiter='_prep',outfmt='mae',max_processes=30)
     #_clean_siteMap(outdir='tests/siteMap')
-    
+
     #5: Find which targets do not have a binding site arround the specified atom
     #TARGs = glob.glob('tests/prepWizard/*_prep.mae')
     #sites = glob.glob('tests/siteMap/*_out.maegz')
     #TARGs_IDs = [os.path.basename(TARG).split('_')[1] for TARG in TARGs]
     #sites_IDs = [os.path.basename(site).split('_')[1] for site in sites]
     #print(set(TARGs_IDs)-set(sites_IDs))
-    
+
     #6: Group all SiteMap sites into a single file
     #_group_siteMap(sites=sites,out='CDK2_sites.maegz',outdir='tests/siteMap/',schroodinger_path=schroodinger_path)
     #_uncompress_maegz(inp='tests/siteMap/CDK2_sites.maegz',schroodinger_path=schroodinger_path)
-    
+
     #7: Get the volume overlapping matrix of the target sites
     #get_volumeOverlapMatrix(sites='tests/siteMap/CDK2_sites.maegz',out='CDK2_volumeMatrix_r2',schroodinger_path=schroodinger_path,max_processes=4)
     #_clean_volumeMatrix(out='CDK2_volumeMatrix_r2',outdir='tests/volumeMatrix/')
-    
+
     #8: Analyse the volume overlapping matrix
     #f = open('tests/siteMap/CDK2_sites.mae','r')
     #IDs = []
