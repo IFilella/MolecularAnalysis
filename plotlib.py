@@ -26,10 +26,10 @@ def plot_UMAP(dbs,names,output=None, random_max = None, delimiter = None, fpsalg
     print('Shape of UMAP_results: ', UMAP_results.shape)
     _plot_reducer(reducer_results = UMAP_results, Y=Y, output=output, colors=colors, sizes=S, alphas=A)
 
-def plot_tSNE(dbs,names,output=None, random_max = None, delimiter = None, fpsalg = 'RDKIT',colors = None, sizes=None, alphas = None, n_iter=1000, perplexity=30):
+def plot_tSNE(dbs,names,output=None, random_max = None, delimiter = None, fpsalg = 'RDKIT',colors = None, sizes=None, alphas = None, n_iter=1000, perplexity=30, early_exaggeration=12,learning_rate='auto'):
     X, Y, S, A = _prepare_reducer(dbs,names,random_max, delimiter, fpsalg, sizes, alphas)
     print('Computing TSNE')
-    tsne = TSNE(n_components=2, verbose = 1, learning_rate='auto', init='pca', perplexity=perplexity, n_iter=n_iter, metric='hamming')
+    tsne = TSNE(n_components=2, verbose = 1, learning_rate=learning_rate, init='pca', perplexity=perplexity, n_iter=n_iter, metric='hamming',early_exaggeration=early_exaggeration)
     tsne_results = tsne.fit_transform(X)
     _plot_reducer(reducer_results = tsne_results, Y=Y, output=output, colors=colors, sizes=S, alphas=A)
 
