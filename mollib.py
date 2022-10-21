@@ -24,6 +24,21 @@ import trimap
 from math import pi
 import os
 
+def join_MolDBs(dbs):
+    new_dicDB = {}
+    for db in dbs:
+        for key in db.dicDB.keys():
+            if key not in new_dicDB.keys():
+                new_dicDB[key] = db.dicDB[key]
+            else:
+                old_eqSMILES = new_dicDB[key][0].split(',')
+                new_eqSMILES = db.dicDB[key][0].split(',')
+                total_eqSMILES = ','.join(list(set(old_eqSMILES + new_eqSMILES)))
+                new_dicDB[key][0] = total_eqSMILES
+                new_dicDB[key][1]+=',%s'%IDs
+    moldb = MolDB(dicDB=new_dicDB)
+    return moldb
+
 def intersect_MolDBs(db1,db2,simt,fingerprint='RDKIT',output=None,verbose=True):
     db3 = copy.deepcopy(db1)
     keepkeys_db1 = []
@@ -105,7 +120,7 @@ class MolDB(object):
     - txtDB: file  of format 'SMILE equivalentSMILES IDs'
     - sdfDB: molecular DB in sdf format
     - dicDB: precalculated MolDB object
-    - pdbList: 
+    - pdbList:
     - chirality:
     The main attribute of the class is 'dicDB', a dicctionary with the molecules SMILES as keys and
     with lists of form [eqSMILES, IDs, Mol object] as values.
@@ -113,14 +128,11 @@ class MolDB(object):
     calculated and stored.
     """""
     def __init__(self, txtDB = None, dicDB = None, sdfDB = None, pdbList = None, paramaters = False, chirality = True, verbose = True):
-        self.txtDB = txtDB
-        self.dicDB = dicDB
-        self.sdfDB = sdfDB
         self.paramaters = paramaters
         self.chirality = chirality
-        if self.txtDB != None and self.dicDB == None and self.sdfDB == None and pdbList == None:
+        if txtDB != None and dicDB == None and sdfDB == None and pdbList == None:
             self.dicDB = {}
-            db = open(self.txtDB,'r')
+            db = open(txtDB,'r')
             counteq = 0
             for i,line in enumerate(db):
                 line = line.split()
@@ -140,12 +152,11 @@ class MolDB(object):
                     self.dicDB[SMILE][0] = total_eqSMILES
                 if verbose: print(i+1,IDs,SMILE)
             if verbose: print('Repeated SMILES: %d'%counteq)
-        elif self.txtDB == None and self.dicDB != None and self.sdfDB == None and pdbList == None:
-            with open(self.dicDB, 'rb') as handle:
-                self.dicDB = pickle.load(handle)
-        elif self.txtDB == None and self.dicDB == None and self.sdfDB != None and pdbList == None:
+        elif txtDB == None and dicDB != None and sdfDB == None and pdbList == None:
+            self.dicDB = dicDB
+        elif txtDB == None and dicDB == None and sdfDB != None and pdbList == None:
             self.dicDB = {}
-            DB = Chem.SDMolSupplier(self.sdfDB)
+            DB = Chem.SDMolSupplier(sdfDB)
             counteq = 0
             for i,cpd in enumerate(DB):
                 mol = Mol(mol2 = cpd, allparamaters = self.paramaters, chirality = self.chirality)
@@ -168,7 +179,7 @@ class MolDB(object):
                     self.dicDB[SMILE][1]+=',%s'%IDs
                 if verbose: print(i+1,IDs,SMILE)
             if verbose: print('Repeated SMILES: %d'%counteq)
-        elif self.txtDB == None and self.dicDB == None and self.sdfDB == None and pdbList != None:
+        elif txtDB == None and dicDB == None and sdfDB == None and pdbList != None:
             self.dicDB = {}
             counteq = 0
             for i,pdb in enumerate(pdbList):
@@ -183,12 +194,12 @@ class MolDB(object):
                     counteq+=1
                     self.dicDB[SMILE][1]+=',%s'%IDs
                 if verbose: print(i+1,IDs,SMILE)
-            if verbose: print('Unique molecules %d.\nRepeated SMILES: %d'%(len(self.dicDB.keys()),counteq)) 
+            if verbose: print('Unique molecules %d.\nRepeated SMILES: %d'%(len(self.dicDB.keys()),counteq))
         else:
             raise KeyError('Provide only a txtDB, a dicDB, or a sdfDB')
         self._get_total_mols()
         self.table = None
-    
+
     def _get_allmols_paramaters(self):
         if self.paramaters: return
         for k in self.dicDB.keys():
@@ -247,10 +258,10 @@ class MolDB(object):
             pass
         else:
             self.get_properties_table()
-        
+
         plt.rcParams['axes.linewidth'] = 1.5
         plt.figure()
-        
+
         if zkey == None:
             ax=sns.scatterplot(x='NPR1',y='NPR2',data=self.table,s=25,linewidth=0.5,alpha=1)
         else:
@@ -259,7 +270,7 @@ class MolDB(object):
             z = self.table[zkey].tolist()
             ax= plt.scatter(x=x,y=y,c=z,data=self.table,s=8,linewidth=0.5,alpha=0.75)
             plt.colorbar()
-        
+
         x1, y1 = [0.5, 0], [0.5, 1]
         x2, y2 = [0.5, 1], [0.5, 1]
         x3, y3 = [0,1],[1,1]
@@ -274,7 +285,7 @@ class MolDB(object):
             ax.spines['right'].set_visible(False)
         else:
             pass
-        
+
         plt.text(0, 1.01,s='Rod',fontsize=16,horizontalalignment='center',verticalalignment='center',fontweight='bold')
         plt.text(1, 1.01,s='Sphere',fontsize=16,horizontalalignment='center',verticalalignment='center',fontweight='bold')
         plt.text(0.5, 0.49,s='Disc',fontsize=16,horizontalalignment='center',verticalalignment='center',fontweight='bold')
@@ -329,12 +340,12 @@ class MolDB(object):
         print(lab)
         print(l)
         print(np.linalg.norm(l,axis=1))
-        
+
         n = l.shape[0]
         for i in range(n):
             plt.arrow(0, 0, l[i,0], l[i,1],color= 'k',alpha=0.5,linewidth=1.8,head_width=0.025)
             plt.text(l[i,0]*1.25, l[i,1]*1.25, lab[i], color = 'k',va = 'center', ha = 'center',fontsize=16)
-        
+
         circle = plt.Circle((0,0), 1, color='gray', fill=False,clip_on=True,linewidth=1.5,linestyle='--')
         plt.tick_params ('both',width=2,labelsize=18)
 
@@ -342,7 +353,7 @@ class MolDB(object):
         plt.xlim(-1.2,1.2)
         plt.ylim(-1.2,1.2)
         plt.tight_layout()
-        
+
         if output != None:
             plt.savefig(output+'.png',dpi=300)
 
@@ -360,8 +371,8 @@ class MolDB(object):
         data['nHD']=[i/3 for i in self.table['NumHDonors']]
         data['nRotB']=[i/10 for i in self.table['NumRotatableBonds']]
         data['TPSA']=[i/140 for i in self.table['TPSA']]
-        
-        categories=list(data.columns) 
+
+        categories=list(data.columns)
         N = len(categories)
         values=data[categories].values[0]
         values=np.append(values,values[:1])
@@ -370,11 +381,11 @@ class MolDB(object):
 
         Ro5_up=[1,1,1,1,1,1,1] #The upper limit for bRo5
         Ro5_low=[0.5,0.1,0,0.25,0.1,0.5,0.5]  #The lower limit for bRo5
-    
+
         fig = plt.figure()
-        
+
         fig, ax = plt.subplots(subplot_kw={'projection': 'polar'})
-        
+
         plt.xticks(angles[:-1], categories,color='k',size=15,ha='center',va='top',fontweight='book')
 
         plt.tick_params(axis='y',width=4,labelsize=6, grid_alpha=0.05)
@@ -394,17 +405,17 @@ class MolDB(object):
 
         ax.grid(axis='y',linewidth=1.5,linestyle='dotted',alpha=0.8)
         ax.grid(axis='x',linewidth=2,linestyle='-',alpha=1)
-        
+
         plt.plot(angles, Ro5_up, linewidth=2, linestyle='-',color='red')
         plt.plot(angles, Ro5_low, linewidth=2, linestyle='-',color='red')
-        
+
         if output != None:
             plt.tight_layout()
             plt.savefig(output,dpi=300)
 
     def save_MolDB(self,output):
-        with open(output+'.p', 'wb') as handle:
-            pickle.dump(self.dicDB, handle)
+        with open(output+'.pickle', 'wb') as handle:
+            pickle.dump(self, handle)
 
     def print_MolDB(self,output):
         f = open(output+'.txt','w')
@@ -438,11 +449,11 @@ class MolDB(object):
             molfp = np.asarray(list((molfp.ToBitString())))
             fps.append(molfp)
         self.fingerprints = fps
-        return fps 
+        return fps
 
     def _get_total_mols(self):
         self.size = len(self.dicDB.keys())
-        
+
     def _remove_anchorings(self):
         kekuleerror1 = 0
         kekuleerror2 = 0
@@ -456,7 +467,7 @@ class MolDB(object):
             new_SMILE = ''
             auxmol = Mol(smile=SMILE)
             auxerror = auxmol._remove_anchorings()
-            
+
             #Check eqSMILES and define new_eqSMILES
             new_eqSMILES = []
             for eqSMILE in eqSMILES:
@@ -464,7 +475,7 @@ class MolDB(object):
                 auxerror2 = auxmol2._remove_anchorings()
                 if auxerror2:
                     new_eqSMILES.append(auxmol2.smile)
-            
+
             #Define new_SMILE and count errors
             if auxerror:
                 new_SMILE = auxmol.smile
@@ -474,7 +485,7 @@ class MolDB(object):
                     kekuleerror2+=1
                 else:
                     kekuleerror1+=1
-            
+
             #Modify dicDB
             del self.dicDB[SMILE]
             if new_SMILE != '':
