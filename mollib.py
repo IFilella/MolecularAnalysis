@@ -23,6 +23,7 @@ import time
 import trimap
 from math import pi
 import os
+import itertools
 
 def join_MolDBs(dbs):
     new_dicDB = {}
@@ -655,10 +656,78 @@ class Mol(object):
         if allparamaters:
             self.get_AllParamaters()
 
-    def get_BRICSdecomposition(self,clean=True):
-        self.fragments = list(BRICS.BRICSDecompose(self.mol))
-        if clean:
-            self.fragments = [re.sub("(\[.*?\])", "[*]", frag) for frag in self.fragments]
+    def write_mol(self,output):
+        file=open(output,'w+')
+        file.write(Chem.MolToMolBlock(self.mol))
+        file.close()
+
+    def write_3D_fragments(self,outname):
+        if not hasattr(self, 'fragments_mols'):
+            self.get_BRICS_fragments(smiles=False)
+        for i,frag in enumerate(self.fragments_mols):
+            file=open('%s%d.mol'%(outname,i),'w+')
+            file.write(Chem.MolToMolBlock(frag))
+            file.close()
+
+    def get_BRICS_fragments(self, smiles = True, clean = True):
+        """
+        Return BRICS fragments
+        if smiles then get fragments as smiles
+        if not smiles then get fragments as mol (keeping the 3D coordinates)
+        """
+        if smiles:
+            self.fragments_smiles = list(BRICS.BRICSDecompose(self.mol))
+            if clean:
+                self.fragments = [re.sub("(\[.*?\])", "[*]", frag) for frag in self.fragments]
+        if not smiles:
+            newmol2 = Chem.FragmentOnBRICSBonds(self.mol)
+            self.fragments_mols = Chem.GetMolFrags(newmol2,asMols=True,sanitizeFrags=True)
+            self._get_frags_connections()
+
+    def _get_atom_coords(self,molconformer,atom):
+        atom_idx = atom.GetIdx()
+        position = molconformer.GetAtomPosition(atom_idx)
+        atom_coords = np.array((position.x, position.y, position.z))
+        return atom_coords
+
+    def _get_ligtofrag_atom_mapping(self):
+        mapping = {}
+        if not hasattr(self, 'fragments_mols'):
+            raise ValueError('BRICS fragments aren\' calculated. Run self.get_BRICS_fragments(smiles=False)')
+        nfrags = len(self.fragments_mols)
+        ligconformer = self.mol.GetConformer()
+        lig_atom_coords = {}
+        for atom in self.mol.GetAtoms():
+            atom_idx = atom.GetIdx()
+            atom_coords = self._get_atom_coords(ligconformer,atom)
+            lig_atom_coords[atom_idx] = atom_coords
+            mapping[atom_idx] = [None] * nfrags
+        for i,frag in enumerate(self.fragments_mols):
+            fragconformer = frag.GetConformer()
+            for atom_frag in frag.GetAtoms():
+                atom_frag_idx = atom_frag.GetIdx()
+                atom_frag_coords = self._get_atom_coords(fragconformer,atom_frag)
+                for atom_lig_idx, atom_lig_coords in lig_atom_coords.items():
+                    dist = np.linalg.norm(atom_frag_coords - atom_lig_coords)
+                    if dist == 0:
+                        mapping[atom_lig_idx][i] = atom_frag_idx
+        self.ligtofrag_atom_mapping = mapping
+
+    def _get_frags_connections(self):
+        if not hasattr(self, 'fragments_mols'):
+            raise ValueError('BRICS fragments aren\' calculated. Run self.get_BRICS_fragments(smiles=False)')
+        self._get_ligtofrag_atom_mapping()
+        nfrags = len(self.fragments_mols)
+        frags_connections = np.zeros((nfrags,nfrags),dtype=int)
+        for atom_lig, atoms_frags in self.ligtofrag_atom_mapping.items():
+            _connections = np.where(np.array(atoms_frags) != None)[0]
+            if len(_connections) > 1:
+                connections = list(itertools.combinations(_connections,2))
+                for connection in connections:
+                    frags_connections[connection[0]][connection[1]] = 1
+                    frags_connections[connection[1]][connection[0]] = 1
+        self.frags_connections = frags_connections
+
 
     def get_AllParamaters(self):
         try:
