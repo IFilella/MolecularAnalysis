@@ -1,0 +1,54 @@
+REMARK   4      COMPLIES WITH FORMAT V. 3.0, 1-DEC-2006
+REMARK 888
+REMARK 888 WRITTEN BY MAESTRO (A PRODUCT OF SCHRODINGER, LLC)
+HETATM    1  C16 5YN A 401     -12.562  14.911  70.870  1.00 36.77           C  
+HETATM    2  C19 5YN A 401     -10.250  11.888  63.424  1.00 38.01           C  
+HETATM    3  C2  5YN A 401     -10.331  15.199  65.129  1.00 29.77           C  
+HETATM    4  C1  5YN A 401     -10.892  14.005  64.397  1.00 29.75           C  
+HETATM    5  C6  5YN A 401     -11.448  14.265  68.360  1.00 33.57           C  
+HETATM    6  C5  5YN A 401     -10.466  13.892  67.263  1.00 28.17           C  
+HETATM    7  C8  5YN A 401     -10.546  16.547  68.412  1.00 24.82           C  
+HETATM    8  C9  5YN A 401      -9.638  16.206  67.236  1.00 31.94           C  
+HETATM    9  C10 5YN A 401     -11.383  15.560  70.451  1.00 35.78           C  
+HETATM   10  C11 5YN A 401     -10.729  16.424  71.354  1.00 34.53           C  
+HETATM   11  C12 5YN A 401     -11.243  16.625  72.627  1.00 41.75           C  
+HETATM   12  C13 5YN A 401     -12.404  15.992  73.059  1.00 40.16           C  
+HETATM   13  O3  5YN A 401     -10.097  16.228  64.480  1.00 31.27           O  
+HETATM   14  C14 5YN A 401     -13.046  15.137  72.153  1.00 40.46           C  
+HETATM   15  C22 5YN A 401     -12.616  12.627  63.379  1.00 25.24           C  
+HETATM   16  C24 5YN A 401     -12.202  13.830  64.083  1.00 25.64           C  
+HETATM   17  N18 5YN A 401      -9.946  13.053  64.096  1.00 26.39           N  
+HETATM   18  N21 5YN A 401     -11.589  11.738  63.092  1.00 25.65           N  
+HETATM   19  N4  5YN A 401     -10.175  15.083  66.460  1.00 30.74           N  
+HETATM   20  N7  5YN A 401     -10.864  15.353  69.175  1.00 31.30           N  
+HETATM   21  O20 5YN A 401      -9.404  11.052  63.148  1.00 32.48           O  
+HETATM   22  O23 5YN A 401     -13.771  12.356  63.039  1.00 26.20           O  
+HETATM   23 CL15 5YN A 401     -14.517  14.339  72.663  1.00 39.52          Cl  
+HETATM   24 CL17 5YN A 401     -13.024  16.263  74.666  1.00 40.89          Cl  
+HETATM   25 CL25 5YN A 401     -10.391  17.704  73.723  1.00 42.62          Cl  
+CONECT    1    9   14
+CONECT    2   17   18   21
+CONECT    3    4   13   19
+CONECT    4    3   16   17
+CONECT    5    6   20
+CONECT    6    5   19
+CONECT    7    8   20
+CONECT    8    7   19
+CONECT    9    1   10   20
+CONECT   10    9   11
+CONECT   11   10   12   25
+CONECT   12   11   14   24
+CONECT   13    3
+CONECT   14    1   12   23
+CONECT   15   16   18   22
+CONECT   16    4   15
+CONECT   17    2    4
+CONECT   18    2   15
+CONECT   19    3    6    8
+CONECT   20    5    7    9
+CONECT   21    2
+CONECT   22   15
+CONECT   23   14
+CONECT   24   12
+CONECT   25   11
+END   
