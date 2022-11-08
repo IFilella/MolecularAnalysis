@@ -201,6 +201,68 @@ class MolDB(object):
         self._get_total_mols()
         self.table = None
 
+    def get_all_BRICS_fragments(self):
+        connection_dfs = []
+        total_frags = []
+        for i,key in enumerate(self.dicDB.keys()):
+            mol = self.dicDB[key][-1]
+            mol.get_BRICS_fragments(smiles=False)
+            connections = mol.frags_connections
+            frags = mol.fragments_mols
+            canonical_smiles = []
+            for frag in frags:
+                canonical_smile = Chem.MolToSmiles(frag, canonical = True)
+                canonical_smile = re.sub("(\[[0-9]+\*\])", "[*]", canonical_smile)
+                canonical_smiles.append(canonical_smile)
+            total_frags += canonical_smiles
+            connection_df = pd.DataFrame(connections, index=canonical_smiles, columns=canonical_smiles)
+            connection_dfs.append(connection_df)
+
+        total_frags_unique = np.unique(np.array(total_frags))
+        print(len(total_frags),len(total_frags_unique))
+        freq_mat = [[0] * len(total_frags_unique)] * len(total_frags_unique)
+        freq_df = pd.DataFrame(freq_mat, index=total_frags_unique, columns=total_frags_unique)
+        print(freq_df)
+
+        for k,connection_df in enumerate(connection_dfs):
+            print(k,connection_df)
+            indexes = connection_df.index.to_list()
+            for i,index1 in enumerate(indexes):
+                for j,index2 in enumerate(indexes):
+                    if j >= i:
+                        value = connection_df.loc[index1,index2]
+                        if isinstance(value,np.integer):
+                            if value == 1:
+                                print(index1,index2,value)
+                                freq_df.loc[index1, index2] += 1
+                                freq_df.loc[index2, index1] += 1
+                        elif isinstance(value,pd.core.frame.DataFrame):
+                            #print(value)
+                            #print(type(value))
+                            #print(np.count_nonzero(value))
+                            if np.count_nonzero(value) > 0:
+                                #print(index1,index2)
+                                #print(value)
+                                #print(np.count_nonzero(value))
+                                if index1 == index2:
+                                    freq_df.loc[index1, index2] += np.count_nonzero(value)
+                                else:
+                                    freq_df.loc[index1, index2] += np.count_nonzero(value)
+                                    freq_df.loc[index2, index1] += np.count_nonzero(value)
+                        elif isinstance(value,pd.core.series.Series):
+                            #print(value)
+                            #print(type(value))
+                            if not (value == 0).all():
+                                #print(index1,index2)
+                                #print(value)
+                                #print(np.count_nonzero(value))
+                                freq_df.loc[index1, index2] += np.count_nonzero(value)
+                                freq_df.loc[index2, index1] += np.count_nonzero(value)
+                        else:
+                            raise ValueError('Error with dtype of frags_connections')
+
+            freq_df.to_csv('test.txt', sep=',')
+
     def _get_allmols_paramaters(self):
         if self.paramaters: return
         for k in self.dicDB.keys():
@@ -678,7 +740,7 @@ class Mol(object):
         if smiles:
             self.fragments_smiles = list(BRICS.BRICSDecompose(self.mol))
             if clean:
-                self.fragments = [re.sub("(\[.*?\])", "[*]", frag) for frag in self.fragments]
+                self.fragments = [re.sub("(\[[0-9]+\*\])", "[*]", frag) for frag in self.fragments]
         if not smiles:
             newmol2 = Chem.FragmentOnBRICSBonds(self.mol)
             self.fragments_mols = Chem.GetMolFrags(newmol2,asMols=True,sanitizeFrags=True)
