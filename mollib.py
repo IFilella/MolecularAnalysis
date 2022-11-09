@@ -24,6 +24,7 @@ import trimap
 from math import pi
 import os
 import itertools
+from collections import Counter
 
 def join_MolDBs(dbs):
     new_dicDB = {}
@@ -201,7 +202,7 @@ class MolDB(object):
         self._get_total_mols()
         self.table = None
 
-    def get_all_BRICS_fragments(self):
+    def get_all_BRICS_fragments(self,norm=True,outname=None,verbose=False):
         connection_dfs = []
         total_frags = []
         for i,key in enumerate(self.dicDB.keys()):
@@ -218,14 +219,20 @@ class MolDB(object):
             connection_df = pd.DataFrame(connections, index=canonical_smiles, columns=canonical_smiles)
             connection_dfs.append(connection_df)
 
+        counter = Counter(total_frags)
+        freq_frags = pd.DataFrame({"counter": counter})
+        if norm:
+            counts = float(sum(freq_frags['counter'].tolist()))
+            freq_frags['counter'] = freq_frags['counter'] / counts
+        self.freq_frags = freq_frags
+
         total_frags_unique = np.unique(np.array(total_frags))
-        print(len(total_frags),len(total_frags_unique))
+        if verbose:
+            print('Total number of fragments: %d\nTotal number of unique fragments %d'%(len(total_frags),len(total_frags_unique)))
         freq_mat = [[0] * len(total_frags_unique)] * len(total_frags_unique)
         freq_df = pd.DataFrame(freq_mat, index=total_frags_unique, columns=total_frags_unique)
-        print(freq_df)
 
         for k,connection_df in enumerate(connection_dfs):
-            print(k,connection_df)
             indexes = connection_df.index.to_list()
             for i,index1 in enumerate(indexes):
                 for j,index2 in enumerate(indexes):
@@ -233,35 +240,31 @@ class MolDB(object):
                         value = connection_df.loc[index1,index2]
                         if isinstance(value,np.integer):
                             if value == 1:
-                                print(index1,index2,value)
                                 freq_df.loc[index1, index2] += 1
                                 freq_df.loc[index2, index1] += 1
                         elif isinstance(value,pd.core.frame.DataFrame):
-                            #print(value)
-                            #print(type(value))
-                            #print(np.count_nonzero(value))
                             if np.count_nonzero(value) > 0:
-                                #print(index1,index2)
-                                #print(value)
-                                #print(np.count_nonzero(value))
                                 if index1 == index2:
                                     freq_df.loc[index1, index2] += np.count_nonzero(value)
                                 else:
                                     freq_df.loc[index1, index2] += np.count_nonzero(value)
                                     freq_df.loc[index2, index1] += np.count_nonzero(value)
                         elif isinstance(value,pd.core.series.Series):
-                            #print(value)
-                            #print(type(value))
                             if not (value == 0).all():
-                                #print(index1,index2)
-                                #print(value)
-                                #print(np.count_nonzero(value))
                                 freq_df.loc[index1, index2] += np.count_nonzero(value)
                                 freq_df.loc[index2, index1] += np.count_nonzero(value)
                         else:
                             raise ValueError('Error with dtype of frags_connections')
 
-            freq_df.to_csv('test.txt', sep=',')
+        if norm:
+            indexes = freq_df.index.to_list()
+            for index in indexes:
+                counts = float(sum(freq_df.loc[index,:].tolist()))
+                freq_df.loc[index,:] = freq_df.loc[index,:] / counts
+        self.freq_frags_connections = freq_df
+        if outname != None:
+            self.freq_frags_connections.to_csv('%s_freq_frags_connections.txt'%outname, sep=',')
+            self.freq_frags('%s_freq_frags_connections.txt'%outname,sep=',')
 
     def _get_allmols_paramaters(self):
         if self.paramaters: return
