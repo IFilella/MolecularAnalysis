@@ -72,9 +72,9 @@ def _plot_reducer(reducer_results,Y,output,colors,sizes,alphas):
     df = pd.DataFrame(dict(xaxis=reducer_results[:,0], yaxis=reducer_results[:,1],  molDB = Y, sizes=sizes, alphas=alphas))
     plt.figure()
     if colors == None:
-        g = sns.scatterplot('xaxis', 'yaxis', data=df, hue='molDB', alpha=alphas, size='sizes')#,style='molDB')
+        g = sns.scatterplot(data=df, x='xaxis', y='yaxis', hue='molDB', alpha=alphas, size='sizes')
     else:
-        g = sns.scatterplot('xaxis', 'yaxis', data=df, hue='molDB', palette=colors ,alpha=alphas, size='sizes')
+        g = sns.scatterplot(data=df, x='xaxis', y='yaxis', hue='molDB',palette=colors, alpha=alphas, size='sizes')
     h,l = g.get_legend_handles_labels()
     n = len(set(df['molDB'].values.tolist()))
     plt.legend(h[0:n+1],l[0:n+1])#,bbox_to_anchor=(1.05, 1)), loc=2, borderaxespad=0.)
