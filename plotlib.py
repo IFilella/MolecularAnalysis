@@ -10,10 +10,10 @@ from sklearn.decomposition import PCA
 import umap as mp
 import trimap
 
-def plot_trimap(dbs,names,output=None, random_max = None, delimiter = None, fpsalg = 'RDKIT', colors = None, sizes = None, alphas = None):
+def plot_trimap(dbs,names,output=None, random_max = None, delimiter = None, fpsalg = 'RDKIT', colors = None, sizes = None, alphas = None, n_iters=400):
     X, Y, S, A = _prepare_reducer(dbs,names,random_max, delimiter, fpsalg, sizes, alphas)
     print('Computing trimap')
-    tri = trimap.TRIMAP()
+    tri = trimap.TRIMAP(n_iters = n_iters)
     trimap_results = tri.fit_transform(X)
     print('Shape of trimap_results: ', trimap_results.shape)
     _plot_reducer(reducer_results = trimap_results, Y=Y, output=output, colors=colors, sizes=S, alphas=A)
