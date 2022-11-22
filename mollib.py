@@ -26,6 +26,8 @@ import os
 import itertools
 from collections import Counter
 
+#test
+
 def join_MolDBs(dbs):
     new_dicDB = {}
     for db in dbs:
