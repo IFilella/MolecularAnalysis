@@ -10,17 +10,11 @@ import pickle
 import copy
 import numpy as np
 import pandas as pd
-from sklearn.manifold import TSNE
-from sklearn.decomposition import PCA
-from sklearn.cluster import KMeans
-from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 import seaborn as sns
 import random
 #from umap import UMAP
-import umap as mp
 import time
-import trimap
 from math import pi
 import os
 import itertools
@@ -275,6 +269,7 @@ class MolDB(object):
             mol.get_AllParamaters()
 
     def _get_kmeans(self,n_clusters,data):
+        from sklearn.cluster import KMeans
         model = KMeans(n_clusters = n_clusters, init = "k-means++")
         labels = model.fit_predict(data)
         centroids = model.cluster_centers_
@@ -286,24 +281,28 @@ class MolDB(object):
         return labels, centroids, clusters
 
     def plot_PCA(self, output = None, random_max = None, fpsalg = 'RDKIT', kmeans = False, n_clusters = 1):
+        from sklearn.decomposition import PCA
         self.get_fingerprints(fpsalg, random_max)
         pca = PCA(n_components=2)
         pca_results = pca.fit_transform(self.fingerprints)
         self._plot_reducer(pca_results,output,kmeans,n_clusters)
 
     def plot_tSNE(self, output = None, random_max = None, fpsalg = 'RDKIT', kmeans = False, n_clusters = 1):
+        from sklearn.manifold import TSNE
         self.get_fingerprints(fpsalg, random_max)
         tsne = TSNE(n_components=2, verbose = 1, learning_rate='auto',init='pca', n_iter=2500, perplexity=50,metric='hamming')
         tsne_results = tsne.fit_transform(np.asarray(self.fingerprints))
         self._plot_reducer(tsne_results,output,kmeans,n_clusters)
 
     def plot_UMAP(self, output = None, random_max = None, fpsalg = 'RDKIT', kmeans = False, n_clusters = 1):
+        import umap as mp
         self.get_fingerprints(fpsalg, random_max)
         umap = mp.UMAP(n_neighbors=50, n_epochs=5000, min_dist= 0.5,metric='hamming')
         UMAP_results = umap.fit_transform(self.fingerprints)
         self._plot_reducer(UMAP_results,output,kmeans,n_clusters)
 
     def plot_trimap(self, output = None, random_max = None, fpsalg = 'RDKIT', kmeans = False, n_clusters = 1):
+        import trimap
         self.get_fingerprints(fpsalg, random_max)
         tri = trimap.TRIMAP(n_dims=2, distance='hamming', n_iters = 2500, n_inliers = 30, n_outliers = 5,weight_temp=0.6)
         tri_results = tri.fit_transform(np.asarray(self.fingerprints))
@@ -364,6 +363,8 @@ class MolDB(object):
             plt.savefig(output+'.png',dpi=300)
 
     def plot_paramaters_PCA(self,output=None):
+        from sklearn.decomposition import PCA
+        from sklearn.preprocessing import StandardScaler
         if isinstance(self.table, pd.DataFrame):
             pass
         else:
