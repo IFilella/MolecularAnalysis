@@ -729,6 +729,11 @@ class Mol(object):
         file.write(Chem.MolToMolBlock(self.mol))
         file.close()
 
+    def write_pdb(self,output):
+        file=open(output,'w+')
+        file.write(Chem.MolToPDBBlock(self.mol))
+        file.close()
+
     def write_3D_fragments(self,outname):
         if not hasattr(self, 'fragments_mols'):
             self.get_BRICS_fragments(smiles=False)
