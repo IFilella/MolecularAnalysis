@@ -198,12 +198,18 @@ class MolDB(object):
         self._get_total_mols()
         self.table = None
 
-    def get_all_BRICS_fragments(self,norm=True,outname=None,verbose=False):
+    def get_all_fragments_as_smile(self):
+        """
+        Under construction
+        """
+        pass
+
+    def get_all_fragments_as_mol(self,norm=True,outname=None,verbose=False):
         connection_dfs = []
         total_frags = []
         for i,key in enumerate(self.dicDB.keys()):
             mol = self.dicDB[key][-1]
-            mol.get_BRICS_fragments(smiles=False)
+            mol.get_fragments_as_mol()
             connections = mol.frags_connections
             frags = mol.fragments_mols
             canonical_smiles = []
@@ -678,6 +684,30 @@ class MolDB(object):
         self._get_total_mols()
 
 
+def get_atom_coords(mol,atom):
+    """
+    Given a RDKit mol object and an RDKit atom object of the mol object compute the atom coords
+    """
+    conformer = mol.GetConformer()
+    atom_idx = atom.GetIdx()
+    position = conformer.GetAtomPosition(atom_idx)
+    atom_coords = np.array((position.x, position.y, position.z))
+    return atom_coords
+
+
+def get_percen_inbox(mol,center,radius):
+    """
+    Given a RDKit mol object and a box defined with a center and a radious get the percentage
+    of atoms of the mol inside the box
+    """
+    total = len(mol.GetAtoms())
+    count = 0
+    for i, atom in enumerate(mol.GetAtoms()):
+        coords = get_atom_coords(mol,atom)
+        if np.linalg.norm(coords-center) <= radius:
+            count +=1
+    return count/total
+
 class Mol(object):
     """"""
     """"""
@@ -736,50 +766,194 @@ class Mol(object):
 
     def write_3D_fragments(self,outname):
         if not hasattr(self, 'fragments_mols'):
-            self.get_BRICS_fragments(smiles=False)
+            self.get_fragments_as_mol()
         for i,frag in enumerate(self.fragments_mols):
             file=open('%s%d.mol'%(outname,i),'w+')
             file.write(Chem.MolToMolBlock(frag))
             file.close()
 
-    def get_BRICS_fragments(self, smiles = True, clean = True):
+    def get_fragments_as_smile(self,clean=True):
         """
-        Return BRICS fragments
-        if smiles then get fragments as smiles
-        if not smiles then get fragments as mol (keeping the 3D coordinates)
+        Get BRICS fragments as SMILES
         """
-        if smiles:
-            self.fragments_smiles = list(BRICS.BRICSDecompose(self.mol))
-            if clean:
-                self.fragments = [re.sub("(\[[0-9]+\*\])", "[*]", frag) for frag in self.fragments]
-        if not smiles:
-            newmol2 = Chem.FragmentOnBRICSBonds(self.mol)
-            self.fragments_mols = Chem.GetMolFrags(newmol2,asMols=True,sanitizeFrags=True)
-            self._get_frags_connections()
+        self.fragments_smiles = list(BRICS.BRICSDecompose(self.mol))
+        if clean:
+            self.fragments_smiles = [re.sub("(\[[0-9]+\*\])", "[*]", frag) for frag in self.fragments_smiles]
 
-    def _get_atom_coords(self,molconformer,atom):
-        atom_idx = atom.GetIdx()
-        position = molconformer.GetAtomPosition(atom_idx)
-        atom_coords = np.array((position.x, position.y, position.z))
-        return atom_coords
+    def get_fragments_as_mol(self,centers=[],radius=[], verbose=True):
+        """
+        Get BRICS fragments as mol
+        If a list of centers and radius ara provided the fragments will be reconstructed to
+        fit into this boxes
+        """
+        newmol2 = Chem.FragmentOnBRICSBonds(self.mol)
+        self.fragments_mols = Chem.GetMolFrags(newmol2,asMols=True,sanitizeFrags=True)
+        self._get_frags_connections()
+        if not centers and not radius:
+            pass
+        else:
+            mol_name = self.mol.GetProp("_Name")
+            boxes_fragments = [[] for x in range(len(centers))]
+            for i,center in enumerate(centers):
+                if verbose: print(center,radius[i])
+
+                #Check if one or more than one frag are in the box
+                idx_frags = []
+                for j, frag in enumerate(self.fragments_mols):
+                    perc = get_percen_inbox(frag,center,radius[i])
+                    if perc >= 0.5: idx_frags.append(j)
+                if verbose: print(idx_frags)
+
+                #If there are no frags in the box go to the next box
+                if len(idx_frags) == 0: continue
+
+                #If there is one frag in the box store it
+                elif len(idx_frags) == 1:
+                    frag = self.fragments_mols[idx_frags[0]]
+                    perc = get_percen_inbox(frag,center,radius[i])
+                    if perc >= 0.75:
+                        frag_name = 'S%s_%s'%(str(i+1),mol_name)
+                        frag.SetProp("_Name",frag_name)
+                        boxes_fragments[i].append(frag)
+
+                #If there is more than one frag in the box, combine them and store the new frag
+                elif len(idx_frags) > 1:
+                    #Get submatrix of connections for the fragments in the box
+                    _connections = self.frags_connections[np.ix_(idx_frags,idx_frags)]
+
+                    #If one of the frags has no connections with te rest it is saved independently
+                    idx_noconn_frags = []
+                    for _idx in range(len(idx_frags)):
+                        idx = idx_frags[_idx]
+                        if sum(_connections[_idx]) == 0:
+                            frag = self.fragments_mols[idx]
+                            perc = get_percen_inbox(frag,center,radius[i])
+                            if perc >= 0.75:
+                                frag_name = 'S%s_%s'%(str(i+1),mol_name)
+                                frag.SetProp("_Name",frag_name)
+                                boxes_fragments[i].append(frag)
+                            idx_noconn_frags.append(idx)
+
+                    #New idx_frags of connected frags
+                    if len(idx_noconn_frags) > 0:
+                        idx_frags = list(set(idx_frags)-set(idx_noconn_frags))
+                    if len(idx_frags) == 0:
+                        continue
+                    else:
+
+                        #Combine all fragments into a single Mol object:
+                        for j in range(len(idx_frags)):
+                            frag0 = self.fragments_mols[idx_frags[j]]
+                            if j == 0:
+                                frag1 = self.fragments_mols[idx_frags[j+1]]
+                                combined_frags = Chem.CombineMols(frag0,frag1)
+                            elif j < len(idx_frags)-1:
+                                frag1 = self.fragments_mols[idx_frags[j+1]]
+                                combined_frags = Chem.CombineMols(combined_frags,frag1)
+
+                        #Remove dummy atoms 'R/*' and add missing bounds
+                        conformer = combined_frags.GetConformer()
+                        coords = {}
+                        todelete = []
+                        toconnect = []
+
+                        #Fill list of atoms index to delete (todelete) and atoms index
+                        # to connect (toconnect)
+                        for idx, atom in enumerate(combined_frags.GetAtoms()):
+                            symbol = atom.GetSymbol()
+                            position = conformer.GetAtomPosition(idx)
+                            key = str(position.x) + str(position.y) + str(position.z)
+                            if symbol != '*':
+                                if key in coords:
+                                    todelete.append(coords[key])
+                                    toconnect.append(idx)
+                                else:
+                                    coords[key]=idx
+                            else:
+                                if key in coords:
+                                    todelete.append(idx)
+                                    if combined_frags.GetAtoms()[coords[key]].GetSymbol() != '*':
+                                        toconnect.append(coords[key])
+                                else:
+                                    coords[key]=idx
+                        toconnect.sort(reverse=True)
+                        if verbose: print(toconnect)
+
+                        #Get mapping between toconnect atom idx (combined_frags) whole ligand atom idx (self.mol)
+                        mapping = {}
+                        for idx_toconnect in toconnect:
+                            atom_toconnect = combined_frags.GetAtoms()[idx_toconnect]
+                            coords_toconnect = get_atom_coords(combined_frags,atom_toconnect)
+                            for idx_mol, atom_mol in enumerate(self.mol.GetAtoms()):
+                                coords_mol = get_atom_coords(self.mol,atom_mol)
+                                if np.linalg.norm(coords_toconnect-coords_mol) == 0:
+                                    mapping[idx_toconnect] = idx_mol
+                        reversed_mapping = {_v: _k for _k, _v in mapping.items()}
+
+                        #Get already existing bonds in combined_frags
+                        old_bonds = []
+                        for bond in combined_frags.GetBonds():
+                            old_bonds.append((bond.GetBeginAtomIdx(),bond.GetEndAtomIdx()))
+                        if verbose: print(old_bonds)
+
+                        _combined_frags = Chem.EditableMol(combined_frags)
+
+                        #Reconstruct the missing bonds between fragments
+                        new_bonds = []
+                        for idx_toconnect in toconnect:
+                            if verbose: print('-----------')
+                            idx_mol = mapping[idx_toconnect]
+                            if verbose: print(idx_toconnect,idx_mol)
+                            atom_mol = self.mol.GetAtoms()[idx_mol]
+                            bonds_atom_mol = atom_mol.GetBonds()
+                            idxs_atom_mol = []
+                            bondTypes_atom_mol = []
+                            for bond in bonds_atom_mol:
+                                idxs_atom_mol.append(bond.GetBeginAtomIdx())
+                                idxs_atom_mol.append(bond.GetEndAtomIdx())
+                                bondTypes_atom_mol.extend([bond.GetBondType()]*2)
+                            if verbose: print(idxs_atom_mol)
+                            for _idx, idx in enumerate(idxs_atom_mol):
+                                if idx == idx_mol: continue
+                                if str(bondTypes_atom_mol[_idx]) == 'AROMATIC': continue
+                                if idx in mapping.values():
+                                    idx2_toconnect = reversed_mapping[idx]
+                                    if verbose: print(idx_toconnect,idx2_toconnect,bondTypes_atom_mol[_idx])
+                                    if (idx_toconnect,idx2_toconnect) not in old_bonds and (idx2_toconnect,idx_toconnect) not in old_bonds and (idx_toconnect,idx2_toconnect) not in new_bonds and (idx2_toconnect,idx_toconnect) not in new_bonds:
+                                        new_bonds.append((idx_toconnect,idx2_toconnect))
+                                        _combined_frags.AddBond(idx_toconnect,idx2_toconnect,bondTypes_atom_mol[_idx])
+
+                        #Delete dummy atoms in todelete
+                        todelete.sort(reverse = True)
+                        for atom in todelete: _combined_frags.RemoveAtom(atom)
+
+                        #Store the new combined frag
+                        new_combined_frags = _combined_frags.GetMol()
+                        Chem.SanitizeMol(new_combined_frags)
+                        frag_name = 'S%s_%s'%(str(i+1),mol_name)
+                        new_combined_frags.SetProp("_Name",frag_name)
+                        boxes_fragments[i].append(new_combined_frags)
+
+            if verbose: print(boxes_fragments)
+            self.boxes_fragments = boxes_fragments
 
     def _get_ligtofrag_atom_mapping(self):
         mapping = {}
         if not hasattr(self, 'fragments_mols'):
-            raise ValueError('BRICS fragments aren\' calculated. Run self.get_BRICS_fragments(smiles=False)')
+            raise ValueError('BRICS fragments aren\'t calculated. Run self.get_fragments_as_mol')
         nfrags = len(self.fragments_mols)
         ligconformer = self.mol.GetConformer()
         lig_atom_coords = {}
         for atom in self.mol.GetAtoms():
             atom_idx = atom.GetIdx()
-            atom_coords = self._get_atom_coords(ligconformer,atom)
+            atom_coords = get_atom_coords(self.mol,atom)
             lig_atom_coords[atom_idx] = atom_coords
             mapping[atom_idx] = [None] * nfrags
         for i,frag in enumerate(self.fragments_mols):
             fragconformer = frag.GetConformer()
             for atom_frag in frag.GetAtoms():
                 atom_frag_idx = atom_frag.GetIdx()
-                atom_frag_coords = self._get_atom_coords(fragconformer,atom_frag)
+                atom_frag_coords = get_atom_coords(frag,atom_frag)
                 for atom_lig_idx, atom_lig_coords in lig_atom_coords.items():
                     dist = np.linalg.norm(atom_frag_coords - atom_lig_coords)
                     if dist == 0:
@@ -788,7 +962,7 @@ class Mol(object):
 
     def _get_frags_connections(self):
         if not hasattr(self, 'fragments_mols'):
-            raise ValueError('BRICS fragments aren\' calculated. Run self.get_BRICS_fragments(smiles=False)')
+            raise ValueError('BRICS fragments aren\'t calculated. Run self.get_fragments_as_mol')
         self._get_ligtofrag_atom_mapping()
         nfrags = len(self.fragments_mols)
         frags_connections = np.zeros((nfrags,nfrags),dtype=int)
@@ -800,7 +974,6 @@ class Mol(object):
                     frags_connections[connection[0]][connection[1]] = 1
                     frags_connections[connection[1]][connection[0]] = 1
         self.frags_connections = frags_connections
-
 
     def get_AllParamaters(self):
         try:
