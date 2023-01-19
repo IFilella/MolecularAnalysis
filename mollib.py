@@ -711,7 +711,7 @@ def get_percen_inbox(mol,center,radius):
 class Mol(object):
     """"""
     """"""
-    def __init__(self ,smile = None, InChI = None, mol2 = None, pdb= None,allparamaters = False, chirality = True):
+    def __init__(self ,smile = None, InChI = None, mol2 = None, pdb= None,allparamaters = False, chirality = True, name = None):
         if smile != None and InChI == None and mol2 == None and pdb == None:
             self.smile = smile
             if not chirality:
@@ -753,6 +753,11 @@ class Mol(object):
             warnings.warn(f'Provide only a smile, a InchI, a mol2 or a pdb')
         if allparamaters:
             self.get_AllParamaters()
+        if name:
+            self.name = name
+        else:
+            self.name = 'unk'
+
 
     def write_mol(self,output):
         file=open(output,'w+')
@@ -792,7 +797,7 @@ class Mol(object):
         if not centers and not radius:
             pass
         else:
-            mol_name = self.mol.GetProp("_Name")
+            mol_name = self.name
             boxes_fragments = [[] for x in range(len(centers))]
             for i,center in enumerate(centers):
                 if verbose: print(center,radius[i])
