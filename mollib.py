@@ -321,10 +321,10 @@ class MolDB(object):
         pca_results = pca.fit_transform(self.fingerprints)
         self._plot_reducer(pca_results,output,kmeans,n_clusters)
 
-    def plot_tSNE(self, output = None, random_max = None, n_iter = 1500, perplexity = 30, fpsalg = 'RDKIT', kmeans = False, n_clusters = 1):
+    def plot_tSNE(self, output = None, random_max = None, n_iter = 1500, perplexity = 30, fpsalg = 'RDKIT', kmeans = False, n_clusters = 1,early_exaggeration=12):
         from sklearn.manifold import TSNE
         self.get_fingerprints(fpsalg, random_max)
-        tsne = TSNE(n_components=2, verbose = 1, learning_rate='auto',init='pca', n_iter=n_iter, perplexity=perplexity,metric='hamming')
+        tsne = TSNE(n_components=2, verbose = 1, learning_rate='auto',init='pca', n_iter=n_iter, perplexity=perplexity,metric='hamming',early_exaggeration=early_exaggeration)
         tsne_results = tsne.fit_transform(np.asarray(self.fingerprints))
         self._plot_reducer(tsne_results,output,kmeans,n_clusters)
 
