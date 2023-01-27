@@ -321,10 +321,10 @@ class MolDB(object):
         pca_results = pca.fit_transform(self.fingerprints)
         self._plot_reducer(pca_results,output,kmeans,n_clusters)
 
-    def plot_tSNE(self, output = None, random_max = None, fpsalg = 'RDKIT', kmeans = False, n_clusters = 1):
+    def plot_tSNE(self, output = None, random_max = None, n_iter = 1500, perplexity = 30, fpsalg = 'RDKIT', kmeans = False, n_clusters = 1):
         from sklearn.manifold import TSNE
         self.get_fingerprints(fpsalg, random_max)
-        tsne = TSNE(n_components=2, verbose = 1, learning_rate='auto',init='pca', n_iter=2500, perplexity=50,metric='hamming')
+        tsne = TSNE(n_components=2, verbose = 1, learning_rate='auto',init='pca', n_iter=n_iter, perplexity=perplexity,metric='hamming')
         tsne_results = tsne.fit_transform(np.asarray(self.fingerprints))
         self._plot_reducer(tsne_results,output,kmeans,n_clusters)
 
@@ -346,11 +346,11 @@ class MolDB(object):
         if kmeans:
             labels,centroids,clusters = self._get_kmeans(n_clusters,reducer_results)
             df = pd.DataFrame(dict(xaxis=reducer_results[:,0], yaxis=reducer_results[:,1],  cluster = labels))
-            sns.scatterplot('xaxis', 'yaxis', data=df, hue='cluster',alpha = 0.8, s=15,style='cluster',palette = sns.color_palette("hls", n_clusters))
+            sns.scatterplot(data=df, x='xaxis', y='yaxis', hue='cluster',alpha = 0.8, s=15,style='cluster',palette = sns.color_palette("hls", n_clusters))
             plt.scatter(centroids[:,0], centroids[:,1], marker="x", color='r')
         else:
             df = pd.DataFrame(dict(xaxis=reducer_results[:,0], yaxis=reducer_results[:,1]))
-            sns.scatterplot('xaxis', 'yaxis', data=df, alpha = 0.8, s=15)
+            sns.scatterplot(data=df, x = 'xaxis', y = 'yaxis', alpha = 0.8, s=15)
         if output != None:
             plt.savefig(output+'.png',dpi=300)
 
@@ -364,7 +364,7 @@ class MolDB(object):
         plt.figure()
 
         if zkey == None:
-            ax=sns.scatterplot(x='NPR1',y='NPR2',data=self.table,s=25,linewidth=0.5,alpha=1)
+            ax=sns.scatterplot(data=self.table, x='NPR1',y='NPR2',s=25,linewidth=0.5,alpha=1)
         else:
             x = self.table['NPR1'].tolist()
             y = self.table['NPR2'].tolist()
@@ -425,7 +425,7 @@ class MolDB(object):
         plt.rcParams['axes.linewidth'] = 1.5
         plt.figure(figsize=(6,6))
 
-        ax=sns.scatterplot(x='PC1_normalized',y='PC2_normalized',data=descriptors_pca,s=20,palette=sns.color_palette("Set2", 3),linewidth=0.2,alpha=1)
+        ax=sns.scatterplot(data=descriptors_pca, x='PC1_normalized',y='PC2_normalized',s=20,palette=sns.color_palette("Set2", 3),linewidth=0.2,alpha=1)
 
         plt.xlabel ('PC1',fontsize=20,fontweight='bold')
         ax.xaxis.set_label_coords(0.98, 0.45)
