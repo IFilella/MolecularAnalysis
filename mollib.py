@@ -209,9 +209,21 @@ class MolDB(object):
         self._get_total_mols()
         self.table = None
 
-    def get_adjmatrix_similarities(self):
-        adj_similarities = np.zeros((PELEDB.size,PELEDB.size))
+    def get_adjmatrix_similarities(self,fingerprint='Morgan4',metric = 'Tanimoto',verbose=True):
+        adj_similarities = np.zeros((self.size,self.size))
         print(adj_similarities)
+        for i,mol in enumerate(self.mols):
+            for j,mol in enumerate(self.mols):
+                if i<j:
+                    if verbose: print('%d/%d'%(i+1,self.size))
+                    sim = get_MolSimilarity(self.mols[i],self.mols[j],fingerprint=fingerprint,metric=metric)
+                    adj_similarities[i][j] = sim
+                    adj_similarities[j][i] = sim
+                elif i==j:
+                    adj_similarities[i][i] = 1
+                else:
+                    continue
+        self.adj_similarities = adj_similarities
 
 
     def get_all_fragments_as_smile(self):
