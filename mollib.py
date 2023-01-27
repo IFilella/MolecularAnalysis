@@ -195,8 +195,24 @@ class MolDB(object):
             if verbose: print('Unique molecules %d.\nRepeated SMILES: %d'%(len(self.dicDB.keys()),counteq))
         else:
             raise KeyError('Provide only a txtDB, a dicDB, or a sdfDB')
+        self.smiles = self.dicDB.keys()
+        mols = []
+        eqsmiles = []
+        IDs = []
+        for smile in self.smiles:
+            mols.append(self.dicDB[smile][2])
+            IDs.append(self.dicDB[smile][1])
+            eqsmiles.append(self.dicDB[smile][0])
+        self.mols = mols
+        self.eqsmiles = eqsmiles
+        self.IDs = IDs
         self._get_total_mols()
         self.table = None
+
+    def get_adjmatrix_similarities(self):
+        adj_similarities = np.zeros((PELEDB.size,PELEDB.size))
+        print(adj_similarities)
+
 
     def get_all_fragments_as_smile(self):
         """
