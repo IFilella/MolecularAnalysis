@@ -33,6 +33,7 @@ def join_MolDBs(dbs):
                 new_eqSMILES = db.dicDB[key][0].split(',')
                 total_eqSMILES = ','.join(list(set(old_eqSMILES + new_eqSMILES)))
                 new_dicDB[key][0] = total_eqSMILES
+                IDs = new_dicDB[key][1]
                 new_dicDB[key][1]+=',%s'%IDs
     moldb = MolDB(dicDB=new_dicDB)
     return moldb
@@ -154,7 +155,7 @@ class MolDB(object):
             self.dicDB = dicDB
         elif txtDB == None and dicDB == None and sdfDB != None and pdbList == None:
             self.dicDB = {}
-            DB = Chem.SDMolSupplier(sdfDB)
+            DB = Chem.SDMolSupplier(sdfDB,removeHs = False)
             counteq = 0
             for i,cpd in enumerate(DB):
                 mol = Mol(mol2 = cpd, allparamaters = self.paramaters, chirality = self.chirality)
@@ -516,17 +517,17 @@ class MolDB(object):
             plt.tight_layout()
             plt.savefig(output,dpi=300)
 
-    def save_MolDB(self,output):
+    def save_topickle(self,output):
         with open(output+'.pickle', 'wb') as handle:
             pickle.dump(self, handle)
 
-    def print_MolDB(self,output):
+    def print_totext(self,output):
         f = open(output+'.txt','w')
         for k in self.dicDB.keys():
             f.write(k + " " + str(self.dicDB[k][0]) + " " + str(self.dicDB[k][1]) + '\n')
         f.close()
 
-    def save_MolDB_sdf(self,output):
+    def save_tosdf(self,output):
         with Chem.SDWriter(output) as w:
             for k in self.dicDB.keys():
                 mol = self.dicDB[k][2].mol
