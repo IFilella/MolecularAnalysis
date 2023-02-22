@@ -4,6 +4,7 @@ from rdkit.Chem import AllChem
 from rdkit import DataStructs
 import rdkit.Chem.Lipinski as Lipinski
 import rdkit.Chem.Descriptors as Descriptors
+from rdkit.Chem.Scaffolds import MurckoScaffold
 import re
 import warnings
 import pickle
@@ -158,25 +159,25 @@ class MolDB(object):
             DB = Chem.SDMolSupplier(sdfDB,removeHs = False)
             counteq = 0
             for i,cpd in enumerate(DB):
-                mol = Mol(mol2 = cpd, allparamaters = self.paramaters, chirality = self.chirality)
+                try:
+                    name = cpd.GetProp("_Name")
+                except:
+                    name = 'unk'
+                if name == '' or name == 'unk':
+                    try:
+                        name = cpd.GetProp("Catalog ID")
+                    except:
+                        pass
+                mol = Mol(rdkitmol = cpd, allparamaters = self.paramaters, chirality = self.chirality,name =name)
                 if mol.error == -1: continue
                 SMILE = mol.smile
                 eqSMILES = SMILE
-                try:
-                    IDs = mol.mol.GetProp("_Name")
-                except:
-                    IDs = 'None'
-                if IDs == '' or IDs == 'None':
-                    try:
-                        IDs = mol.mol.GetProp("Catalog ID")
-                    except:
-                        pass
                 if SMILE not in self.dicDB:
-                    self.dicDB[SMILE] = [eqSMILES,IDs,mol]
+                    self.dicDB[SMILE] = [eqSMILES,name,mol]
                 else:
                     counteq+=1
-                    self.dicDB[SMILE][1]+=',%s'%IDs
-                if verbose: print(i+1,IDs,SMILE)
+                    self.dicDB[SMILE][1]+=',%s'%name
+                if verbose: print(i+1,name,SMILE)
             if verbose: print('Repeated SMILES: %d'%counteq)
         elif txtDB == None and dicDB == None and sdfDB == None and pdbList != None:
             self.dicDB = {}
@@ -787,7 +788,6 @@ class Mol(object):
         else:
             self.name = 'unk'
 
-
     def write_mol(self,output):
         file=open(output,'w+')
         file.write(Chem.MolToMolBlock(self.mol))
@@ -805,6 +805,9 @@ class Mol(object):
             file=open('%s%d.mol'%(outname,i),'w+')
             file.write(Chem.MolToMolBlock(frag))
             file.close()
+
+    def get_scaffold(self):
+        self.scaffold = MurckoScaffold.GetScaffoldForMol(self.mol)
 
     def get_fragments_as_smile(self,clean=True):
         """
