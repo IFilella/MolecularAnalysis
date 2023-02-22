@@ -740,8 +740,8 @@ def get_percen_inbox(mol,center,radius):
 class Mol(object):
     """"""
     """"""
-    def __init__(self ,smile = None, InChI = None, mol2 = None, pdb= None,allparamaters = False, chirality = True, name = None):
-        if smile != None and InChI == None and mol2 == None and pdb == None:
+    def __init__(self ,smile = None, InChI = None, rdkitmol = None, pdb= None,allparamaters = False, chirality = True, name = None):
+        if smile != None and InChI == None and rdkitmol == None and pdb == None:
             self.smile = smile
             if not chirality:
                 self.smile = self.smile.replace("@","")
@@ -750,7 +750,7 @@ class Mol(object):
                 self.error = -1
             else:
                 self.error = 0
-        elif smile == None and InChI != None and mol2 == None and pdb == None:
+        elif smile == None and InChI != None and rdkitmol == None and pdb == None:
             self.InChI = InChI
             self.mol = Chem.MolFromInchi(self.InChI)
             if self.mol == None:
@@ -760,8 +760,8 @@ class Mol(object):
             self.smile = Chem.MolToSmiles(self.mol)
             if not chirality:
                 self.smile = self.smile.replace("@","")
-        elif smile == None and InChI == None and mol2 != None and pdb == None:
-            self.mol = mol2
+        elif smile == None and InChI == None and rdkitmol != None and pdb == None:
+            self.mol = rdkitmol
             if self.mol == None:
                 self.error = -1
             else:
@@ -769,7 +769,7 @@ class Mol(object):
             self.smile = Chem.MolToSmiles(self.mol)
             if not chirality:
                 self.smile = self.smile.replace("@","")
-        elif smile == None and InChI == None and mol2 == None and pdb != None:
+        elif smile == None and InChI == None and rdkitmol == None and pdb != None:
             self.mol = Chem.MolFromPDBFile(pdb)
             if self.mol == None:
                 self.error = -1
@@ -779,7 +779,7 @@ class Mol(object):
             if not chirality:
                 self.smile = self.smile.replace("@","")
         else:
-            warnings.warn(f'Provide only a smile, a InchI, a mol2 or a pdb')
+            warnings.warn(f'Provide only a smile, a InchI, a rdkitmol or a pdb')
         if allparamaters:
             self.get_AllParamaters()
         if name:
