@@ -177,6 +177,10 @@ class MolDB(object):
                 else:
                     counteq+=1
                     self.dicDB[SMILE][1]+=',%s'%name
+                    old_eqSMILES = self.dicDB[SMILE][0].split(',')
+                    new_eqSMILES = eqSMILES.split(',')
+                    total_eqSMILES = ','.join(list(set(old_eqSMILES + new_eqSMILES)))
+                    self.dicDB[SMILE][0] = total_eqSMILES
                 if verbose: print(i+1,name,SMILE)
             if verbose: print('Repeated SMILES: %d'%counteq)
         elif txtDB == None and dicDB == None and sdfDB == None and pdbList != None:
@@ -193,6 +197,10 @@ class MolDB(object):
                 else:
                     counteq+=1
                     self.dicDB[SMILE][1]+=',%s'%IDs
+                    old_eqSMILES = self.dicDB[SMILE][0].split(',')
+                    new_eqSMILES = eqSMILES.split(',')
+                    total_eqSMILES = ','.join(list(set(old_eqSMILES + new_eqSMILES)))
+                    self.dicDB[SMILE][0] = total_eqSMILES
                 if verbose: print(i+1,IDs,SMILE)
             if verbose: print('Unique molecules %d.\nRepeated SMILES: %d'%(len(self.dicDB.keys()),counteq))
         else:
@@ -785,6 +793,7 @@ class Mol(object):
             self.get_AllParamaters()
         if name:
             self.name = name
+            self.mol.SetProp('_Name', self.name)
         else:
             self.name = 'unk'
 
