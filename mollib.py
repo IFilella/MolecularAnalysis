@@ -117,7 +117,7 @@ class MolDB(object):
     """""
     Class to store a database of molecules/fragments.
     It takes as input:
-    - txtDB: file  of format 'SMILE equivalentSMILES IDs'
+    - smiDB: file  of format SMILES
     - sdfDB: molecular DB in sdf format
     - dicDB: precalculated MolDB object
     - pdbList:
@@ -127,34 +127,32 @@ class MolDB(object):
     If paramaters flag is given multiple paramaters of each molecule such as NumAtoms or NOCount are
     calculated and stored.
     """""
-    def __init__(self, txtDB = None, dicDB = None, sdfDB = None, pdbList = None, paramaters = False, chirality = True, verbose = True):
+    def __init__(self, smiDB = None, molDB = None, sdfDB = None, pdbList = None, molList = None ,paramaters = False, chirality = True, verbose = True):
         self.paramaters = paramaters
         self.chirality = chirality
-        if txtDB != None and dicDB == None and sdfDB == None and pdbList == None:
+        if smiDB != None and dicDB == None and sdfDB == None and pdbList == None and molList == None:
             self.dicDB = {}
-            db = open(txtDB,'r')
+            db = open(smiDB,'r')
+            count = 0
             counteq = 0
             for i,line in enumerate(db):
-                line = line.split()
-                SMILE = line[0]
-                eqSMILES = line[1]
-                IDs = line[2]
+                line = line.replace('\n','')
+                SMILE = line
                 mol = Mol(smile=SMILE,allparamaters = self.paramaters, chirality = self.chirality)
                 if mol.error == -1: continue
                 if SMILE not in self.dicDB:
-                    self.dicDB[SMILE] = [eqSMILES,IDs,mol]
+                    count+=1
+                    self.dicDB[SMILE] = [SMILE,'unk',mol]
                 else:
                     counteq+=1
-                    old_eqSMILES = self.dicDB[SMILE][0].split(',')
-                    new_eqSMILES = eqSMILES.split(',')
-                    total_eqSMILES = ','.join(list(set(old_eqSMILES + new_eqSMILES)))
-                    self.dicDB[SMILE][1]+=',%s'%IDs
-                    self.dicDB[SMILE][0] = total_eqSMILES
-                if verbose: print(i+1,IDs,SMILE)
+                    continue
+                if verbose: print(count+1,SMILE)
             if verbose: print('Repeated SMILES: %d'%counteq)
-        elif txtDB == None and dicDB != None and sdfDB == None and pdbList == None:
-            self.dicDB = dicDB
-        elif txtDB == None and dicDB == None and sdfDB != None and pdbList == None:
+        elif smiDB == None and molDB != None and sdfDB == None and pdbList == None and molList == None:
+            with open(molDB, 'rb') as f:
+                molDBobject = pickle.load(f)
+            self.dicDB = molDBobject.dicDB
+        elif smiDB == None and molDB == None and sdfDB != None and pdbList == None and molList == None:
             self.dicDB = {}
             DB = Chem.SDMolSupplier(sdfDB,removeHs = False)
             counteq = 0
@@ -183,7 +181,7 @@ class MolDB(object):
                     self.dicDB[SMILE][0] = total_eqSMILES
                 if verbose: print(i+1,name,SMILE)
             if verbose: print('Repeated SMILES: %d'%counteq)
-        elif txtDB == None and dicDB == None and sdfDB == None and pdbList != None:
+        elif smiDB == None and molDB == None and sdfDB == None and pdbList != None and molList == None:
             self.dicDB = {}
             counteq = 0
             for i,pdb in enumerate(pdbList):
@@ -203,8 +201,25 @@ class MolDB(object):
                     self.dicDB[SMILE][0] = total_eqSMILES
                 if verbose: print(i+1,IDs,SMILE)
             if verbose: print('Unique molecules %d.\nRepeated SMILES: %d'%(len(self.dicDB.keys()),counteq))
+        elif smiDB == None and molDB == None and sdfDB == None and pdbList == None and molList != None:
+            self.dicDB = {}
+            counteq = 0
+            for i,molobject in enumerate(molList):
+                mol = molobject.mol
+                SMILE = molobject.smile
+                if SMILE not in self.dicDB:
+                    self.dicDB[SMILE] = [SMILE,mol.name,mol]
+                else:
+                    counteq+=1
+                    self.dicDB[SMILE][1]+=',%s'%mol.name
+                    old_eqSMILES = self.dicDB[SMILE][0].split(',')
+                    new_eqSMILES = [mol.name]
+                    total_eqSMILES = ','.join(list(set(old_eqSMILES + new_eqSMILES)))
+                    self.dicDB[SMILE][0] = total_eqSMILES
+                if verbose: print(i+1,mol.name,SMILE)
+            if verbose: print('Unique molecules %d.\nRepeated SMILES: %d'%(len(self.dicDB.keys()),counteq))
         else:
-            raise KeyError('Provide only a txtDB, a dicDB, or a sdfDB')
+            raise KeyError('Provide only a smiDB, a molDB object, a sdfDB, a pdbList or a molList')
         self.smiles = self.dicDB.keys()
         mols = []
         eqsmiles = []
@@ -353,6 +368,7 @@ class MolDB(object):
         self._plot_reducer(tri_results,output,kmeans,n_clusters)
 
     def _plot_reducer(self,reducer_results, output = None, kmeans = False, n_clusters = 1):
+        plt.figure()
         if kmeans:
             labels,centroids,clusters = self._get_kmeans(n_clusters,reducer_results)
             df = pd.DataFrame(dict(xaxis=reducer_results[:,0], yaxis=reducer_results[:,1],  cluster = labels))
@@ -826,7 +842,7 @@ class Mol(object):
         if clean:
             self.fragments_smiles = [re.sub("(\[[0-9]+\*\])", "[*]", frag) for frag in self.fragments_smiles]
 
-    def get_fragments_as_mol(self,centers=[],radius=[], verbose=True):
+    def get_fragments_as_mol(self,centers=[],radius=[], verbose=True, clean=False, partialperc = 0.5, recomposeperc = 0.75):
         """
         Get BRICS fragments as mol
         If a list of centers and radius ara provided the fragments will be reconstructed to
@@ -847,7 +863,7 @@ class Mol(object):
                 idx_frags = []
                 for j, frag in enumerate(self.fragments_mols):
                     perc = get_percen_inbox(frag,center,radius[i])
-                    if perc >= 0.5: idx_frags.append(j)
+                    if perc >= partialperc: idx_frags.append(j)
                 if verbose: print(idx_frags)
 
                 #If there are no frags in the box go to the next box
@@ -857,9 +873,12 @@ class Mol(object):
                 elif len(idx_frags) == 1:
                     frag = self.fragments_mols[idx_frags[0]]
                     perc = get_percen_inbox(frag,center,radius[i])
-                    if perc >= 0.75:
+                    if perc >= recomposeperc:
                         frag_name = 'S%s_%s'%(str(i+1),mol_name)
                         frag.SetProp("_Name",frag_name)
+                        if clean:
+                            frag = self.clean_rdkitmol(frag)
+                            if frag == -1: continue
                         boxes_fragments[i].append(frag)
 
                 #If there is more than one frag in the box, combine them and store the new frag
@@ -874,7 +893,7 @@ class Mol(object):
                         if sum(_connections[_idx]) == 0:
                             frag = self.fragments_mols[idx]
                             perc = get_percen_inbox(frag,center,radius[i])
-                            if perc >= 0.75:
+                            if perc >= recomposeperc:
                                 frag_name = 'S%s_%s'%(str(i+1),mol_name)
                                 frag.SetProp("_Name",frag_name)
                                 boxes_fragments[i].append(frag)
@@ -976,12 +995,38 @@ class Mol(object):
                         #Store the new combined frag
                         new_combined_frags = _combined_frags.GetMol()
                         Chem.SanitizeMol(new_combined_frags)
+
+                        #If clean remove dummy atoms
+                        if clean:
+                            new_combined_frags = self.clean_rdkitmol(new_combined_frags)
+                            if new_combined_frags == -1: continue
+
                         frag_name = 'S%s_%s'%(str(i+1),mol_name)
                         new_combined_frags.SetProp("_Name",frag_name)
                         boxes_fragments[i].append(new_combined_frags)
 
             if verbose: print(boxes_fragments)
             self.boxes_fragments = boxes_fragments
+
+    def clean_rdkitmol(self,rdkitmol):
+        """
+        remove dummy atoms from an rdkit mol object
+        """
+        _rdkitmol = Chem.EditableMol(rdkitmol)
+        todelete = []
+        for idx,atom in enumerate(rdkitmol.GetAtoms()):
+            atomtype = atom.GetSymbol()
+            if atomtype == '*': todelete.append(idx)
+        todelete.sort(reverse = True)
+        for idx in todelete: _rdkitmol.RemoveAtom(idx)
+        new_rdkitmol = _rdkitmol.GetMol()
+        try:
+            Chem.SanitizeMol(new_rdkitmol)
+        except:
+            print('ERROR in %s'%self.name)
+            return -1
+        return new_rdkitmol
+
 
     def _get_ligtofrag_atom_mapping(self):
         mapping = {}
