@@ -40,13 +40,15 @@ def join_MolDBs(dbs):
     return moldb
 
 def intersect_MolDBs(db1,db2,simt,fingerprint='RDKIT',output=None,verbose=True):
-    db3 = copy.deepcopy(db1)
+    db3 = copy.copy(db1)
     keepkeys_db1 = []
     keepkeys_db2 = []
     hitsSMILE = 0
     hitsSimilarity = 0
     for i,k1 in enumerate(db1.dicDB.keys()):
         m1 = db1.dicDB[k1][2]
+        print(m1)
+        exit()
         SMILE1 = k1
         for k2 in db2.dicDB.keys():
             m2 = db2.dicDB[k2][2]
@@ -139,6 +141,7 @@ class MolDB(object):
                 line = line.replace('\n','')
                 SMILE = line
                 mol = Mol(smile=SMILE,allparamaters = self.paramaters, chirality = self.chirality)
+                print(mol)
                 if mol.error == -1: continue
                 if SMILE not in self.dicDB:
                     count+=1
