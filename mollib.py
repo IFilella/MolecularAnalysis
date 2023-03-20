@@ -130,7 +130,7 @@ class MolDB(object):
     def __init__(self, smiDB = None, molDB = None, sdfDB = None, pdbList = None, molList = None ,paramaters = False, chirality = True, verbose = True):
         self.paramaters = paramaters
         self.chirality = chirality
-        if smiDB != None and dicDB == None and sdfDB == None and pdbList == None and molList == None:
+        if smiDB != None and molDB == None and sdfDB == None and pdbList == None and molList == None:
             self.dicDB = {}
             db = open(smiDB,'r')
             count = 0
@@ -207,16 +207,17 @@ class MolDB(object):
             for i,molobject in enumerate(molList):
                 mol = molobject.mol
                 SMILE = molobject.smile
+                name = molobject.name
                 if SMILE not in self.dicDB:
-                    self.dicDB[SMILE] = [SMILE,mol.name,mol]
+                    self.dicDB[SMILE] = [SMILE,name,mol]
                 else:
                     counteq+=1
-                    self.dicDB[SMILE][1]+=',%s'%mol.name
+                    self.dicDB[SMILE][1]+=',%s'%name
                     old_eqSMILES = self.dicDB[SMILE][0].split(',')
-                    new_eqSMILES = [mol.name]
+                    new_eqSMILES = [name]
                     total_eqSMILES = ','.join(list(set(old_eqSMILES + new_eqSMILES)))
                     self.dicDB[SMILE][0] = total_eqSMILES
-                if verbose: print(i+1,mol.name,SMILE)
+                if verbose: print(i+1,name,SMILE)
             if verbose: print('Unique molecules %d.\nRepeated SMILES: %d'%(len(self.dicDB.keys()),counteq))
         else:
             raise KeyError('Provide only a smiDB, a molDB object, a sdfDB, a pdbList or a molList')
@@ -546,10 +547,10 @@ class MolDB(object):
         with open(output+'.pickle', 'wb') as handle:
             pickle.dump(self, handle)
 
-    def print_totext(self,output):
-        f = open(output+'.txt','w')
-        for k in self.dicDB.keys():
-            f.write(k + " " + str(self.dicDB[k][0]) + " " + str(self.dicDB[k][1]) + '\n')
+    def save_tosmi(self,output):
+        f = open(output,'w')
+        for smile in self.smiles:
+            f.write('%s\n'%smile)
         f.close()
 
     def save_tosdf(self,output):
@@ -736,6 +737,18 @@ class MolDB(object):
                 if count % 500 == 0:  print('Analized compounds: %d'%count)
         self.dicDB = new_dicDB
         self._get_total_mols()
+        self.smiles = self.dicDB.keys()
+        mols = []
+        eqsmiles = []
+        IDs = []
+        for smile in self.smiles:
+            mols.append(self.dicDB[smile][2])
+            IDs.append(self.dicDB[smile][1])
+            eqsmiles.append(self.dicDB[smile][0])
+        self.mols = mols
+        self.eqsmiles = eqsmiles
+        self.IDs = IDs
+        self.table = None
 
 
 def get_atom_coords(mol,atom):
