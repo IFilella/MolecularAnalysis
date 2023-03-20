@@ -47,8 +47,6 @@ def intersect_MolDBs(db1,db2,simt,fingerprint='RDKIT',output=None,verbose=True):
     hitsSimilarity = 0
     for i,k1 in enumerate(db1.dicDB.keys()):
         m1 = db1.dicDB[k1][2]
-        print(m1)
-        exit()
         SMILE1 = k1
         for k2 in db2.dicDB.keys():
             m2 = db2.dicDB[k2][2]
@@ -59,13 +57,14 @@ def intersect_MolDBs(db1,db2,simt,fingerprint='RDKIT',output=None,verbose=True):
                 keepkeys_db1.append(SMILE1)
                 keepkeys_db2.append(SMILE2)
                 break
-            #if m1.NumAtoms != m2.NumAtoms: continue
-            #if m1.NOCount != m2.NOCount: continue
-            #if m1.NHOHCount != m2.NHOHCount: continue
-            #if m1.RingCount != m2.RingCount: continue
-            #if m1.FractionCSP3 != m2.FractionCSP3: continue
-            #if m1.NumAliphaticRings != m2.NumAliphaticRings: continue
-            #if m1.NumAromaticRings != m2.NumAromaticRings: continue
+            if simt == 1:
+                if m1.NumAtoms != m2.NumAtoms: continue
+                if m1.NOCount != m2.NOCount: continue
+                if m1.NHOHCount != m2.NHOHCount: continue
+                if m1.RingCount != m2.RingCount: continue
+                if m1.FractionCSP3 != m2.FractionCSP3: continue
+                if m1.NumAliphaticRings != m2.NumAliphaticRings: continue
+                if m1.NumAromaticRings != m2.NumAromaticRings: continue
             similarity = get_MolSimilarity(m1,m2,fingerprint=fingerprint)
             if similarity >= simt:
                 hitsSimilarity += 1
@@ -141,7 +140,6 @@ class MolDB(object):
                 line = line.replace('\n','')
                 SMILE = line
                 mol = Mol(smile=SMILE,allparamaters = self.paramaters, chirality = self.chirality)
-                print(mol)
                 if mol.error == -1: continue
                 if SMILE not in self.dicDB:
                     count+=1
@@ -208,11 +206,10 @@ class MolDB(object):
             self.dicDB = {}
             counteq = 0
             for i,molobject in enumerate(molList):
-                mol = molobject.mol
                 SMILE = molobject.smile
                 name = molobject.name
                 if SMILE not in self.dicDB:
-                    self.dicDB[SMILE] = [SMILE,name,mol]
+                    self.dicDB[SMILE] = [SMILE,name,molobject]
                 else:
                     counteq+=1
                     self.dicDB[SMILE][1]+=',%s'%name
