@@ -561,7 +561,7 @@ class MolDB(object):
                 mol.SetProp("_Name",ID)
                 w.write(mol,)
 
-    def get_fingerprints(self, alg='RDKIT', random_max=None):
+    def get_fingerprints(self, alg='RDKIT', random_max=None,verbose=False):
         fps = []
         if random_max == None:
             keys = self.dicDB.keys()
@@ -573,7 +573,7 @@ class MolDB(object):
             keys = random.sample(list(self.dicDB.keys()), random_max)
             total = len(keys)
         for i,k in enumerate(keys):
-            print(alg + ': ' + str(i) + '/' + str(total))
+            if verbose: print(alg + ': ' + str(i) + '/' + str(total))
             mol = self.dicDB[k][2]
             molfp = mol.get_FingerPrint(alg)
             molfp = np.asarray(list((molfp.ToBitString())))
