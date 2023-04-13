@@ -7,7 +7,8 @@ import rdkit.Chem.Descriptors as Descriptors
 from rdkit.Chem.Scaffolds import MurckoScaffold
 import re
 import warnings
-import pickle
+#import pickle
+import dill as pickle
 import copy
 import numpy as np
 import pandas as pd
