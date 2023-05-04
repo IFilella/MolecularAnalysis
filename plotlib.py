@@ -78,7 +78,8 @@ def _plot_reducer(reducer_results,Y,output,colors,sizes,alphas, linewidths, mark
         g = sns.scatterplot(data=df, x='xaxis', y='yaxis', hue='molDB',palette=colors, alpha=alphas, size='sizes',linewidth=linewidths,style='molDB',markers=markers)
     h,l = g.get_legend_handles_labels()
     n = len(set(df['molDB'].values.tolist()))
-    plt.legend(h[0:n+1],l[0:n+1])#,bbox_to_anchor=(1.05, 1)), loc=2, borderaxespad=0.)
+    #plt.legend(frameon=False, title=None)
+    plt.legend(h[0:n+1],l[0:n+1]) #,bbox_to_anchor=(1.05, 1)), loc=2, borderaxespad=0.)
     plt.tight_layout()
     if output != None:
         plt.savefig(output+'.pdf',dpi=500)

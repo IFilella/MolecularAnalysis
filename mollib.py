@@ -24,21 +24,24 @@ from collections import Counter
 
 #test
 
-def join_MolDBs(dbs):
-    new_dicDB = {}
-    for db in dbs:
+def join_MolDBs(dbs,simfilter=None):
+    #new_dicDB = {}
+    new_db = copy.copy(dbs[0])
+    for db in dbs[1:]:
         for key in db.dicDB.keys():
-            if key not in new_dicDB.keys():
-                new_dicDB[key] = db.dicDB[key]
+            if key not in new_db.dicDB.keys():
+                new_db.dicDB[key] = db.dicDB[key]
             else:
-                old_eqSMILES = new_dicDB[key][0].split(',')
+                old_eqSMILES = new_db.dicDB[key][0].split(',')
                 new_eqSMILES = db.dicDB[key][0].split(',')
                 total_eqSMILES = ','.join(list(set(old_eqSMILES + new_eqSMILES)))
-                new_dicDB[key][0] = total_eqSMILES
-                IDs = new_dicDB[key][1]
-                new_dicDB[key][1]+=',%s'%IDs
-    moldb = MolDB(dicDB=new_dicDB)
-    return moldb
+                new_db.dicDB[key][0] = total_eqSMILES
+                IDs = new_db.dicDB[key][1]
+                new_db.dicDB[key][1]+=',%s'%IDs
+    new_db._update()
+    if simfilter != None:
+        new_db.filter_similarity(simthreshold=simfilter,fingerprint='Morgan4',verbose=False)
+    return new_db
 
 def intersect_MolDBs(db1,db2,simt,fingerprint='RDKIT',output=None,verbose=True):
     db3 = copy.copy(db1)
@@ -222,6 +225,9 @@ class MolDB(object):
             if verbose: print('Unique molecules %d.\nRepeated SMILES: %d'%(len(self.dicDB.keys()),counteq))
         else:
             raise KeyError('Provide only a smiDB, a molDB object, a sdfDB, a pdbList or a molList')
+        self._update()
+
+    def _update(self):
         self.smiles = self.dicDB.keys()
         mols = []
         eqsmiles = []
@@ -235,6 +241,7 @@ class MolDB(object):
         self.IDs = IDs
         self._get_total_mols()
         self.table = None
+
 
     def get_adjmatrix_similarities(self,fingerprint='Morgan4',metric = 'Tanimoto',verbose=True):
         adj_similarities = np.zeros((self.size,self.size))
