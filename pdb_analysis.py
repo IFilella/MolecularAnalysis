@@ -320,8 +320,8 @@ class VolumeOverlappingMatrix(object):
                 ID = line.split(delimiter)[del_position]
                 if ID not in IDs:
                     IDs.append(ID)
-        self.matrix.set_axis(IDs, axis=1, inplace=True)
-        self.matrix.set_axis(IDs, axis=0, inplace=True)
+        self.matrix = self.matrix.set_axis(axis=1, labels=IDs)
+        self.matrix = self.matrix.set_axis(axis=0, labels=IDs)
         self.IDs = IDs
 
     def plot_hierarchical(self,out,fontsize=1):
