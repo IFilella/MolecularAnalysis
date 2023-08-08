@@ -1,0 +1,257 @@
+REMARK AtomGroup mrtx1133_2pos
+HETATM    1  C1  LIG L 202      -5.185   3.184 -22.137  1.00 10.36           C  
+ANISOU    1  C1  LIG L 202     1620   1116   1200     43    147    112       C  
+HETATM    2  C2  LIG L 202      -5.368   3.329 -23.517  1.00 10.44           C  
+ANISOU    2  C2  LIG L 202     1632   1139   1196     36    148    111       C  
+HETATM    3  C3  LIG L 202      -3.890   3.058 -21.618  1.00 10.33           C  
+ANISOU    3  C3  LIG L 202     1605   1113   1207     42    151    111       C  
+HETATM    4  C4  LIG L 202      -2.919   3.310 -23.881  1.00 10.35           C  
+ANISOU    4  C4  LIG L 202     1613   1106   1212     35    148    101       C  
+HETATM    5  C5  LIG L 202      -2.757   3.100 -22.466  1.00 10.29           C  
+ANISOU    5  C5  LIG L 202     1603   1102   1203     44    149    105       C  
+HETATM    6  C6  LIG L 202      -4.257   3.386 -24.380  1.00 10.45           C  
+ANISOU    6  C6  LIG L 202     1637   1125   1207     28    152    107       C  
+HETATM    7  C7  LIG L 202      -3.469   3.601 -26.674  1.00 10.49           C  
+ANISOU    7  C7  LIG L 202     1661   1110   1215     22    149     99       C  
+HETATM    8  C8  LIG L 202       6.533   3.221 -21.423  1.00  9.48           C  
+ANISOU    8  C8  LIG L 202     1327    980   1295      2    231     -7       C  
+HETATM    9  C9  LIG L 202       5.980   3.044 -23.932  1.00  9.49           C  
+ANISOU    9  C9  LIG L 202     1327    976   1300     -2    223      7       C  
+HETATM   10  C10 LIG L 202      -4.523   3.524 -25.756  1.00 10.48           C  
+ANISOU   10  C10 LIG L 202     1659   1113   1209     22    158    103       C  
+HETATM   11  C11 LIG L 202       2.275   3.738 -23.898  1.00  9.70           C  
+ANISOU   11  C11 LIG L 202     1411    987   1290     16    176     31       C  
+HETATM   12  C12 LIG L 202       1.460   4.876 -23.660  1.00  9.76           C  
+ANISOU   12  C12 LIG L 202     1429    987   1291     32    171     36       C  
+HETATM   13  C13 LIG L 202       3.287   6.021 -22.886  1.00  9.86           C  
+ANISOU   13  C13 LIG L 202     1414   1006   1326    -15    168      2       C  
+HETATM   14  C14 LIG L 202       3.649   3.842 -23.548  1.00  9.63           C  
+ANISOU   14  C14 LIG L 202     1374    982   1303     23    185     13       C  
+HETATM   15  C15 LIG L 202       1.676   2.597 -24.481  1.00  9.81           C  
+ANISOU   15  C15 LIG L 202     1441   1007   1279     14    164     47       C  
+HETATM   16  C16 LIG L 202      -0.420   3.584 -24.507  1.00 10.01           C  
+ANISOU   16  C16 LIG L 202     1507   1035   1262     22    157     72       C  
+HETATM   17  C17 LIG L 202       0.091   4.786 -23.975  1.00  9.82           C  
+ANISOU   17  C17 LIG L 202     1454   1003   1273     46    161     54       C  
+HETATM   18  C18 LIG L 202      -1.850   3.453 -24.833  1.00 10.26           C  
+ANISOU   18  C18 LIG L 202     1587   1082   1228     13    150     92       C  
+HETATM   19  C19 LIG L 202       5.129   7.368 -22.148  1.00 10.36           C  
+ANISOU   19  C19 LIG L 202     1500   1054   1381    -97    160    -33       C  
+HETATM   20  C20 LIG L 202       4.222   1.528 -22.957  1.00  9.52           C  
+ANISOU   20  C20 LIG L 202     1340    977   1298      4    205      5       C  
+HETATM   21  C21 LIG L 202       5.275   1.190 -21.876  1.00  9.45           C  
+ANISOU   21  C21 LIG L 202     1320    974   1298      8    225      1       C  
+HETATM   22  C22 LIG L 202       6.885   2.564 -22.768  1.00  9.44           C  
+ANISOU   22  C22 LIG L 202     1328    966   1291      4    237      2       C  
+HETATM   23  C23 LIG L 202       5.422   2.323 -20.843  1.00  9.47           C  
+ANISOU   23  C23 LIG L 202     1322    985   1290    -17    228     -7       C  
+HETATM   24  C24 LIG L 202      -2.148   3.572 -26.208  1.00 10.39           C  
+ANISOU   24  C24 LIG L 202     1631   1090   1227     30    148     97       C  
+HETATM   25  C25 LIG L 202       5.445   8.867 -21.947  1.00 10.66           C  
+ANISOU   25  C25 LIG L 202     1555   1079   1414   -130    156    -56       C  
+HETATM   26  C26 LIG L 202       4.584   9.521 -20.844  1.00 10.76           C  
+ANISOU   26  C26 LIG L 202     1584   1078   1426   -142    156    -68       C  
+HETATM   27  C27 LIG L 202       4.075  10.812 -21.464  1.00 10.80           C  
+ANISOU   27  C27 LIG L 202     1588   1094   1422   -160    158    -66       C  
+HETATM   28  C28 LIG L 202       4.008  10.474 -22.952  1.00 10.85           C  
+ANISOU   28  C28 LIG L 202     1593   1094   1433   -140    165    -54       C  
+HETATM   29  C29 LIG L 202       6.323  10.295 -23.646  1.00 10.79           C  
+ANISOU   29  C29 LIG L 202     1576   1085   1439   -157    160    -67       C  
+HETATM   30  C30 LIG L 202       7.476   9.466 -23.105  1.00 10.80           C  
+ANISOU   30  C30 LIG L 202     1569   1099   1434   -148    152    -70       C  
+HETATM   31  C31 LIG L 202       6.957   9.084 -21.733  1.00 10.77           C  
+ANISOU   31  C31 LIG L 202     1564   1095   1431   -136    149    -65       C  
+HETATM   32  C32 LIG L 202      -1.478   2.867 -21.799  1.00 10.23           C  
+ANISOU   32  C32 LIG L 202     1590   1096   1202     32    157    105       C  
+HETATM   33  C33 LIG L 202      -0.435   2.647 -21.200  1.00 10.21           C  
+ANISOU   33  C33 LIG L 202     1583   1098   1197     46    166    110       C  
+HETATM   34  F1  LIG L 202      -0.734   5.839 -23.751  1.00  9.85           F  
+ANISOU   34  F1  LIG L 202     1455   1006   1280     34    150     46       F  
+HETATM   35  F2  LIG L 202       4.943  11.803 -21.252  1.00 10.99           F  
+ANISOU   35  F2  LIG L 202     1613   1109   1451   -158    150    -77       F  
+HETATM   36  F3  LIG L 202      -3.746   2.883 -20.280  1.00 10.41           F  
+ANISOU   36  F3  LIG L 202     1611   1135   1209     43    158    118       F  
+HETATM   37  N1  LIG L 202       1.986   6.008 -23.150  1.00  9.79           N  
+ANISOU   37  N1  LIG L 202     1409   1005   1303      8    167     22       N  
+HETATM   38  N2  LIG L 202       4.136   5.001 -23.046  1.00  9.70           N  
+ANISOU   38  N2  LIG L 202     1387    987   1312      1    176      4       N  
+HETATM   39  N3  LIG L 202       0.362   2.516 -24.776  1.00  9.86           N  
+ANISOU   39  N3  LIG L 202     1465   1016   1266     52    157     63       N  
+HETATM   40  N4  LIG L 202       4.555   2.766 -23.677  1.00  9.54           N  
+ANISOU   40  N4  LIG L 202     1344    982   1298     11    202      9       N  
+HETATM   41  N5  LIG L 202       6.593   1.145 -22.525  1.00  9.39           N1+
+ANISOU   41  N5  LIG L 202     1315    959   1295     -2    242      5       N1+
+HETATM   42  N6  LIG L 202       5.131   9.573 -23.204  1.00 10.74           N1+
+ANISOU   42  N6  LIG L 202     1580   1086   1413   -145    162    -57       N1+
+HETATM   43  O1  LIG L 202       3.741   7.209 -22.430  1.00 10.02           O  
+ANISOU   43  O1  LIG L 202     1442   1019   1346    -51    165    -13       O  
+HETATM   44  O2  LIG L 202      -3.721   3.728 -28.009  1.00 10.69           O  
+ANISOU   44  O2  LIG L 202     1703   1135   1224      5    138     97       O  
+HETATM   45  H1  LIG L 202      -6.040   3.146 -21.477  1.00 10.36           H  
+ANISOU   45  H1  LIG L 202        0      0      0      0      0      0       H  
+HETATM   46  H2  LIG L 202      -6.372   3.400 -23.910  1.00 10.44           H  
+ANISOU   46  H2  LIG L 202        0      0      0      0      0      0       H  
+HETATM   47  H3  LIG L 202       6.230   4.262 -21.526  1.00  9.48           H  
+ANISOU   47  H3  LIG L 202        0      0      0      0      0      0       H  
+HETATM   48  H4  LIG L 202       7.399   3.202 -20.760  1.00  9.48           H  
+ANISOU   48  H4  LIG L 202        0      0      0      0      0      0       H  
+HETATM   49  H5  LIG L 202       6.257   2.517 -24.846  1.00  9.49           H  
+ANISOU   49  H5  LIG L 202        0      0      0      0      0      0       H  
+HETATM   50  H6  LIG L 202       6.162   4.098 -24.139  1.00  9.49           H  
+ANISOU   50  H6  LIG L 202        0      0      0      0      0      0       H  
+HETATM   51  H7  LIG L 202      -5.543   3.569 -26.111  1.00 10.48           H  
+ANISOU   51  H7  LIG L 202        0      0      0      0      0      0       H  
+HETATM   52  H8  LIG L 202       2.251   1.717 -24.723  1.00  9.81           H  
+ANISOU   52  H8  LIG L 202        0      0      0      0      0      0       H  
+HETATM   53  H9  LIG L 202       5.383   6.802 -21.250  1.00 10.36           H  
+ANISOU   53  H9  LIG L 202        0      0      0      0      0      0       H  
+HETATM   54  H10 LIG L 202       5.742   6.981 -22.965  1.00 10.36           H  
+ANISOU   54  H10 LIG L 202        0      0      0      0      0      0       H  
+HETATM   55  H11 LIG L 202       3.243   1.603 -22.482  1.00  9.52           H  
+ANISOU   55  H11 LIG L 202        0      0      0      0      0      0       H  
+HETATM   56  H12 LIG L 202       4.157   0.714 -23.679  1.00  9.52           H  
+ANISOU   56  H12 LIG L 202        0      0      0      0      0      0       H  
+HETATM   57  H13 LIG L 202       5.040   0.238 -21.400  1.00  9.45           H  
+ANISOU   57  H13 LIG L 202        0      0      0      0      0      0       H  
+HETATM   58  H14 LIG L 202       7.935   2.708 -23.022  1.00  9.44           H  
+ANISOU   58  H14 LIG L 202        0      0      0      0      0      0       H  
+HETATM   59  H15 LIG L 202       4.488   2.865 -20.689  1.00  9.47           H  
+ANISOU   59  H15 LIG L 202        0      0      0      0      0      0       H  
+HETATM   60  H16 LIG L 202       5.732   1.924 -19.876  1.00  9.47           H  
+ANISOU   60  H16 LIG L 202        0      0      0      0      0      0       H  
+HETATM   61  H17 LIG L 202      -1.342   3.673 -26.921  1.00 10.39           H  
+ANISOU   61  H17 LIG L 202        0      0      0      0      0      0       H  
+HETATM   62  H18 LIG L 202       5.126   9.690 -19.913  1.00 10.76           H  
+ANISOU   62  H18 LIG L 202        0      0      0      0      0      0       H  
+HETATM   63  H19 LIG L 202       3.729   8.892 -20.594  1.00 10.76           H  
+ANISOU   63  H19 LIG L 202        0      0      0      0      0      0       H  
+HETATM   64  H20 LIG L 202       3.115  11.130 -21.058  1.00 10.80           H  
+ANISOU   64  H20 LIG L 202        0      0      0      0      0      0       H  
+HETATM   65  H21 LIG L 202       4.007  11.352 -23.599  1.00 10.85           H  
+ANISOU   65  H21 LIG L 202        0      0      0      0      0      0       H  
+HETATM   66  H22 LIG L 202       3.089   9.921 -23.150  1.00 10.85           H  
+ANISOU   66  H22 LIG L 202        0      0      0      0      0      0       H  
+HETATM   67  H23 LIG L 202       6.349  10.401 -24.731  1.00 10.79           H  
+ANISOU   67  H23 LIG L 202        0      0      0      0      0      0       H  
+HETATM   68  H24 LIG L 202       6.363  11.294 -23.209  1.00 10.79           H  
+ANISOU   68  H24 LIG L 202        0      0      0      0      0      0       H  
+HETATM   69  H25 LIG L 202       8.414  10.021 -23.064  1.00 10.80           H  
+ANISOU   69  H25 LIG L 202        0      0      0      0      0      0       H  
+HETATM   70  H26 LIG L 202       7.629   8.578 -23.720  1.00 10.80           H  
+ANISOU   70  H26 LIG L 202        0      0      0      0      0      0       H  
+HETATM   71  H27 LIG L 202       7.464   8.210 -21.324  1.00 10.77           H  
+ANISOU   71  H27 LIG L 202        0      0      0      0      0      0       H  
+HETATM   72  H28 LIG L 202       7.136   9.912 -21.046  1.00 10.77           H  
+ANISOU   72  H28 LIG L 202        0      0      0      0      0      0       H  
+HETATM   73  H29 LIG L 202       0.473   2.459 -20.674  1.00 10.21           H  
+ANISOU   73  H29 LIG L 202        0      0      0      0      0      0       H  
+HETATM   74  H30 LIG L 202       6.569   0.615 -23.384  1.00  9.39           H  
+ANISOU   74  H30 LIG L 202        0      0      0      0      0      0       H  
+HETATM   75  H31 LIG L 202       7.275   0.762 -21.886  1.00  9.39           H  
+ANISOU   75  H31 LIG L 202        0      0      0      0      0      0       H  
+HETATM   76  H32 LIG L 202      -4.643   3.749 -28.215  1.00 10.69           H  
+ANISOU   76  H32 LIG L 202        0      0      0      0      0      0       H  
+HETATM   77  H33 LIG L 202       4.868   8.899 -23.909  1.00  0.00           H  
+ANISOU   77  H33 LIG L 202        0      0      0      0      0      0       H  
+CONECT    1    2    3   45
+CONECT    1    2
+CONECT    2    1    6   46
+CONECT    2    1
+CONECT    3    1    5   36
+CONECT    3    5
+CONECT    4    5    6   18
+CONECT    4   18
+CONECT    5    3    4   32
+CONECT    5    3
+CONECT    6    2    4   10
+CONECT    6   10
+CONECT    7   10   24   44
+CONECT    7   24
+CONECT    8   22   23   47   48
+CONECT    9   22   40   49   50
+CONECT   10    6    7   51
+CONECT   10    6
+CONECT   11   12   14   15
+CONECT   11   14
+CONECT   12   11   17   37
+CONECT   12   37
+CONECT   13   37   38   43
+CONECT   13   38
+CONECT   14   11   38   40
+CONECT   14   11
+CONECT   15   11   39   52
+CONECT   15   39
+CONECT   16   17   18   39
+CONECT   16   17
+CONECT   17   12   16   34
+CONECT   17   16
+CONECT   18    4   16   24
+CONECT   18    4
+CONECT   19   25   43   53   54
+CONECT   20   21   40   55   56
+CONECT   21   20   23   41   57
+CONECT   22    8    9   41   58
+CONECT   23    8   21   59   60
+CONECT   24    7   18   61
+CONECT   24    7
+CONECT   25   19   26   31   42
+CONECT   26   25   27   62   63
+CONECT   27   26   28   35   64
+CONECT   28   27   42   65   66
+CONECT   29   30   42   67   68
+CONECT   30   29   31   69   70
+CONECT   31   25   30   71   72
+CONECT   32    5   33
+CONECT   32   33
+CONECT   32   33
+CONECT   33   32   73
+CONECT   33   32
+CONECT   33   32
+CONECT   34   17
+CONECT   35   27
+CONECT   36    3
+CONECT   37   12   13
+CONECT   37   12
+CONECT   38   13   14
+CONECT   38   13
+CONECT   39   15   16
+CONECT   39   15
+CONECT   40    9   14   20
+CONECT   41   21   22   74   75
+CONECT   42   25   28   29   77
+CONECT   43   13   19
+CONECT   44    7   76
+CONECT   45    1
+CONECT   46    2
+CONECT   47    8
+CONECT   48    8
+CONECT   49    9
+CONECT   50    9
+CONECT   51   10
+CONECT   52   15
+CONECT   53   19
+CONECT   54   19
+CONECT   55   20
+CONECT   56   20
+CONECT   57   21
+CONECT   58   22
+CONECT   59   23
+CONECT   60   23
+CONECT   61   24
+CONECT   62   26
+CONECT   63   26
+CONECT   64   27
+CONECT   65   28
+CONECT   66   28
+CONECT   67   29
+CONECT   68   29
+CONECT   69   30
+CONECT   70   30
+CONECT   71   31
+CONECT   72   31
+CONECT   73   33
+CONECT   74   41
+CONECT   75   41
+CONECT   76   44
+CONECT   77   42
+END   

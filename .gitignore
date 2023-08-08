@@ -1,5 +1,6 @@
 __pycache__/*
-data/*
 scripts/__pycache__/*
+fragments/__pycache__/*
+tests/testout/*
 scripts/.ipynb_checkpoints/
 .DS_Store

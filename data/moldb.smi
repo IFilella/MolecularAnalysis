@@ -1,0 +1,8 @@
+C[C@@H]1O[C@@](C)(Cn2cnc(-c3ccc(F)cc3F)c2F)[NH+]=C(N)[C@H]1O
+CC1=N[C@]2(CCc3nc(-c4cccc(F)c4)no3)C(=O)C(N)=C12
+CC1=N[C@@](C)(Cc2ncc(-c3cccc(Cl)c3)cn2)[NH+]=C(N)[C@H]1CCO
+C=C1N[C@@](C)(c2ncc(-c3cccc(N4CC[NH2+]CC4)c3)cn2)C=C1NO
+C[C@@H]1/[NH+]=C(\N)Cc2ncc(-c3ccc(F)cc3)nc2C(C)(C)/C(N)=[NH+]/1
+Cn1c(-c2cccc(N3CC[NH2+]CC3)c2)cc2c1-c1cccc(O)c1C2
+CC1=C/C(O)=C\c2cnc(-c3cccc(N4CC[NH2+]CC4)c3)c(F)c2/C=C\1O
+Cc1cn(CCc2cccc(N3CC[NH2+]CC3)c2)cc1N(C)C(=O)C[NH3+]
