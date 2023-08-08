@@ -94,7 +94,7 @@ class Mol(object):
     def getFingerPrint(self,alg='RDKIT',nBits=2048):
         """
         Get molecular FingerPrint
-        - alg: Algrithm used to compute the Fingerprint (default RDKFingerprint)
+        - alg: Algrithm used to compute the Fingerprint (default Morgan4)
         - nBits: Number of bits of the Fingerprint (default 2048)
         """
         if alg == 'RDKIT':
