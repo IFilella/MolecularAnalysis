@@ -1,10 +1,11 @@
 import os
 import glob
-from MolecularAnalysis import mol
-from MolecularAnalysis.fragments import fragmentation
-from MolecularAnalysis import moldb
 from io import StringIO
 import sys
+from MolecularAnalysis import mol
+from MolecularAnalysis import moldb
+from MolecularAnalysis.fragments import fragmentation
+from MolecularAnalysis.analysis import plot
 
 class CapturingErr(list):
     def __enter__(self):
@@ -64,7 +65,7 @@ for i,box in enumerate(molobj.boxesFragments3D):
         _frag.saveToPDB('testout/mrtx1133_box%dfrag%d'%(i,j))
 
 moldbobj=moldb.MolDB(smiDB='../data/moldb.smi',verbose=False)
-moldbobj=moldb.MolDB(sdfDB='../data/moldb.sdf',verbose=False)
+moldbobj=moldb.MolDB(sdfDB='../data/moldb1.sdf',verbose=False)
 moldbobj.saveToPickle('testout/moldb')
 moldbobj.saveToSmi('testout/moldb.smi')
 moldbobj=moldb.MolDB(molDB='testout/moldb.pickle',verbose=False)
@@ -90,6 +91,7 @@ moldbobj3.getMatrixSimilarity()
 fragmentation.getMolDB3DFragments(moldbobj3)
 fragmentation.getMolDB3DFragments(moldbobj3,norm=False)
 
+"""
 moldbobj3.plotNPR('testout/NPR')
 moldbobj3.plotNPR('testout/NPR_MW',zkey='MolWt')
 moldbobj3.plotParamatersPCA('testout/paramatersPCA')
@@ -111,3 +113,26 @@ with CapturingErr() as output:
     moldbobj3.plotTrimap('testout/Trimap', n_inliers=5)
 with CapturingErr() as output:
     moldbobj3.plotTrimap('testout/Trimap2', n_inliers=5, k=2)
+"""
+
+moldbobj1=moldb.MolDB(sdfDB='../data/moldb1.sdf',verbose=False)
+moldbobj2=moldb.MolDB(sdfDB='../data/moldb2.sdf',verbose=False)
+moldbobj3=moldb.MolDB(sdfDB='../data/moldb3.sdf',verbose=False)
+
+plot.plotPCA(dbs=[moldbobj1, moldbobj2, moldbobj3], names=['DB1','DB2','DB3'], output='testout/dbsPCA',
+             colors=['r','b','g'], sizes=[10,5,5], alphas=[0.8,0.8,0.8], linewidths=0,
+             markers=['o','X','.'], figsize=(6,6))
+with CapturingOut() as output:
+    plot.plotTSNE(dbs=[moldbobj1, moldbobj2, moldbobj3], names=['DB1','DB2','DB3'], output='testout/dbsTSNE',
+                  colors=['r','b','g'], sizes=[10,5,5], alphas=[0.8,0.8,0.8], linewidths=0,
+                  markers=['o','X','.'], figsize=(6,6), perplexity=8)
+with CapturingErr() as error:
+    with CapturingOut() as output:
+        plot.plotUMAP(dbs=[moldbobj1, moldbobj2, moldbobj3], names=['DB1','DB2','DB3'], output='testout/dbsUMAP',
+                      colors=['r','b','g'], sizes=[10,5,5], alphas=[0.8,0.8,0.8], linewidths=0,
+                      markers=['o','X','.'], figsize=(6,6), n_neighbors=8)
+with CapturingOut() as output:
+    with CapturingErr() as error:
+        plot.plotTrimap(dbs=[moldbobj1, moldbobj2, moldbobj3], names=['DB1','DB2','DB3'],
+                        output='testout/dbsTrimap', colors=['r','b','g'], sizes=[10,5,5], alphas=[0.8,0.8,0.8],
+                        linewidths=0, markers=['o','X','.'], figsize=(6,6))
