@@ -8,13 +8,17 @@ def loadSchrodingerCSV(csvfile):
     Load a Maestro/Glide csv file into a DataFrame
     - csvfile: Glide/Maestro csv file
     """
-    data=pd.read_csv(file)
-    data=data[data['Stars'].isna()]
-    data=data[data['Job Name'].notna()]
+    data=pd.read_csv(csvfile)
+    try:
+        data=data[data['Stars'].isna()]
+    except: pass
+    try:
+        data=data[data['Job Name'].notna()]
+    except: pass
     data=data.reset_index(drop=True)
     return data
 
-def getBiClassification(data, RealClass, PredClass, RealThrs, PredThrs):
+def _getBiClassification(data, RealClass, PredClass, RealThrs, PredThrs):
     """
     Given a real classifier, a predicted classifier and a threshold for each,
     return the TP,TN,FP,FN values.
@@ -69,7 +73,7 @@ def _getEqualPopulation(data,RealClass,RealThrs):
         raise ValueError('Both popoulations have the same number of elements')
     return sample,neg_invariance
 
-def getROC(data,RealClass,PredClass,RealThrs,thresholds=None,whole=True,n_iter=100):
+def getROC(data,RealClass,PredClass,RealThrs,thresholds=None,whole_db=True,n_iter=100):
     """
     Get the FPR and TPR needed to plot a ROC curve for a given real and predicted classifier
     - data: Python DataFrame with the data
@@ -82,14 +86,14 @@ def getROC(data,RealClass,PredClass,RealThrs,thresholds=None,whole=True,n_iter=1
                 according the RealClass and compute n times the FPRs and TPRs for
                 n different ROC curves
     """
-    if whole:
+    if whole_db:
         #If not specific list of threshold has been pass use all data predvalues as threshols
         if thresholds==None:
             thresholds=[data[PredClass][ind] for ind in data.index]
             thresholds=list(set(thresholds))
         fprs, tprs=[], []
         for threshold in thresholds:
-            dicClass=getBiClassification(data, RealClass, PredClass, RealThrs, threshold)
+            dicClass=_getBiClassification(data, RealClass, PredClass, RealThrs, threshold)
             tpr=dicClass['TP']/(dicClass['TP']+dicClass['FN'])
             fpr=dicClass['FP']/(dicClass['FP']+dicClass['TN'])
             tprs.append(tpr)
@@ -111,12 +115,11 @@ def getROC(data,RealClass,PredClass,RealThrs,thresholds=None,whole=True,n_iter=1
                 thresholds.extend(aux)
             thresholds=list(set(thresholds))
         for i,sample in enumerate(samples):
-            print(i+1)
             fprs_, tprs_=[], []
             balanceddata=data.iloc[list(sample)]
             balanceddata=balanceddata.reset_index(drop=True)
             for threshold in thresholds:
-                dicClass=getBiClassification(balanceddata, RealClass,
+                dicClass=_getBiClassification(balanceddata, RealClass,
                                                PredClass, RealThrs, threshold)
                 tpr=dicClass['TP']/(dicClass['TP']+dicClass['FN'])
                 fpr=dicClass['FP']/(dicClass['FP']+dicClass['TN'])
@@ -131,7 +134,7 @@ def getROC(data,RealClass,PredClass,RealThrs,thresholds=None,whole=True,n_iter=1
         return tprs, fprs, thresholds, neg_invariance
 
 def plotROC(data, RealClass, PredClass, RealThrs, thresholds=None, label=None,
-            whole_db=True, n_iter=100):
+            whole_db=True, n_iter=100, verbose=False):
     """
     Plot a ROC curve for a given real and predicted classifier
     - data: Python DataFrame with the data
@@ -144,6 +147,7 @@ def plotROC(data, RealClass, PredClass, RealThrs, thresholds=None, label=None,
                 according the RealClass and compute n times the FPRs and TPRs for
                 n different ROC curves
     - label: Label to be added to the legend of the plot
+    - verbose: If True get additional details (default False)
     """
     tprs, fprs, thresholds, neg_invariance=getROC(data, RealClass, PredClass,
                                                     RealThrs, thresholds, whole_db, n_iter)
@@ -188,7 +192,7 @@ def plotROC(data, RealClass, PredClass, RealThrs, thresholds=None, label=None,
     sthresholds=-np.sort(-thresholds)
     optaccuracy, thr_accuracy= 0,0
     for threshold in sthresholds:
-        dicClass=getBiClassification(data, RealClass, PredClass,
+        dicClass=_getBiClassification(data, RealClass, PredClass,
                                        RealThrs, threshold)
         accuracy=(dicClass['TP']+dicClass['TN'])/(dicClass['TP']+dicClass['TN']+dicClass['FP']+dicClass['FN'])
         if accuracy > optaccuracy:
@@ -197,7 +201,7 @@ def plotROC(data, RealClass, PredClass, RealThrs, thresholds=None, label=None,
 
     optprecision=0
     for threshold in sthresholds:
-        dicClass=getBiClassification(data, RealClass, PredClass,
+        dicClass=_getBiClassification(data, RealClass, PredClass,
                                        RealThrs, threshold)
         if dicClass['TP']+dicClass['FP']==0:
             continue
@@ -211,12 +215,14 @@ def plotROC(data, RealClass, PredClass, RealThrs, thresholds=None, label=None,
                 optprecision=precision
                 thr_precision=threshold
 
-    print('- %s \t #Observations=%d \t AUC= %.3f \t Max_GMean=%.3f \t Thr_GMean=%.3f \t OptPrecision=%.3f \t Thr_Precision=%.3f \t OptAccuracy=%.3f \t Thr_Accuracy=%.3f' % (label,data.shape[0],auc, gmeans[ix1],thresholds[ix1],optprecision,thr_precision,optaccuracy,thr_accuracy))
+    if verbose:
+        print('- %s \t #Observations=%d \t AUC= %.3f \t Max_GMean=%.3f \t Thr_GMean=%.3f \t OptPrecision=%.3f \t Thr_Precision=%.3f \t OptAccuracy=%.3f \t Thr_Accuracy=%.3f' % (label,data.shape[0],auc, gmeans[ix1],thresholds[ix1],optprecision,thr_precision,optaccuracy,thr_accuracy))
 
     plt.scatter(fprs[ix1], tprs[ix1], marker='o', color='black',s=30)
     plt.legend()
 
-def plotMultConfusionPlots(data, RealClass, PredClass, RealThrs, PredThrs, disc=None):
+def plotMultConfusionPlots(data, RealClass, PredClass, RealThrs, PredThrs,
+                           disc=None, verbose=False):
     """
     Plot multiple confusion plots in a single figure in form of multiple barplots
     - data: Python DataFrame with the data
@@ -226,6 +232,7 @@ def plotMultConfusionPlots(data, RealClass, PredClass, RealThrs, PredThrs, disc=
     - PredThrs: Threshold for the predicted classifier (<)
     - disc: Column name of the data to discriminate between data for the different confusion
             plots
+    - verbose: If True get additional details (default False)
     """
     if disc!=None:
         labels=data[disc].unique()
@@ -236,7 +243,7 @@ def plotMultConfusionPlots(data, RealClass, PredClass, RealThrs, PredThrs, disc=
         for label in labels:
             filtdata=data[(data[disc]==label)]
             filtdata=filtdata.reset_index(drop=True)
-            dicClass=getBiClassification(filtdata, RealClass, PredClass, RealThrs, PredThrs)
+            dicClass=_getBiClassification(filtdata, RealClass, PredClass, RealThrs, PredThrs)
             TPs.append(dicClass['TP'])
             FPs.append(dicClass['FP'])
             FNs.append(dicClass['FN'])
@@ -255,8 +262,9 @@ def plotMultConfusionPlots(data, RealClass, PredClass, RealThrs, PredThrs, disc=
         ax.bar(labels, FNs, bottom=TPs+TNs,label='FN',color='sandybrown')
         ax.bar(labels, FPs, bottom=TPs+TNs+FNs,label='FP',color='firebrick')
 
-        print(labels)
-        print(accuracies)
+        if verbose:
+            print(labels)
+            print(accuracies)
 
         for i,acc in enumerate(accuracies):
             plt.text(x=i-0.1,y=TPs[i]/2,s=str(TPs[i]),fontsize=8)
