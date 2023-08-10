@@ -14,17 +14,26 @@ import re
 import shutil
 import distinctipy
 
-def getChains(pdbs, outname, delimiter=None, upresfilter=None, lowresfilter=None, verbose=False):
+def checkPath(path):
+    """
+    Ensure correct path
+    - path: path to correct
+    """
+    if path[-1]!='/': path+='/'
+    return path
+
+def getChains(pdbs, out_dir, delimiter=None, upresfilter=None, lowresfilter=None, verbose=False):
     """
     From a pdbs list retrieve all its chains (filtered if asked) into individual pdbs
     with only protein
     - pdbs: 'list'. PDBs list
-    - outname: 'str'. Prefix to add to the new PDB chains
+    - out_dir: 'str'. Prefix to add to the new PDB chains
     - delimiter: 'str'. Delimiter to obtain an identifier from each PDB name
     - upresfilter: 'int'. Residue upper threhsold. Maximum number of residues allowed per chain
     - lowresfilter: 'int'. Residue lower threshold. Minimum number of residues per chain
     - verbose: If True get additional details (default False)
     """
+    out_dir=checkPath(out_dir)
     PDBnames=[os.path.basename(pdb) for pdb in pdbs]
     if delimiter!=None:
         IDs=[ pdbname.replace(".pdb","").split(delimiter)[0] for pdbname in PDBnames]
@@ -47,16 +56,21 @@ def getChains(pdbs, outname, delimiter=None, upresfilter=None, lowresfilter=None
                 if nresidues < lowresfilter:
                     print("Too few residues for chain %s in %s"%(chain,pdbname))
                     continue
-            writePDB('%s_%s%s.pdb'%(outname,IDs[i],chain),hvPDB[chain].select('protein')) #Save only protein
+            writePDB('%s%s_%s.pdb'%(out_dir, IDs[i], chain), hvPDB[chain].select('protein')) #Save only protein
 
-def splitPDBs(pdb_dir, schrodinger_path):
+def splitPDBs(pdb_dir, schrodinger_path, out_dir=None, verbose=False):
     """
     SCHRODINGER LISENCE DEPENDENT
     Split PDBs from a directory into the target structure (receptor), the ligands,
     the waters and the ions/cofactors of the list of pdb files.
     - pdb_dir: directory with PDBs
+    - out_dir: output directory
     - schrodinger_path: path to schrodinger
+    -
     """
+    exe_dir=os.getcwd()
+    pdb_dir=checkPath(pdb_dir)
+    if out_dir!=None: out_dir=checkPath(out_dir)
     os.chdir(pdb_dir)
     PDBs=glob.glob("*.pdb*")
     for PDB in PDBs:
@@ -67,12 +81,13 @@ def splitPDBs(pdb_dir, schrodinger_path):
             ID=PDB.replace(".pdb","")
         elif '.pdb' in PDB:
             ID=PDB.replace(".pdb","")
-        print('Extracting %s ligands...' %(ID))
-        cmd2='%srun split_structure.py -m pdb %s %s.pdb -many_files'%(schrodinger_path,PDB,ID)
+        if verbose: print('Extracting %s ligands...' %(ID))
+        cmd2='%srun split_structure.py -m pdb %s %s.pdb -many_files'%(
+            schrodinger_path, PDB, ID)
         os.system(cmd2)
-    _organizeSplitOutput()
+    _organizeSplitOutput(pdb_dir=pdb_dir, exe_dir=exe_dir, out_dir=out_dir)
 
-def _organizeSplitOutput(pdb_dir,out_dir=None):
+def _organizeSplitOutput(pdb_dir, exe_dir, out_dir=None):
     """
     SCHRODINGER LISENCE DEPENDENT
     Organize all the output files from splitPDBs (target/receptor, ligands, water and ions)
@@ -80,23 +95,29 @@ def _organizeSplitOutput(pdb_dir,out_dir=None):
     - pdb_dir: directory with PDBs after the split
     - out_dir: output directory (if None then out_dir=pdb_dir)
     """
-    out_dir=pdb_dir
-    os.mkdir("%s/ligand"%out_dir)
-    os.mkdir("%s/receptor"%out_dir)
-    os.mkdir("%s/water"%out_dir)
-    os.mkdir("%s/cof_ion"%out_dir)
+    os.chdir(exe_dir)
+    if out_dir==None:
+        out_dir=pdb_dir
+    else:
+        our_dir=checkPath(out_dir)
+    os.mkdir("%sligand"%out_dir)
+    os.mkdir("%sreceptor"%out_dir)
+    os.mkdir("%swater"%out_dir)
+    os.mkdir("%scof_ion"%out_dir)
 
     files=glob.glob("%s/*.pdb"%pdb_dir)
+    in_dir=checkPath(os.path.dirname(files[0]))
+    files=[os.path.basename(f) for f in files]
 
     for filename in files:
         if re.search("ligand", filename):
-            shutil.move("%s"%(filename), "%s/ligand/%s"%(out_dir,filename))
+            shutil.move("%s%s"%(in_dir,filename), "%sligand/%s"%(out_dir,filename))
         if re.search("receptor", filename):
-            shutil.move("%s"%(filename), "%s/receptor/%s"%(out_dir,filename))
+            shutil.move("%s%s"%(in_dir,filename), "%sreceptor/%s"%(out_dir,filename))
         if re.search("water", filename):
-            shutil.move("%s"%(filename), "%s/water/%s"%(out_dir,filename))
+            shutil.move("%s%s"%(in_dir,filename), "%swater/%s"%(out_dir,filename))
         if re.search("cof_ion", filename):
-            shutil.move("%s"%(filename), "%s/cof_ion/%s"%(out_dir,filename))
+            shutil.move("%s%s"%(in_dir,filename), "%scof_ion/%s"%(out_dir,filename))
 
 def superimposePDB(mob_pdb, fix_pdb, out_dir, verbose=False):
     """
@@ -111,11 +132,11 @@ def superimposePDB(mob_pdb, fix_pdb, out_dir, verbose=False):
     nameMOB=os.path.basename(mob_pdb).replace(".pdb","")
     try:
         matchAlign(structureMOB,structureFIX)
-        writePDB('%s/%s_super.pdb'%(out_dir,nameMOB),structureMOB)
-        return 0
     except:
         print('Superimposition between %s and %s failed'%(mob_pdb,fix_pdb))
         return -1
+    writePDB('%s%s_super.pdb'%(out_dir,nameMOB),structureMOB)
+    return 0
 
 def superimposePDBs(pdbs, fix_pdb, out_dir, verbose=False):
     """
@@ -126,6 +147,7 @@ def superimposePDBs(pdbs, fix_pdb, out_dir, verbose=False):
     - out_dir: 'str'. Directory to store all the superimposed PDBs
     - verbose: If True get additional details (default False)
     """
+    out_dir=checkPath(out_dir)
     errors=0
     name_fix=os.path.basename(fix_pdb)
     for pdb in pdbs:
@@ -158,7 +180,7 @@ def superimposePDBs(pdbs, fix_pdb, out_dir, verbose=False):
     #    writePDB(aux,hvPDB['A'])
     #    os.system('rm %s_all_atm.pdb'%(outname))
 
-def runPrepWizard(pdbs, schroodinger_path, delimiter=None, outfmt='mae',
+def runPrepWizard(pdbs, schroodinger_path, delimiter=None, out_fmt='mae',
                   max_processes=4):
     """
     SCHRODINGER LISENCE DEPENDENT
@@ -170,15 +192,15 @@ def runPrepWizard(pdbs, schroodinger_path, delimiter=None, outfmt='mae',
     - outfmt: 'str'. Outfile format. Either .mae or .pdb
     - max_processes: Number of processors used to paralalize the different executions
     """
-    if outfmt!='mae' and outfmt!='pdb':
-        raise ValueError('outfmt must be either mae or pdb')
+    if out_fmt!='mae' and out_fmt!='pdb':
+        raise ValueError('out_fmt must be either mae or pdb')
     PDBnames=[os.path.basename(pdb) for pdb in pdbs]
     if delimiter!=None:
         IDs=[ pdbname.replace(".pdb","").split(delimiter)[0] for pdbname in PDBnames]
     else:
         IDs=[ pdbname.replace(".pdb","") for pdbname in PDBnames]
 
-    cmd_prepW=['%s/utilities/prepwizard -fillsidechains -WAIT %s %s_prep.%s'%(schroodinger_path,pdb,IDs[i],outfmt) for i,pdb in enumerate(pdbs)]
+    cmd_prepW=['%s/utilities/prepwizard -fillsidechains -WAIT %s %s_prep.%s'%(schroodinger_path,pdb,IDs[i],out_fmt) for i,pdb in enumerate(pdbs)]
     cmd_prepW=[cmd.replace('//','/') for cmd in cmd_prepW]
     processes=set()
 
@@ -189,22 +211,31 @@ def runPrepWizard(pdbs, schroodinger_path, delimiter=None, outfmt='mae',
             os.wait()
             processes.difference_update([p for p in processes if p.poll() is not None])
 
-def _cleanPrepWizard(out_dir, out_fmt='mae'):
+def cleanPrepWizard(out_dir, out_fmt='mae'):
     """
     SCHRODINGER LISENCE DEPENDENT
     Move the PrepWizard output to an specified directory
     - out_dir: 'str'. Output directory
     - out_fmt: 'str'. Outfile format of the PrepWizard. Either .mae or .pdb
     """
+    out_dir=checkPath(out_dir)
     if out_fmt!='mae' and out_fmt!='pdb':
         raise ValueError('out_fmt must be either mae or pdb')
     os.system('mv *_prep.%s %s'%(out_fmt,out_dir))
-    logdir='%s/logs'%out_dir
-    logdir=logdir.replace('//','/')
+    logdir='%slogs'%out_dir
     if not os.path.isdir(logdir):
         os.system('mkdir %s'%logdir)
-    os.system('mv *.mae %s'%logdir)
-    os.system('mv *.log %s'%logdir)
+    if out_fmt=='mae': nout='pdb'
+    else: nout='mae'
+    try:
+        os.system('mv *.%s %s'%(nout,logdir))
+    except: pass
+    try:
+        os.system('mv *.log %s'%logdir)
+    except: pass
+    try:
+        os.system('rm -r *-001')
+    except: pass
 
 def runSiteMap(maes, asl, schroodinger_path, delimiter=None, max_processes=4):
     """
@@ -242,39 +273,37 @@ def _cleanSiteMap(out_dir, out_fmt='maegz'):
     - out_dir: 'str'. Output directory
     - out_fmt: 'str'. Outfile format of the PrepWizard. Either .mae or .pdb
     """
+    out_dir=checkPath(out_dir)
     if out_fmt!='maegz':
         raise ValueError('out_fmt must be maegz')
     os.system('mv *.%s %s'%(out_fmt,out_dir))
-    logdir='%s/logs'%out_dir
-    logdir=logdir.replace('//','/')
+    logdir='%slogs'%out_dir
     if not os.path.isdir(logdir):
         os.system('mkdir %s'%logdir)
     os.system('mv *.vis %s'%logdir)
     os.system('mv *.smap %s'%logdir)
     os.system('mv *.log %s'%logdir)
 
-def _groupSiteMap(sites, out, out_dir, schroodinger_path):
+def _groupSiteMap(sites, out_name, out_dir, schroodinger_path):
     """
     SCHRODINGER LISENCE DEPENDENT
     Group all volume sites from SiteMap into a single mae file
-    - sites:
-    - out:
-    - out_dir:
+    - sites: list of siteMap files
+    - out_name: output file name
+    - out_dir: output file directory
     - schroodinger_path: 'str'. Global path of Schroodinger
     """
     conc_sites=''
     for site in sites:
         conc_sites=conc_sites + ' ' + site
-
-    cmd='%s/utilities/structcat -imae %s -omae %s'%(schroodinger_path,conc_sites,out)
-    cmd=cmd.replace('//','/')
-    print(cmd)
+    out_dir=checkPath(out_dir)
+    cmd='%sutilities/structcat -imae %s -omae %s'%(schroodinger_path,conc_sites,out_name)
     os.system(cmd)
     try:
-        aux='mv %s %s'%(out,out_dir)
+        aux='mv %s %s'%(out_name,out_dir)
         os.system(aux)
     except:
-        print('wrong outdir')
+        print('wrong out_dir')
 
 def getVolumeOverlapMatrix(sites, out, schroodinger_path, max_processes=4):
     """
@@ -285,36 +314,32 @@ def getVolumeOverlapMatrix(sites, out, schroodinger_path, max_processes=4):
     - schroodinger_path: 'str'. Global path of Schroodinger
     - max_processes: Number of processors used to paralalize the different executions
     """
-    cmd='%s/run volume_cluster.py -j %s -HOST localhost:%d -sc -r 2 %s'%(schroodinger_path,out,max_processes,sites)
-    cmd=cmd.replace('//','/')
-    print(cmd)
+    cmd='%srun volume_cluster.py -j %s -HOST localhost:%d -sc -r 2 %s'%(schroodinger_path,out,max_processes,sites)
     os.system(cmd)
 
-def _cleanVolumeOverlapMatrix(out,out_dir):
+def _cleanVolumeOverlapMatrix(matrix,out_dir):
     """
     SCHRODINGER LISENCE DEPENDENT
     Move the VolumeMatrix output to an specified directory
-    out: 'str'
+    out: 'str' Volume Overlapping Matrix file  (in csv)
     out_dir: 'str'. Output directory
     """
+    out_dir=checkPath(out_dir)
     os.system('mv *.csv %s'%(out_dir))
-    logdir='%s/logs/'%out_dir
-    logdir=logdir.replace('//','/')
+    logdir='%slogs/'%out_dir
     if not os.path.isdir(logdir):
         os.system('mkdir %s'%logdir)
     os.system('mv *.mae %s'%logdir)
     os.system('mv *.log %s'%logdir)
 
-def _uncompressMaegz(inp, schroodinger_path):
+def _uncompressMaegz(maegz, schroodinger_path):
     """
     SCHRODINGER LISENCE DEPENDENT
     inp:
     schroodinger_path: 'str'. Global path of Schroodinger
     """
-    out=inp.replace('.maegz','.mae')
-    cmd='%s/utilities/structcat -imae %s -omae %s'%(schroodinger_path,inp,out)
-    cmd=cmd.replace('//','/')
-    print(cmd)
+    out=maegz.replace('.maegz','.mae')
+    cmd='%sutilities/structcat -imae %s -omae %s'%(schroodinger_path,maegz,out)
     os.system(cmd)
 
 
@@ -335,8 +360,8 @@ class VolumeOverlappingMatrix(object):
             if len(IDs)!=self.matrix.shape[0]:
                 raise ValueError('IDs should have the same length as rows/cols of csv file')
             self.IDs=IDs
-            self.matrix.set_axis(self.IDs, axis=1, inplace=True)
-            self.matrix.set_axis(self.IDs, axis=0, inplace=True)
+            self.matrix=self.matrix.set_axis(self.IDs, axis=1)
+            self.matrix=self.matrix.set_axis(self.IDs, axis=0)
         elif IDs==None and IDs_shroodinger!=None:
             if identifier==None:
                 raise ValueError('To select the IDs from IDs_shroodinger an identifier is needed')
@@ -578,65 +603,3 @@ class VolumeOverlappingMatrix(object):
             elements=self.clusters_dic[cluster]
             submatrix=self.matrix.loc[elements,elements]
             print(submatrix.nlargest(num_elements, [center])[center])
-
-if __name__=='__main__':
-    schroodinger_path='/data/general_software/schrodinger2019-1'
-
-    #1: Get all target chains (filtered if asked) into individual pdbs
-    #TARGs=glob.glob('tests/PDBs/*receptor*')
-    #getChains(pdbs=TARGs,outname='tests/PDBs/CDK2',delimiter='_',upresfilter=300,lowresfilter=280)
-
-    #2: Superimpose all targets to a fix target
-    #TARGs=glob.glob('tests/PDBs/CDK2*')
-    #pdbs_superimposition(pdbs=TARGs,fix_pdb='tests/PDBs/CDK2_1b38A.pdb',outdir='tests/superimpositions/')
-
-    #3: Prepare the targets with PrepWizard from Schroodinger premium package
-    #TARGs=glob.glob('tests/superimpositions/CDK2*')
-    #runPrepWizard(pdbs=TARGs,delimiter='_super',schroodinger_path=schroodinger_path,outfmt='pdb',max_processes=30)
-    #_cleanPrepWizard(outdir='tests/prepWizard',outfmt='pdb')
-
-    #4: Compute the volume of each target specific binding site (single one sourranding LYS33 NZ)
-    #TARGs=glob.glob('tests/prepWizard/*_prep.mae')
-    #runSiteMap(maes=TARGs,asl="(res.num 33) AND ((atom.ptype \' NZ \'))", schroodinger_path=schroodinger_path,delimiter='_prep',outfmt='mae',max_processes=30)
-    #_cleanSiteMap(outdir='tests/siteMap')
-
-    #5: Find which targets do not have a binding site arround the specified atom
-    #TARGs=glob.glob('tests/prepWizard/*_prep.mae')
-    #sites=glob.glob('tests/siteMap/*_out.maegz')
-    #TARGs_IDs=[os.path.basename(TARG).split('_')[1] for TARG in TARGs]
-    #sites_IDs=[os.path.basename(site).split('_')[1] for site in sites]
-    #print(set(TARGs_IDs)-set(sites_IDs))
-
-    #6: Group all SiteMap sites into a single file
-    #_groupSiteMap(sites=sites,out='CDK2_sites.maegz',outdir='tests/siteMap/',schroodinger_path=schroodinger_path)
-    #_uncompress_maegz(inp='tests/siteMap/CDK2_sites.maegz',schroodinger_path=schroodinger_path)
-
-    #7: Get the volume overlapping matrix of the target sites
-    #getVolumeOverlapMatrix(sites='tests/siteMap/CDK2_sites.maegz',out='CDK2_volumeMatrix_r2',schroodinger_path=schroodinger_path,max_processes=4)
-    #_cleanVolumeOverlapMatrix(out='CDK2_volumeMatrix_r2',outdir='tests/volumeMatrix/')
-
-    #8: Analyse the volume overlapping matrix
-    #f=open('tests/siteMap/CDK2_sites.mae','r')
-    #IDs=[]
-    #for line in f:
-    #    if 'CDK2' in line:
-    #        ID=line.split('_')[1]
-    #        if ID not in IDs:
-    #            IDs.append(ID)
-    #volume_matrix=VolumeOverlappingMatrix('tests/volumeMatrix/CDK2_volumeMatrix_r2.csv',IDs)
-    #print(volume_matrix.matrix)
-    #volume_matrix.plot_hierarchical(out='tests/volumeMatrix/CDK2_volumematrix_r2.pdf')
-    #volume_matrix.get_dendrogram()
-    #volume_matrix.plot_dendrogram(out='tests/volumeMatrix/CDK2_dendrogram_r2.pdf',max_d=5,annotate_above=20)
-    #volume_matrix.plot_dendrogram(out='tests/volumeMatrix/CDK2_dendrogram2_r2.pdf',max_d=0.6,annotate_above=20)
-    #volume_matrix.plot_dendrogram(out='tests/volumeMatrix/CDK2_dendrogram2_r3.pdf',max_d=1.95,annotate_above=0.6,p=3)
-    #volume_matrix.get_dendrogram_clusters(max_d=0.6)
-    #print(volume_matrix.clusters)
-    #print(len(volume_matrix.clusters))
-    #print(set(volume_matrix.clusters))
-    #volume_matrix.save_dendrogram_clusters(out='tests/volumeMatrix/CDK2_dendrogram_clusters')
-    #
-    #with open('tests/volumeMatrix/CDK2_dendrogram_clusters.p', 'rb') as handle:
-    #    clusters_dic=pickle.load(handle)
-
-    #volume_matrix.get_dendrogram_clustersCenters()

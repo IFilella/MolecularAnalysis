@@ -1,5 +1,8 @@
 from MolecularAnalysis.analysis import sts
 import matplotlib.pyplot as plt
+import os
+
+if not os.path.exists('testout'): os.system('mkdir testout')
 
 data=sts.loadSchrodingerCSV('../data/test.csv')
 
