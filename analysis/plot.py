@@ -189,7 +189,7 @@ def _prepareReducer(dbs, names, random_max, delimiter, alg, sizes, alphas):
         else:
             name=names[i].split(delimiter)[0]
             #name='_'.join(names[i].split(delimiter)[0:2])
-        fps=db.getFingerprints(alg, random_max)
+        fps=db.getFingerprints(alg, random_max=random_max)
         fps=[fp for fp in fps if fp is not None]
         X.extend(fps)
         Y.extend([name]*len(fps))
