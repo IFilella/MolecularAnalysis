@@ -225,7 +225,10 @@ def _plotReducer(reducer_results, Y, output, colors, sizes, alphas, linewidths,
     df=pd.DataFrame(dict(xaxis=reducer_results[:,0], yaxis=reducer_results[:,1],
                          molDB=Y, sizes=sizes, alphas=alphas))
     plt.figure(figsize=figsize)
-    if colors==None:
+    if markers is  None:
+        numDBs = len(set(df['molDB'].tolist()))
+        markers = ['o']*numDBs
+    if colors is None:
         g=sns.scatterplot(data=df, x='xaxis', y='yaxis', hue='molDB', alpha=alphas,
                           size='sizes',linewidth=linewidths, style='molDB', markers=markers)
     else:
