@@ -4,9 +4,10 @@ import pandas as pd
 import seaborn as sns
 from MolecularAnalysis import mol
 from MolecularAnalysis import moldb
+import matplotlib.colors as mcolors
 
 def plotTrimap(dbs, names, output, random_max=None, delimiter=None, alg='Morgan4', colors=None,
-               sizes=None, alphas=None, markers=None, figsize=(8,8), linewidths=None,
+               sizes=None, alphas=None, markers=None, figsize=(8,8), linewidth=None,
                n_iters=400, n_inliers=12, n_outliers=4, n_random=3, weight_temp=0.5, verbose=False):
     """
     Performe a Trimap with the fingerprint of the molecules of multiple MolDB
@@ -24,7 +25,7 @@ def plotTrimap(dbs, names, output, random_max=None, delimiter=None, alg='Morgan4
              different MolDBs
     - alphas: list of matplotlib transparency rates to asjust the transparency
               of molecules from different MolDBs
-    - linewidths: list of linewidths to adjust the linewidths of molecules from
+    - linewidth: linewidth to adjust the linewidth of molecules from
                     different MolDBs
     - markers: list of markers to adjust the marker shape of molecules from
                   different MolDBs
@@ -47,12 +48,12 @@ def plotTrimap(dbs, names, output, random_max=None, delimiter=None, alg='Morgan4
     trimap_results=tri.fit_transform(X)
     if verbose: print('Shape of trimap_results: ', trimap_results.shape)
     _plotReducer(reducer_results=trimap_results, Y=Y, output=output, names=names,
-                 colors=colors, sizes=S, alphas=alphas, linewidths=linewidths,
+                 colors=colors, sizes=S, alphas=alphas, linewidth=linewidth,
                  markers=markers, figsize=figsize)
 
 def plotUMAP(dbs, names, output, random_max=None, delimiter=None, alg='Morgan4',
               colors=None, sizes=None, alphas=None, min_dist=0.1, n_neighbors=100,
-              n_epochs=1000, markers=None, figsize=(8,8), linewidths=None, verbose=False):
+              n_epochs=1000, markers=None, figsize=(8,8), linewidth=None, verbose=False):
     """
     Performe a UMAP with the fingerprint of the molecules of multiple MolDB
     an plot the two first components
@@ -74,7 +75,7 @@ def plotUMAP(dbs, names, output, random_max=None, delimiter=None, alg='Morgan4',
     - n_neighbors: controls how UMAP balances local versus global structure in the
                    data (default 100)
     - n_epochs: Maximum number of iterations (default 1000)
-    - linewidths: list of linewidths to adjust the linewidths of molecules from
+    - linewidth: linewidth to adjust the linewidth of molecules from
                    different MolDBs
     - markers: list of markers to adjust the marker shape of molecules from
                  different MolDBs
@@ -89,11 +90,11 @@ def plotUMAP(dbs, names, output, random_max=None, delimiter=None, alg='Morgan4',
     UMAP_results=umap.fit_transform(X)
     if verbose: print('Shape of UMAP_results: ', UMAP_results.shape)
     _plotReducer(reducer_results=UMAP_results, Y=Y, output=output, names=names,
-                 colors=colors, sizes=S, alphas=alphas, linewidths=linewidths,
+                 colors=colors, sizes=S, alphas=alphas, linewidth=linewidth,
                  markers=markers, figsize=figsize)
 
 def plotTSNE(dbs, names, output, random_max=None, delimiter=None, alg='Morgan4',
-              colors=None, sizes=None, alphas=None, linewidths=None, n_iter=1000,
+              colors=None, sizes=None, alphas=None, linewidth=None, n_iter=1000,
               perplexity=30, early_exaggeration=12, learning_rate='auto', markers=None,
               figsize=(8,8)):
     """
@@ -112,7 +113,7 @@ def plotTSNE(dbs, names, output, random_max=None, delimiter=None, alg='Morgan4',
              different MolDBs
     - alphas: list of matplotlib transparency rates to asjust the transparency
               of molecules from different MolDBs
-    - linewidths: list of linewidths to adjust the linewidths of molecules from
+    - linewidth: linewidth to adjust the linewidth of molecules from
                    different MolDBs
     - n_iter: Maximum number of iterations (default 1500)
     - perplexity: paramater related to the number of nearest neighbors (default 30)
@@ -130,11 +131,11 @@ def plotTSNE(dbs, names, output, random_max=None, delimiter=None, alg='Morgan4',
               early_exaggeration=early_exaggeration)
     tsne_results=tsne.fit_transform(X)
     _plotReducer(reducer_results=tsne_results, Y=Y, output=output, names=names,
-                 colors=colors, sizes=S, alphas=alphas, linewidths=linewidths,
+                 colors=colors, sizes=S, alphas=alphas, linewidth=linewidth,
                  markers=markers, figsize=figsize)
 
 def plotPCA(dbs, names, output, random_max=None, delimiter=None, alg='Morgan4',
-            colors=None, sizes=None, alphas=None, linewidths=None, markers=None,
+            colors=None, sizes=None, alphas=None, linewidth=None, markers=None,
             figsize=(8,8), verbose=False):
     """
     Performe a PCA with the fingerprint of the molecules of multiple MolDB
@@ -152,7 +153,7 @@ def plotPCA(dbs, names, output, random_max=None, delimiter=None, alg='Morgan4',
              different MolDBs
     - alphas: list of matplotlib transparency rates to asjust the transparency
               of molecules from different MolDBs
-    - linewidths: list of linewidths to adjust the linewidths of molecules from
+    - linewidth: linewidth to adjust the linewidth of molecules from
                    different MolDBs
     - markers: list of markers to adjust the marker shape of molecules from
                 different MolDBs
@@ -167,7 +168,7 @@ def plotPCA(dbs, names, output, random_max=None, delimiter=None, alg='Morgan4',
     pca_results=pca.fit_transform(X)
     if verbose: print('Explained variation per principal component: {}'.format(pca.explained_variance_ratio_))
     _plotReducer(reducer_results=pca_results, Y=Y, output=output, names=names,
-                 colors=colors, sizes=S, alphas=alphas, linewidths=linewidths,
+                 colors=colors, sizes=S, alphas=alphas, linewidth=linewidth,
                  markers=markers, figsize=figsize)
 
 def _prepareReducer(dbs, names, random_max, delimiter, alg, sizes):
@@ -204,7 +205,7 @@ def _prepareReducer(dbs, names, random_max, delimiter, alg, sizes):
     X=np.asarray(X)
     return X, Y, S
 
-def _plotReducer(reducer_results, Y, output, names, colors, sizes, alphas, linewidths,
+def _plotReducer(reducer_results, Y, output, names, colors, sizes, alphas, linewidth,
                   markers, figsize):
     """
     Plot the dimensional reduction results (PCA, UMAP, ...)
@@ -217,7 +218,7 @@ def _plotReducer(reducer_results, Y, output, names, colors, sizes, alphas, linew
               different MolDBs
     - alphas: list of matplotlib transparency rates to asjust the transparency
                of molecules from different MolDBs
-    - linewidths: list of linewidths to adjust the linewidths of molecules from
+    - linewidth: list of linewidth to adjust the linewidth of molecules from
                   different MolDBs
     - markers: list of markers to adjust the marker shape of molecules from
                different MolDBs
@@ -232,7 +233,7 @@ def _plotReducer(reducer_results, Y, output, names, colors, sizes, alphas, linew
     else:
         _colors = []
         for color in colors:
-            _colors.append(to_rgb(color))
+            _colors.append(mcolors.to_rgb(color))
     if markers is  None:
         markers = ['o']*numDBs
     if alphas is None:
@@ -243,7 +244,7 @@ def _plotReducer(reducer_results, Y, output, names, colors, sizes, alphas, linew
             _colors[i] = _colors[i] + (alphas[i],)
     color_dict = dict(zip(names,_colors))
     g=sns.scatterplot(data=df, x='xaxis', y='yaxis', hue='molDB',
-                      palette=color_dict, size='sizes', linewidth=linewidths,
+                      palette=color_dict, size='sizes', linewidth=linewidth,
                       style='molDB',markers=markers)
     h,l=g.get_legend_handles_labels()
     n=len(set(df['molDB'].values.tolist()))
