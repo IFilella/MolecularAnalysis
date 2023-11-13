@@ -40,14 +40,15 @@ def plotTrimap(dbs, names, output, random_max=None, delimiter=None, alg='Morgan4
     - verbose: If True get additional details (default False)
     """
     import trimap
-    X, Y, S, A=_prepareReducer(dbs, names, random_max, delimiter, alg, sizes, alphas)
+    X, Y, S = _prepareReducer(dbs, names, random_max, delimiter, alg, sizes)
     if verbose: print('Computing trimap')
     tri=trimap.TRIMAP(n_iters=n_iters, distance='hamming', n_inliers=n_inliers,
                       n_outliers=n_outliers, n_random=n_random, weight_temp=weight_temp)
     trimap_results=tri.fit_transform(X)
     if verbose: print('Shape of trimap_results: ', trimap_results.shape)
-    _plotReducer(reducer_results=trimap_results, Y=Y, output=output, colors=colors, sizes=S,
-                 alphas=A, linewidths=linewidths, markers=markers, figsize=figsize)
+    _plotReducer(reducer_results=trimap_results, Y=Y, output=output, names=names,
+                 colors=colors, sizes=S, alphas=alphas, linewidths=linewidths,
+                 markers=markers, figsize=figsize)
 
 def plotUMAP(dbs, names, output, random_max=None, delimiter=None, alg='Morgan4',
               colors=None, sizes=None, alphas=None, min_dist=0.1, n_neighbors=100,
@@ -82,13 +83,14 @@ def plotUMAP(dbs, names, output, random_max=None, delimiter=None, alg='Morgan4',
     """
     #from umap import UMAP
     import umap as mp
-    X, Y, S, A=_prepareReducer(dbs, names, random_max, delimiter, alg, sizes, alphas)
+    X, Y, S =_prepareReducer(dbs, names, random_max, delimiter, alg, sizes)
     if verbose: print('Computing UMAP')
     umap=mp.UMAP(n_neighbors=n_neighbors, n_epochs=n_epochs, min_dist=min_dist, metric='hamming')
     UMAP_results=umap.fit_transform(X)
     if verbose: print('Shape of UMAP_results: ', UMAP_results.shape)
-    _plotReducer(reducer_results=UMAP_results, Y=Y, output=output, colors=colors, sizes=S,
-                 alphas=A, linewidths=linewidths, markers=markers, figsize=figsize)
+    _plotReducer(reducer_results=UMAP_results, Y=Y, output=output, names=names,
+                 colors=colors, sizes=S, alphas=alphas, linewidths=linewidths,
+                 markers=markers, figsize=figsize)
 
 def plotTSNE(dbs, names, output, random_max=None, delimiter=None, alg='Morgan4',
               colors=None, sizes=None, alphas=None, linewidths=None, n_iter=1000,
@@ -122,13 +124,14 @@ def plotTSNE(dbs, names, output, random_max=None, delimiter=None, alg='Morgan4',
     - figsize: output plot figure size (default (8,8))
     """
     from sklearn.manifold import TSNE
-    X, Y, S, A=_prepareReducer(dbs, names, random_max, delimiter, alg, sizes, alphas)
+    X, Y, S = _prepareReducer(dbs, names, random_max, delimiter, alg, sizes)
     tsne=TSNE(n_components=2, verbose=1, learning_rate=learning_rate, init='pca',
               perplexity=perplexity, n_iter=n_iter, metric='hamming',
               early_exaggeration=early_exaggeration)
     tsne_results=tsne.fit_transform(X)
-    _plotReducer(reducer_results=tsne_results, Y=Y, output=output, colors=colors,
-                 sizes=S, alphas=A, linewidths=linewidths, markers=markers, figsize=figsize)
+    _plotReducer(reducer_results=tsne_results, Y=Y, output=output, names=names,
+                 colors=colors, sizes=S, alphas=alphas, linewidths=linewidths,
+                 markers=markers, figsize=figsize)
 
 def plotPCA(dbs, names, output, random_max=None, delimiter=None, alg='Morgan4',
             colors=None, sizes=None, alphas=None, linewidths=None, markers=None,
@@ -157,20 +160,21 @@ def plotPCA(dbs, names, output, random_max=None, delimiter=None, alg='Morgan4',
     - verbose: If True get additional details (default False)
     """
     from sklearn.decomposition import PCA
-    X, Y, S, A=_prepareReducer(dbs, names, random_max, delimiter, alg,
-                                sizes, alphas)
+    X, Y, S,= _prepareReducer(dbs, names, random_max, delimiter, alg,
+                              sizes)
     if verbose: print('Computing PCA')
     pca=PCA(n_components=2)
     pca_results=pca.fit_transform(X)
     if verbose: print('Explained variation per principal component: {}'.format(pca.explained_variance_ratio_))
-    _plotReducer(reducer_results=pca_results, Y=Y, output=output, colors=colors,
-                  sizes=S, alphas=A, linewidths=linewidths, markers=markers, figsize=figsize)
+    _plotReducer(reducer_results=pca_results, Y=Y, output=output, names=names,
+                 colors=colors, sizes=S, alphas=alphas, linewidths=linewidths,
+                 markers=markers, figsize=figsize)
 
-def _prepareReducer(dbs, names, random_max, delimiter, alg, sizes, alphas):
+def _prepareReducer(dbs, names, random_max, delimiter, alg, sizes):
     """
     Get the X (fingerprints) data needed to run the dimensional reduction
     algorithm (PCA, UMAP, ...), and the data needed to plot it Y (MolDB labels),
-    S (sizes), A (alpha transparencies)
+    S (sizes)
     - dbs: list of MolDB
     - names: list of labels for the MolDB
     - random_max: If an integer is given the PCA is going to be done
@@ -182,7 +186,7 @@ def _prepareReducer(dbs, names, random_max, delimiter, alg, sizes, alphas):
     - alphas: list of matplotlib transparency rates to asjust the transparency
               of molecules from different MolDBs
     """
-    X, Y, S, A=[], [], [], []
+    X, Y, S = [], [], []
     for i,db in enumerate(dbs):
         if delimiter==None:
             name=names[i]
@@ -197,14 +201,10 @@ def _prepareReducer(dbs, names, random_max, delimiter, alg, sizes, alphas):
             S.extend([float(5)]*len(fps))
         else:
             S.extend([float(sizes[i])]*len(fps))
-        if alphas==None:
-            A.extend([float(0.8)]*len(fps))
-        else:
-            A.extend([float(alphas[i])]*len(fps))
     X=np.asarray(X)
-    return X, Y, S, A
+    return X, Y, S
 
-def _plotReducer(reducer_results, Y, output, colors, sizes, alphas, linewidths,
+def _plotReducer(reducer_results, Y, output, names, colors, sizes, alphas, linewidths,
                   markers, figsize):
     """
     Plot the dimensional reduction results (PCA, UMAP, ...)
@@ -225,16 +225,26 @@ def _plotReducer(reducer_results, Y, output, colors, sizes, alphas, linewidths,
     df=pd.DataFrame(dict(xaxis=reducer_results[:,0], yaxis=reducer_results[:,1],
                          molDB=Y, sizes=sizes, alphas=alphas))
     plt.figure(figsize=figsize)
-    if markers is  None:
-        numDBs = len(set(df['molDB'].tolist()))
-        markers = ['o']*numDBs
+    numDBs = len(set(df['molDB'].tolist()))
     if colors is None:
-        g=sns.scatterplot(data=df, x='xaxis', y='yaxis', hue='molDB', alpha=alphas,
-                          size='sizes',linewidth=linewidths, style='molDB', markers=markers)
+        default_palette = sns.color_palette()
+        _colors = default_palette[:numDBs]
     else:
-        g=sns.scatterplot(data=df, x='xaxis', y='yaxis', hue='molDB', palette=colors,
-                          alpha=alphas, size='sizes', linewidth=linewidths, style='molDB',
-                          markers=markers)
+        _colors = []
+        for color in colors:
+            _colors.append(to_rgb(color))
+    if markers is  None:
+        markers = ['o']*numDBs
+    if alphas is None:
+        for i, color in enumerate(_colors):
+            _colors[i] = _colors[i] + (1,)
+    else:
+        for i, color in enumerate(_colors):
+            _colors[i] = _colors[i] + (alphas[i],)
+    color_dict = dict(zip(names,_colors))
+    g=sns.scatterplot(data=df, x='xaxis', y='yaxis', hue='molDB',
+                      palette=color_dict, size='sizes', linewidth=linewidths,
+                      style='molDB',markers=markers)
     h,l=g.get_legend_handles_labels()
     n=len(set(df['molDB'].values.tolist()))
     #plt.legend(frameon=False, title=None)
