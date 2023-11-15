@@ -2,7 +2,7 @@ import rdkit.Chem as Chem
 from rdkit.Chem import AllChem
 import rdkit.Chem.Lipinski as Lipinski
 import rdkit.Chem.Descriptors as Descriptors
-
+import selfies as sf
 
 class Mol(object):
     """
@@ -90,6 +90,11 @@ class Mol(object):
         file=open(output+'.pdb','w+')
         file.write(Chem.MolToPDBBlock(self.molrdkit))
         file.close()
+
+    def getSelfie(self):
+        self.selfie = sf.encoder(self.smile)
+        return self.selfie
+
 
     def getFingerPrint(self,alg='RDKIT',nBits=2048):
         """
