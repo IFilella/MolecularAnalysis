@@ -285,10 +285,10 @@ class MolDB(object):
         """
         with Chem.SDWriter(output) as w:
             for k in self.dicDB.keys():
-                mol=self.dicDB[k][2].mol
+                molrdkit=self.dicDB[k][2].molrdkit
                 ID=self.dicDB[k][1]
-                mol.SetProp("_Name",ID)
-                w.write(mol,)
+                molrdkit.SetProp("_Name",ID)
+                w.write(molrdkit,)
 
     def getFingerprints(self, alg='Morgan4', nBits=2048, random_max=None, verbose=False):
         """
@@ -335,8 +335,8 @@ class MolDB(object):
             df.loc[i,'id']=self.dicDB[k][1]
             df.loc[i,'smile']=k
             try:
-                df.loc[i,'IC50']=float(mol.mol.GetProp('Value'))/1000000000
-                df.loc[i,'pIC50']=-np.log10(float(mol.mol.GetProp('Value'))/1000000000)
+                df.loc[i,'IC50']=float(mol.molrdkit.GetProp('Value'))/1000000000
+                df.loc[i,'pIC50']=-np.log10(float(mol.molrdkit.GetProp('Value'))/1000000000)
             except:
                 pass
             df.loc[i,'MolWt']=mol.MolWt
