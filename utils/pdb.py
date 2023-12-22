@@ -68,22 +68,26 @@ def splitPDBs(pdb_dir, schrodinger_path, out_dir=None, verbose=False):
     - schrodinger_path: path to schrodinger
     -
     """
-    exe_dir=os.getcwd()
-    pdb_dir=checkPath(pdb_dir)
-    if out_dir!=None: out_dir=checkPath(out_dir)
+
+    schrodinger_path = checkPath(schrodinger_path)
+    exe_dir = os.getcwd()
+    pdb_dir = checkPath(pdb_dir)
+    if out_dir is not None:
+        out_dir = checkPath(out_dir)
     os.chdir(pdb_dir)
-    PDBs=glob.glob("*.pdb*")
+    PDBs = glob.glob("*.pdb*")
     for PDB in PDBs:
         if '.pdb.gz' in PDB:
-            cmd1="gunzip %s"%PDB
+            cmd1 = "gunzip %s" % PDB
             os.system(cmd1)
-            PDB=PDB.replace('.pdb.gz','.pdb')
-            ID=PDB.replace(".pdb","")
+            PDB = PDB.replace('.pdb.gz','.pdb')
+            ID = PDB.replace(".pdb","")
         elif '.pdb' in PDB:
-            ID=PDB.replace(".pdb","")
-        if verbose: print('Extracting %s ligands...' %(ID))
-        cmd2='%srun split_structure.py -m pdb %s %s.pdb -many_files'%(
-            schrodinger_path, PDB, ID)
+            ID = PDB.replace(".pdb","")
+        if verbose:
+            print('Extracting %s ligands...' % (ID))
+        cmd2 = '%srun split_structure.py -m pdb %s %s.pdb -many_files'\
+            % (schrodinger_path, PDB, ID)
         os.system(cmd2)
     _organizeSplitOutput(pdb_dir=pdb_dir, exe_dir=exe_dir, out_dir=out_dir)
 
@@ -96,18 +100,22 @@ def _organizeSplitOutput(pdb_dir, exe_dir, out_dir=None):
     - out_dir: output directory (if None then out_dir=pdb_dir)
     """
     os.chdir(exe_dir)
-    if out_dir==None:
-        out_dir=pdb_dir
+    if out_dir is None:
+        out_dir = pdb_dir
     else:
-        our_dir=checkPath(out_dir)
-    os.mkdir("%sligand"%out_dir)
-    os.mkdir("%sreceptor"%out_dir)
-    os.mkdir("%swater"%out_dir)
-    os.mkdir("%scof_ion"%out_dir)
+        out_dir = checkPath(out_dir)
+    if not os.path.exists("%sligand" % out_dir):
+        os.mkdir("%sligand" % out_dir)
+    if not os.path.exists("%sreceptor" % out_dir):
+        os.mkdir("%sreceptor" % out_dir)
+    if not os.path.exists("%swater" % out_dir):
+        os.mkdir("%swater" % out_dir)
+    if not os.path.exists("%scof_ion" % out_dir):
+        os.mkdir("%scof_ion" % out_dir)
 
-    files=glob.glob("%s/*.pdb"%pdb_dir)
-    in_dir=checkPath(os.path.dirname(files[0]))
-    files=[os.path.basename(f) for f in files]
+    files = glob.glob("%s/*.pdb" % pdb_dir)
+    in_dir = checkPath(os.path.dirname(files[0]))
+    files = [os.path.basename(f) for f in files]
 
     for filename in files:
         if re.search("ligand", filename):

@@ -204,7 +204,8 @@ class MolDB(object):
             self.dicDB={}
             counteq=0
             for i,pdb in enumerate(pdbList):
-                mol= Mol(pdb=pdb, allparamaters=self.paramaters, chirality=self.chirality)
+                pdb_name = os.path.basename(pdb)
+                mol = Mol(pdb=pdb, allparamaters=self.paramaters, chirality=self.chirality, name=pdb_name)
                 if mol.error==-1: continue
                 SMILE=mol.smile
                 eqSMILES=SMILE
