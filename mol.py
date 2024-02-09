@@ -69,7 +69,7 @@ class Mol(object):
             self.getAllParamaters()
         if name:
             self.name=name
-            self.molrdkit.SetProp('_Name',self.name)
+            self.molrdkit.SetProp('_Name', self.name)
         else:
             self.name='unk'
 

@@ -127,7 +127,7 @@ def _organizeSplitOutput(pdb_dir, exe_dir, out_dir=None):
         if re.search("cof_ion", filename):
             shutil.move("%s%s"%(in_dir,filename), "%scof_ion/%s"%(out_dir,filename))
 
-def superimposePDB(mob_pdb, fix_pdb, out_dir, verbose=False):
+def superimposePDB(mob_pdb, fix_pdb, out_dir, seqid=90, overlap=90, verbose=False):
     """
     Superimpose a mobile PDB into a fix PDB with Prody
     - mob_pdb: Mobile PDB to superimpose
@@ -139,14 +139,14 @@ def superimposePDB(mob_pdb, fix_pdb, out_dir, verbose=False):
     structureMOB=parsePDB(mob_pdb)
     nameMOB=os.path.basename(mob_pdb).replace(".pdb","")
     try:
-        matchAlign(structureMOB,structureFIX)
+        matchAlign(structureMOB, structureFIX, seqid=seqid, overlap=overlap)
     except:
         print('Superimposition between %s and %s failed'%(mob_pdb,fix_pdb))
         return -1
     writePDB('%s%s_super.pdb'%(out_dir,nameMOB),structureMOB)
     return 0
 
-def superimposePDBs(pdbs, fix_pdb, out_dir, verbose=False):
+def superimposePDBs(pdbs, fix_pdb, out_dir, seqid=90, overlap=90, verbose=False):
     """
     Given a list of mobile PDBs and a fix superimpose all mobile elements to the fix PDB
     - pdbs: 'list'. PDBs list of mobile elements
@@ -162,7 +162,7 @@ def superimposePDBs(pdbs, fix_pdb, out_dir, verbose=False):
         name_mobile=os.path.basename(pdb)
         if verbose:
             print('Superimposition between fix PDB %s and mobile PDB %s'%(name_fix,name_mobile))
-        aux_error=superimposePDB(pdb,fix_pdb,out_dir,verbose)
+        aux_error=superimposePDB(pdb,fix_pdb,out_dir, seqid, overlap, verbose)
         errors += aux_error
     if verbose:  print('%d couldn\'t be superimpose'%-errors)
 
