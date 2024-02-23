@@ -16,48 +16,43 @@ class Mol(object):
     - chirality: if False remove chirality (default True)
     - name: name identifier for the molecule object
     """
-    def __init__(self, smile=None, InChI=None, rdkit=None, pdb=None, allparamaters=False,
-                 chirality=True, name=None):
+    def __init__(self, smile=None, InChI=None, rdkit=None, pdb=None,
+                 mol=None,allparamaters=False, chirality=True, name=None):
         #Load from SMILE
-        if smile!=None and InChI==None and rdkit==None and pdb==None:
+        if smile!=None and InChI==None and rdkit==None and pdb==None and mol==None:
             self.smile=smile
             self.InChi=None
             if not chirality:
                 self.smile=self.smile.replace("@","")
             self.molrdkit=Chem.MolFromSmiles(self.smile)
-            if self.molrdkit==None:
-                self.error=-1
-            else:
-                self.error=0
+            self._check_rdkit_error()
         #Load from InChi
-        elif smile==None and InChI!=None and rdkit==None and pdb==None:
+        elif smile==None and InChI!=None and rdkit==None and pdb==None and mol==None:
             self.InChI=InChI
             self.molrdkit=Chem.MolFromInchi(self.InChI)
-            if self.molrdkit==None:
-                self.error=-1
-            else:
-                self.error=0
+            self._check_rdkit_error()
             self.smile=Chem.MolToSmiles(self.molrdkit)
             if not chirality:
                 self.smile=self.smile.replace("@","")
         #Load from rdkit Mol object
-        elif smile==None and InChI==None and rdkit!=None and pdb==None:
+        elif smile==None and InChI==None and rdkit!=None and pdb==None and mol==None:
              self.molrdkit=rdkit
-             if self.molrdkit==None:
-                 self.error=-1
-             else:
-                 self.error=0
+             self._check_rdkit_error()
              self.smile=Chem.MolToSmiles(self.molrdkit)
              self.InChi=None
              if not chirality:
                  self.smile=self.smile.replace("@","")
         #Load from pdb file
-        elif smile==None and InChI==None and rdkit==None and pdb!=None:
+        elif smile==None and InChI==None and rdkit==None and pdb!=None and mol==None:
             self.molrdkit=Chem.MolFromPDBFile(pdb)
-            if self.molrdkit==None:
-                self.error=-1
-            else:
-                self.error=0
+            self._check_rdkit_error()
+            self.smile=Chem.MolToSmiles(self.molrdkit)
+            self.InChi=None
+            if not chirality:
+                self.smile=self.smile.replace("@","")
+        elif smile==None and InChI==None and rdkit==None and pdb==None and mol!=None:
+            self.molrdkit=Chem.MolFromMolFile(mol)
+            self._check_rdkit_error()
             self.smile=Chem.MolToSmiles(self.molrdkit)
             self.InChi=None
             if not chirality:
@@ -72,6 +67,12 @@ class Mol(object):
             self.molrdkit.SetProp('_Name', self.name)
         else:
             self.name='unk'
+
+    def _check_rdkit_error():
+        if self.molrdkit==None:
+            self.error=-1
+        else:
+            self.error=0
 
     def saveToMol(self,output):
         """
