@@ -178,6 +178,8 @@ class MolDB(object):
             with open(molDB, 'rb') as f:
                 molDBobject=pickle.load(f)
             self.dicDB=molDBobject.dicDB
+            self.paramaters=molDBobject.paramaters
+            self.chirality=molDBobject.chirality
         elif smiDB==None and molDB==None and sdfDB!=None and pdbList==None and molList==None:
             self.dicDB={}
             DB=Chem.SDMolSupplier(sdfDB,removeHs=False)
