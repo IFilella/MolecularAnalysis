@@ -17,7 +17,7 @@ class Mol(object):
     - name: name identifier for the molecule object
     """
     def __init__(self, smile=None, InChI=None, rdkit=None, pdb=None,
-                 mol=None,allparamaters=False, chirality=True, name=None):
+                 mol=None, allparamaters=False, chirality=True, name=None):
         #Load from SMILE
         if smile!=None and InChI==None and rdkit==None and pdb==None and mol==None:
             self.smile=smile
@@ -61,7 +61,7 @@ class Mol(object):
             raise AttributeError('Provide only a smile, a InchI, a rdkit mol or a pdb')
         #Calculate rdkit molecular paramaters such as NOCount, RingCount, ...
         if allparamaters:
-            self.getAllParamaters()
+            self.getParamaters()
         if name:
             self.name=name
             self.molrdkit.SetProp('_Name', self.name)
