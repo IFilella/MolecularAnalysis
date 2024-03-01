@@ -68,7 +68,7 @@ class Mol(object):
         else:
             self.name='unk'
 
-    def _check_rdkit_error():
+    def _check_rdkit_error(self):
         if self.molrdkit==None:
             self.error=-1
         else:

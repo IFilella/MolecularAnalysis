@@ -50,6 +50,14 @@ def intersectMolDBs(db1,db2,simt,alg='RDKIT',verbose=True):
     keepkeys_db2=[]
     hitsSMILE=0
     hitsSimilarity=0
+    if not db1.paramaters:
+        print('getting paramaters db1')
+        db1._getMolsParamaters()
+        db1.paramaters=True
+    if not db2.paramaters:
+        db2._getMolsParamaters()
+        print('getting paramaters db2')
+        db2.paramaters = True
     for i,k1 in enumerate(db1.dicDB.keys()):
         m1=db1.dicDB[k1][2]
         SMILE1=k1
