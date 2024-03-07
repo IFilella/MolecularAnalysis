@@ -41,14 +41,14 @@ def plotTrimap(dbs, names, output, random_max=None, delimiter=None, alg='Morgan4
     - verbose: If True get additional details (default False)
     """
     import trimap
-    X, Y, S = _prepareReducer(dbs, names, random_max, delimiter, alg, sizes)
+    X, Y, S, A = _prepareReducer(dbs, names, random_max, delimiter, alg, sizes, alphas)
     if verbose: print('Computing trimap')
     tri=trimap.TRIMAP(n_iters=n_iters, distance='hamming', n_inliers=n_inliers,
                       n_outliers=n_outliers, n_random=n_random, weight_temp=weight_temp)
     trimap_results=tri.fit_transform(X)
     if verbose: print('Shape of trimap_results: ', trimap_results.shape)
     _plotReducer(reducer_results=trimap_results, Y=Y, output=output, names=names,
-                 colors=colors, sizes=S, alphas=alphas, linewidth=linewidth,
+                 colors=colors, sizes=S, alphas=A, linewidth=linewidth,
                  markers=markers, figsize=figsize)
 
 def plotUMAP(dbs, names, output, random_max=None, delimiter=None, alg='Morgan4',
@@ -84,13 +84,13 @@ def plotUMAP(dbs, names, output, random_max=None, delimiter=None, alg='Morgan4',
     """
     #from umap import UMAP
     import umap as mp
-    X, Y, S =_prepareReducer(dbs, names, random_max, delimiter, alg, sizes)
+    X, Y, S, A =_prepareReducer(dbs, names, random_max, delimiter, alg, sizes, alphas)
     if verbose: print('Computing UMAP')
     umap=mp.UMAP(n_neighbors=n_neighbors, n_epochs=n_epochs, min_dist=min_dist, metric='hamming')
     UMAP_results=umap.fit_transform(X)
     if verbose: print('Shape of UMAP_results: ', UMAP_results.shape)
     _plotReducer(reducer_results=UMAP_results, Y=Y, output=output, names=names,
-                 colors=colors, sizes=S, alphas=alphas, linewidth=linewidth,
+                 colors=colors, sizes=S, alphas=A, linewidth=linewidth,
                  markers=markers, figsize=figsize)
 
 def plotTSNE(dbs, names, output, random_max=None, delimiter=None, alg='Morgan4',
@@ -125,13 +125,13 @@ def plotTSNE(dbs, names, output, random_max=None, delimiter=None, alg='Morgan4',
     - figsize: output plot figure size (default (8,8))
     """
     from sklearn.manifold import TSNE
-    X, Y, S = _prepareReducer(dbs, names, random_max, delimiter, alg, sizes)
+    X, Y, S, A = _prepareReducer(dbs, names, random_max, delimiter, alg, sizes, alphas)
     tsne=TSNE(n_components=2, verbose=1, learning_rate=learning_rate, init='pca',
               perplexity=perplexity, n_iter=n_iter, metric='hamming',
               early_exaggeration=early_exaggeration)
     tsne_results=tsne.fit_transform(X)
     _plotReducer(reducer_results=tsne_results, Y=Y, output=output, names=names,
-                 colors=colors, sizes=S, alphas=alphas, linewidth=linewidth,
+                 colors=colors, sizes=S, alphas=A, linewidth=linewidth,
                  markers=markers, figsize=figsize)
 
 def plotPCA(dbs, names, output, random_max=None, delimiter=None, alg='Morgan4',
@@ -161,21 +161,21 @@ def plotPCA(dbs, names, output, random_max=None, delimiter=None, alg='Morgan4',
     - verbose: If True get additional details (default False)
     """
     from sklearn.decomposition import PCA
-    X, Y, S,= _prepareReducer(dbs, names, random_max, delimiter, alg,
-                              sizes)
+    X, Y, S, A = _prepareReducer(dbs, names, random_max, delimiter, alg,
+                              sizes, alphas)
     if verbose: print('Computing PCA')
     pca=PCA(n_components=2)
     pca_results=pca.fit_transform(X)
     if verbose: print('Explained variation per principal component: {}'.format(pca.explained_variance_ratio_))
     _plotReducer(reducer_results=pca_results, Y=Y, output=output, names=names,
-                 colors=colors, sizes=S, alphas=alphas, linewidth=linewidth,
+                 colors=colors, sizes=S, alphas=A, linewidth=linewidth,
                  markers=markers, figsize=figsize)
 
-def _prepareReducer(dbs, names, random_max, delimiter, alg, sizes):
+def _prepareReducer(dbs, names, random_max, delimiter, alg, sizes, alphas):
     """
     Get the X (fingerprints) data needed to run the dimensional reduction
     algorithm (PCA, UMAP, ...), and the data needed to plot it Y (MolDB labels),
-    S (sizes)
+    S (sizes), A (alpha transparencies)
     - dbs: list of MolDB
     - names: list of labels for the MolDB
     - random_max: If an integer is given the PCA is going to be done
@@ -187,7 +187,7 @@ def _prepareReducer(dbs, names, random_max, delimiter, alg, sizes):
     - alphas: list of matplotlib transparency rates to asjust the transparency
               of molecules from different MolDBs
     """
-    X, Y, S = [], [], []
+    X, Y, S, A = [], [], [], []
     for i,db in enumerate(dbs):
         if delimiter==None:
             name=names[i]
@@ -202,8 +202,12 @@ def _prepareReducer(dbs, names, random_max, delimiter, alg, sizes):
             S.extend([float(5)]*len(fps))
         else:
             S.extend([float(sizes[i])]*len(fps))
+        if alphas==None:
+            A.extend([float(0.8)]*len(fps))
+        else:
+            A.extend([float(alphas[i])]*len(fps))
     X=np.asarray(X)
-    return X, Y, S
+    return X, Y, S, A
 
 def _plotReducer(reducer_results, Y, output, names, colors, sizes, alphas, linewidth,
                   markers, figsize):
