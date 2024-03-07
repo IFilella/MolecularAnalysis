@@ -10,6 +10,7 @@ import copy
 import seaborn as sns
 import matplotlib.pyplot as plt
 from math import pi
+import progressbar
 
 def joinMolDBs(dbs,simt=None):
     """
@@ -58,7 +59,9 @@ def intersectMolDBs(db1,db2,simt,alg='RDKIT',verbose=True):
         db2._getMolsParamaters()
         print('getting paramaters db2')
         db2.paramaters = True
+    bar = progressbar.ProgressBar(maxval=db1.size).start()
     for i,k1 in enumerate(db1.dicDB.keys()):
+        bar.update(i)
         m1=db1.dicDB[k1][2]
         SMILE1=k1
         for k2 in db2.dicDB.keys():
@@ -85,6 +88,7 @@ def intersectMolDBs(db1,db2,simt,alg='RDKIT',verbose=True):
                 keepkeys_db1.append(SMILE1)
                 keepkeys_db2.append(SMILE2)
                 break
+    bar.finish()
     totalhits=hitsSMILE + hitsSimilarity
     sizedb1=len(db1.dicDB.keys())
     sizedb2=len(db2.dicDB.keys())
@@ -778,4 +782,5 @@ class MolDB(object):
         for k in self.dicDB.keys():
             mol=self.dicDB[k][2]
             mol.getParamaters()
+        self.paramaters = True
 
