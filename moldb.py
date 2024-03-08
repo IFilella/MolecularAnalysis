@@ -12,7 +12,8 @@ import matplotlib.pyplot as plt
 from math import pi
 import progressbar
 
-def joinMolDBs(dbs,simt=None):
+
+def joinMolDBs(dbs, simt=None):
     """
     Join a list of MolDB objects into a single MolDB object
     - dbs: list of MolDB objects
@@ -595,8 +596,10 @@ class MolDB(object):
         Plot a biovailability radar plot
         - output: plot output name
         """
-        if isinstance(self.df, pd.DataFrame):
+        if hasattr(self,'df'):
             pass
+            #if isinstance(self.df, pd.DataFrame):
+            #    pass
         else:
             self.getParamatersDataFrame()
 
