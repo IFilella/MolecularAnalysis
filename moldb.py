@@ -587,7 +587,6 @@ class MolDB(object):
         if hasattr(self, 'df'):
             pass
         else:
-            print('computing params df')
             self.getParamatersDataFrame()
 
         data=pd.DataFrame()
@@ -595,11 +594,10 @@ class MolDB(object):
         data['MolWt']=[i/500 for i in self.df['MolWt']]
         data['LogP']=[i/5 for i in self.df['LogP']]
         data['nHA']=[i/10 for i in self.df['NumHAcceptors']]
-        data['nHD']=[i/3 for i in self.df['NumHDonors']]
+        data['nHD']=[i/5 for i in self.df['NumHDonors']]
         data['nRotB']=[i/10 for i in self.df['NumRotatableBonds']]
         data['TPSA']=[i/140 for i in self.df['TPSA']]
 
-        print('printing')
         categories=list(data.columns)
         N=len(categories)
         values=data[categories].values[0]
@@ -607,8 +605,8 @@ class MolDB(object):
         angles=[n / float(N) * 2 * pi for n in range(N)]
         angles += angles[:1]
 
-        Ro5_up=[1,1,1,1,1,1,1] #The upper limit for bRo5
-        Ro5_low=[0.5,0.1,0,0.25,0.1,0.5,0.5]  #The lower limit for bRo5
+        Ro5_up=[1,1,1,1,1,1] #The upper limit for bRo5
+        Ro5_low=[0.5,0.1,0,0,0,0.25]  #The lower limit for bRo5
 
         fig=plt.figure()
 
