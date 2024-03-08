@@ -337,57 +337,45 @@ class MolDB(object):
         self.fingerprints=fps
         return fps
 
+    def get_molecular_paramater_list(self, paramater):
+        if not hasattr(self.mols[0], paramater):
+            raise ValueError('%s is not a Mol attribute' % paramater)
+        paramater_list = []
+
+        for mol in self.mols:
+            value = getattr(mol, paramater)
+            paramater_list.append(value)
+
+        setattr(self, paramater, paramater_list)
+
+        return paramater_list
+
     def getParamatersDataFrame(self):
         """
-        Construct a DataFrame whith several molecular paramaters for each molecule
+        Construct a DataFrame whith several molecular\
+        paramaters for each molecule
         """
-        if self.paramaters: pass
+        if self.paramaters:
+            pass
         else:
             self._getMolsParamaters()
-            self.paramaters=True
-        df=pd.DataFrame()
-        for i,k in enumerate(self.dicDB.keys()):
-            mol=self.dicDB[k][2]
-            df.loc[i,'id']=self.dicDB[k][1]
-            df.loc[i,'smile']=k
-            try:
-                df.loc[i,'IC50']=float(mol.molrdkit.GetProp('Value'))/1000000000
-                df.loc[i,'pIC50']=-np.log10(float(mol.molrdkit.GetProp('Value'))/1000000000)
-            except:
-                pass
-            df.loc[i,'MolWt']=mol.MolWt
-            df.loc[i,'LogP']=mol.LogP
-            df.loc[i,'NumHAcceptors']=mol.NumHAcceptors
-            df.loc[i,'NumHDonors']=mol.NumHDonors
-            df.loc[i,'NumHeteroatoms']=mol.NumHeteroatoms
-            df.loc[i,'NumRotatableBonds']=mol.NumRotatableBonds
-            df.loc[i,'NumHeavyAtoms']=mol.NumHeavyAtoms
-            df.loc[i,'NumAliphaticCarbocycles']=mol.NumAliphaticCarbocycles
-            df.loc[i,'NumAliphaticHeterocycles']=mol.NumAliphaticHeterocycles
-            df.loc[i,'NumAliphaticRings']=mol.NumAliphaticRings
-            df.loc[i,'NumAromaticCarbocycles']=mol.NumAromaticCarbocycles
-            df.loc[i,'NumAromaticHeterocycles']=mol.NumAromaticHeterocycles
-            df.loc[i,'NumAromaticRings']=mol.NumAromaticRings
-            df.loc[i,'RingCount']=mol.RingCount
-            df.loc[i,'FractionCSP3']=mol.FractionCSP3
-            df.loc[i,'TPSA']=mol.TPSA
-            try:
-                df.loc[i,'NPR1']=mol.NPR1
-            except:
-                df.loc[i,'NPR1']=None
-            try:
-                df.loc[i,'NPR2']=mol.NPR2
-            except:
-                df.loc[i,'NPR2']=None
-            try:
-                df.loc[i,'InertialShapeFactor']=mol.InertialShapeFactor
-            except:
-                df.loc[i,'InertialShapeFactor']=None
-            try:
-                df.loc[i,'RadiusOfGyration']=mol.RadiusOfGyration
-            except:
-                df.loc[i,'RadiusOfGyration']=None
-        self.df=df
+            self.paramaters = True
+        df = pd.DataFrame()
+        paramaters = ['MolWt', 'LogP', 'NumHAcceptors', 'NumHDonors',
+                      'NumHeteroatoms', 'NumRotatableBonds', 'NumHeavyAtoms',
+                      'NumAliphaticCarbocycles', 'NumAliphaticHeterocycles',
+                      'NumAliphaticRings', 'NumAromaticCarbocycles',
+                      'NumAromaticHeterocycles', 'NumAromaticRings',
+                      'RingCount', 'FractionCSP3', 'TPSA', 'NumAtoms',
+                      'NPR1', 'NPR2', 'InertialShapeFactor',
+                      'RadiusOfGyration']
+        df['smile'] = self.smiles
+        df['id'] = self.IDs
+        for paramater in paramaters:
+            paramater_list = self.get_molecular_paramater_list(paramater)
+            df[paramater] = paramater_list
+
+        self.df = df
 
     def filterSimilarity(self,simt=1, alg='Morgan4',verbose=True):
         """
@@ -596,11 +584,10 @@ class MolDB(object):
         Plot a biovailability radar plot
         - output: plot output name
         """
-        if hasattr(self,'df'):
+        if hasattr(self, 'df'):
             pass
-            #if isinstance(self.df, pd.DataFrame):
-            #    pass
         else:
+            print('computing params df')
             self.getParamatersDataFrame()
 
         data=pd.DataFrame()
@@ -612,6 +599,7 @@ class MolDB(object):
         data['nRotB']=[i/10 for i in self.df['NumRotatableBonds']]
         data['TPSA']=[i/140 for i in self.df['TPSA']]
 
+        print('printing')
         categories=list(data.columns)
         N=len(categories)
         values=data[categories].values[0]
