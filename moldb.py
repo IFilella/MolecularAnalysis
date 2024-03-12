@@ -605,8 +605,8 @@ class MolDB(object):
         angles=[n / float(N) * 2 * pi for n in range(N)]
         angles += angles[:1]
 
-        Ro5_up=[1,1,1,1,1,1] #The upper limit for bRo5
-        Ro5_low=[0.5,0.1,0,0,0,0.25]  #The lower limit for bRo5
+        Ro5_up=[1,1,1,1,1,1,1] #The upper limit for bRo5
+        Ro5_low=[0.5,0.1,0,0,0,0.25,0.5]  #The lower limit for bRo5
 
         fig=plt.figure()
 
