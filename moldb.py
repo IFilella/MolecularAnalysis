@@ -157,15 +157,20 @@ class MolDB(object):
     with lists of form [eqSMILES, IDs, Mol object] as values.
     """""
     def __init__(self, smiDB=None, molDB=None, sdfDB=None, pdbList=None,
-                 molList=None, paramaters=False, chirality=True, verbose=True):
-        self.paramaters=paramaters
-        self.chirality=chirality
-        if smiDB!=None and molDB==None and sdfDB==None and pdbList==None and molList==None:
-            self.dicDB={}
-            db=open(smiDB,'r')
-            count=0
-            counteq=0
-            for i,line in enumerate(db):
+                 molList=None, paramaters=False, chirality=True, verbose=False):
+        self.paramaters = paramaters
+        self.chirality = chirality
+        if smiDB != None and molDB == None and sdfDB == None and pdbList == None and molList == None:
+            self.dicDB = {}
+            db = open(smiDB, 'r')
+            lines = db.readline()
+            count = 0
+            counteq = 0
+            
+            bar = progressbar.ProgressBar(maxval=len(lines)).start()
+            print('Loading MolDB from smi file')
+            for i, line in enumerate(lines):
+                bar.update(i)
                 line=line.replace('\n','')
                 SMILE=line
                 mol=Mol(smile=SMILE, allparamaters=self.paramaters,
@@ -178,29 +183,36 @@ class MolDB(object):
                     counteq+=1
                     continue
                 if verbose: print(count+1,SMILE)
-            if verbose: print('Repeated SMILES: %d'%counteq)
-        elif smiDB==None and molDB!=None and sdfDB==None and pdbList==None and molList==None:
+            bar.finish()
+            print('Repeated SMILES: %d'%counteq)
+
+        elif smiDB == None and molDB != None and sdfDB == None and pdbList == None and molList == None:
+            print('Loading MolDB from moldb')
             with open(molDB, 'rb') as f:
-                molDBobject=pickle.load(f)
-            self.dicDB=molDBobject.dicDB
-            self.paramaters=molDBobject.paramaters
-            self.chirality=molDBobject.chirality
-        elif smiDB==None and molDB==None and sdfDB!=None and pdbList==None and molList==None:
+                molDBobject = pickle.load(f)
+            self.dicDB = molDBobject.dicDB
+            self.paramaters = molDBobject.paramaters
+            self.chirality = molDBobject.chirality
+
+        elif smiDB == None and molDB == None and sdfDB != None and pdbList == None and molList == None:
             self.dicDB={}
-            DB=Chem.SDMolSupplier(sdfDB,removeHs=False)
-            counteq=0
-            for i,cpd in enumerate(DB):
+            DB = Chem.SDMolSupplier(sdfDB, removeHs=False)
+            counteq = 0
+            print('Loading MolDB from sdf file')
+            bar = progressbar.ProgressBar(maxval=len(DB)).start()
+            for i, cpd in enumerate(DB):
+                bar.update(i)
                 try:
-                    name=cpd.GetProp("_Name")
+                    name = cpd.GetProp("_Name")
                 except:
-                    name='unk'
-                if name=='' or name=='unk':
+                    name = 'unk'
+                if name == '' or name == 'unk':
                     try:
-                        name=cpd.GetProp("Catalog ID")
+                        name = cpd.GetProp("Catalog ID")
                     except:
                         pass
-                mol=Mol(rdkit=cpd, allparamaters=self.paramaters,
-                        chirality=self.chirality,name =name)
+                mol = Mol(rdkit=cpd, allparamaters=self.paramaters,
+                          chirality=self.chirality, name=name)
                 if mol.error==-1: continue
                 SMILE=mol.smile
                 eqSMILES=SMILE
@@ -214,11 +226,16 @@ class MolDB(object):
                     total_eqSMILES=','.join(list(set(old_eqSMILES + new_eqSMILES)))
                     self.dicDB[SMILE][0]=total_eqSMILES
                 if verbose: print(i+1,name,SMILE)
-            if verbose: print('Repeated SMILES: %d'%counteq)
+            bar.finish()
+            print('Repeated SMILES: %d'%counteq)
+
         elif smiDB==None and molDB==None and sdfDB==None and pdbList!=None and molList==None:
             self.dicDB={}
             counteq=0
+            print('Loading MolDB from pdb list')
+            bar = progressbar.ProgressBar(maxval=len(pdbList)).start()
             for i,pdb in enumerate(pdbList):
+                bar.update(i)
                 pdb_name = os.path.basename(pdb)
                 mol = Mol(pdb=pdb, allparamaters=self.paramaters, chirality=self.chirality, name=pdb_name)
                 if mol.error==-1: continue
@@ -235,12 +252,18 @@ class MolDB(object):
                     total_eqSMILES=','.join(list(set(old_eqSMILES + new_eqSMILES)))
                     self.dicDB[SMILE][0]=total_eqSMILES
                 if verbose: print(i+1,IDs,SMILE)
-            if verbose: print('Unique molecules %d.\nRepeated SMILES: %d'
-                              %(len(self.dicDB.keys()),counteq))
+            bar.finish()
+            print('Unique molecules %d.\nRepeated SMILES: %d'
+                % (len(self.dicDB.keys()), counteq))
+
         elif smiDB==None and molDB==None and sdfDB==None and pdbList==None and molList!=None:
             self.dicDB={}
             counteq=0
-            for i,molobject in enumerate(molList):
+            
+            print('Loading MolDB from mol List')
+            bar = progressbar.ProgressBar(maxval=len(molList)).start()
+            for i, molobject in enumerate(molList):
+                bar.update(i)
                 SMILE=molobject.smile
                 name=molobject.name
                 if SMILE not in self.dicDB:
@@ -253,7 +276,8 @@ class MolDB(object):
                     total_eqSMILES=','.join(list(set(old_eqSMILES + new_eqSMILES)))
                     self.dicDB[SMILE][0]=total_eqSMILES
                 if verbose: print(i+1,name,SMILE)
-            if verbose: print('Unique molecules %d.\nRepeated SMILES: %d'%(len(self.dicDB.keys()),counteq))
+            bar.finish()
+            print('Unique molecules %d.\nRepeated SMILES: %d'%(len(self.dicDB.keys()),counteq))
         else:
             raise KeyError('Provide only a smiDB, a molDB object, a sdfDB, a pdbList or a molList')
         self._update()
