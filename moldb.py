@@ -20,21 +20,26 @@ def joinMolDBs(dbs, simt=None):
     - simt: similarity threshold to filter the molecules of the new
                  MolDB object (default None)
     """
-    new_db=copy.copy(dbs[0])
-    for db in dbs[1:]:
-        for key in db.dicDB.keys():
+    new_db = copy.copy(dbs[0])
+    print('Joining %d moldbs' % len(dbs))
+    for i, db in enumerate(dbs[1:]):
+        print('%d/%d' % (i+2, len(dbs)))
+        bar = progressbar.ProgressBar(maxval=len(db.dicDB.keys())).start()
+        for j, key in enumerate(db.dicDB.keys()):
+            bar.update(j)
             if key not in new_db.dicDB.keys():
-                new_db.dicDB[key]=db.dicDB[key]
+                new_db.dicDB[key] = db.dicDB[key]
             else:
-                old_eqSMILES=new_db.dicDB[key][0].split(',')
-                new_eqSMILES=db.dicDB[key][0].split(',')
-                total_eqSMILES=','.join(list(set(old_eqSMILES + new_eqSMILES)))
-                new_db.dicDB[key][0]=total_eqSMILES
-                IDs=new_db.dicDB[key][1]
-                new_db.dicDB[key][1]+=',%s'%IDs
+                old_eqSMILES = new_db.dicDB[key][0].split(',')
+                new_eqSMILES = db.dicDB[key][0].split(',')
+                total_eqSMILES = ','.join(list(set(old_eqSMILES + new_eqSMILES)))
+                new_db.dicDB[key][0] = total_eqSMILES
+                IDs = new_db.dicDB[key][1]
+                new_db.dicDB[key][1] += ',%s' % IDs
+        bar.finish()
     new_db._update()
-    if simt!=None:
-        new_db.filterSimilarity(simt=simt,alg='Morgan4',verbose=False)
+    if simt:
+        new_db.filterSimilarity(simt=simt, alg='Morgan4', verbose=False)
     return new_db
 
 def intersectMolDBs(db1,db2,simt,alg='RDKIT',verbose=True):
@@ -188,6 +193,7 @@ class MolDB(object):
 
         elif smiDB == None and molDB != None and sdfDB == None and pdbList == None and molList == None:
             print('Loading MolDB from moldb')
+            Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.AllProps)
             with open(molDB, 'rb') as f:
                 molDBobject = pickle.load(f)
             self.dicDB = molDBobject.dicDB
@@ -195,7 +201,7 @@ class MolDB(object):
             self.chirality = molDBobject.chirality
 
         elif smiDB == None and molDB == None and sdfDB != None and pdbList == None and molList == None:
-            self.dicDB={}
+            self.dicDB = {}
             DB = Chem.SDMolSupplier(sdfDB, removeHs=False)
             counteq = 0
             print('Loading MolDB from sdf file')
@@ -305,6 +311,7 @@ class MolDB(object):
         Save the molDB object with pickle
         - output: output file name (without format)
         """
+        Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.AllProps)
         with open(output+'.pickle', 'wb') as handle:
             pickle.dump(self, handle)
 
