@@ -52,70 +52,79 @@ def intersectMolDBs(db1,db2,simt,alg='RDKIT',verbose=True):
     - alg: Algrithm used to compute the Fingerprint (default Morgan4)
     - verbose: If True get additional details (default False)
     """
-    db3=copy.copy(db1)
-    keepkeys_db1=[]
-    keepkeys_db2=[]
-    hitsSMILE=0
-    hitsSimilarity=0
+    db3 = copy.copy(db1)
+    keepkeys_db1 = []
+    keepkeys_db2 = []
+    hitsSMILE = 0
+    hitsSimilarity = 0
     if not db1.paramaters:
         print('getting paramaters db1')
         db1._getMolsParamaters()
-        db1.paramaters=True
+        db1.paramaters = True
     if not db2.paramaters:
         db2._getMolsParamaters()
         print('getting paramaters db2')
         db2.paramaters = True
     bar = progressbar.ProgressBar(maxval=db1.size).start()
-    for i,k1 in enumerate(db1.dicDB.keys()):
+    for i, m1 in enumerate(db1.mols):
         bar.update(i)
-        m1=db1.dicDB[k1][2]
-        SMILE1=k1
-        for k2 in db2.dicDB.keys():
-            m2=db2.dicDB[k2][2]
-            SMILE2=k2
-            if SMILE1==SMILE2:
+        SMILE1 = m1.smile
+        for j, m2 in enumerate(db2.mols):
+            SMILE2 = m2.smile
+            if SMILE1 == SMILE2:
                 hitsSMILE += 1
-                if verbose: print(i,'bySMILE',SMILE1,SMILE2)
+                if verbose:
+                    print(i, 'bySMILE', SMILE1, SMILE2)
                 keepkeys_db1.append(SMILE1)
                 keepkeys_db2.append(SMILE2)
                 break
-            if simt==1:
-                if m1.NumAtoms!=m2.NumAtoms: continue
-                if m1.NOCount!=m2.NOCount: continue
-                if m1.NHOHCount!=m2.NHOHCount: continue
-                if m1.RingCount!=m2.RingCount: continue
-                if m1.FractionCSP3!=m2.FractionCSP3: continue
-                if m1.NumAliphaticRings!=m2.NumAliphaticRings: continue
-                if m1.NumAromaticRings!=m2.NumAromaticRings: continue
-            similarity=getMolSimilarity(m1,m2,alg=alg)
+            if simt == 1:
+                if m1.NumAtoms != m2.NumAtoms:
+                    continue
+                if m1.NOCount != m2.NOCount:
+                    continue
+                if m1.NHOHCount != m2.NHOHCount:
+                    continue
+                if m1.RingCount != m2.RingCount:
+                    continue
+                if m1.FractionCSP3 != m2.FractionCSP3:
+                    continue
+                if m1.NumAliphaticRings != m2.NumAliphaticRings:
+                    continue
+                if m1.NumAromaticRings != m2.NumAromaticRings:
+                    continue
+            similarity = getMolSimilarity(m1, m2, alg=alg)
             if similarity >= simt:
                 hitsSimilarity += 1
-                if verbose: print(i,'bySimilarity',SMILE1,SMILE2)
+                if verbose:
+                    print(i, 'bySimilarity', SMILE1, SMILE2)
                 keepkeys_db1.append(SMILE1)
                 keepkeys_db2.append(SMILE2)
                 break
     bar.finish()
-    totalhits=hitsSMILE + hitsSimilarity
-    sizedb1=len(db1.dicDB.keys())
-    sizedb2=len(db2.dicDB.keys())
+    totalhits = hitsSMILE + hitsSimilarity
+    sizedb1 = len(db1.dicDB.keys())
+    sizedb2 = len(db2.dicDB.keys())
     if verbose:
-        print('Hits by SMILE: %d'%hitsSMILE)
-        print('Hits by Similarity (threshold %.3f): %d'%(simt,hitsSimilarity))
-        print('Total hits: %d'%totalhits)
-        print('Total db1=%d, total db2=%d'%(sizedb1,sizedb2))
+        print('Total db1=%d, total db2=%d' % (sizedb1, sizedb2))
+        print('Hits by SMILE: %d' % hitsSMILE)
+        print('Hits by Similarity (threshold %.3f): %d'
+            % (simt, hitsSimilarity))
+        print('Total hits: %d' % totalhits)
         print('Percentage of elements of db1 in db2: %.3f'
-              %(((float(totalhits)/float(sizedb1))*100)))
+            % (((float(totalhits)/float(sizedb1))*100)))
         print('Percentage of elements of db2 in db1: %.3f'
-              %(((float(totalhits)/float(sizedb2))*100)))
-    for i,k1 in enumerate(keepkeys_db1):
-        k2=keepkeys_db2[i]
+            % (((float(totalhits)/float(sizedb2))*100)))
+    for i, k1 in enumerate(keepkeys_db1):
+        k2 = keepkeys_db2[i]
         db3.dicDB[k1][0] += ',' + db2.dicDB[k2][0]
         db3.dicDB[k1][1] += ',' + db2.dicDB[k2][1]
-    set_keepkeys_db3=set(keepkeys_db1)
-    set_keys_db3=set(list(db3.dicDB.keys()))
-    delkeys_db3=list(set_keys_db3.difference(set_keepkeys_db3))
+    set_keepkeys_db3 = set(keepkeys_db1)
+    set_keys_db3 = set(list(db3.dicDB.keys()))
+    delkeys_db3 = list(set_keys_db3.difference(set_keepkeys_db3))
     for key in delkeys_db3:
         del db3.dicDB[key]
+    db3._update()
     return db3
 
 def getMolSimilarity(mol1, mol2, alg='Morgan4', nBits=2048, metric='Tanimoto'):
@@ -165,6 +174,7 @@ class MolDB(object):
                  molList=None, paramaters=False, chirality=True, verbose=False):
         self.paramaters = paramaters
         self.chirality = chirality
+        # Load moldb object from a smiles file
         if smiDB != None and molDB == None and sdfDB == None and pdbList == None and molList == None:
             self.dicDB = {}
             db = open(smiDB, 'r')
@@ -176,21 +186,22 @@ class MolDB(object):
             print('Loading MolDB from smi file')
             for i, line in enumerate(lines):
                 bar.update(i)
-                line=line.replace('\n','')
-                SMILE=line
-                mol=Mol(smile=SMILE, allparamaters=self.paramaters,
-                        chirality=self.chirality)
-                if mol.error==-1: continue
+                line = line.replace('\n', '')
+                SMILE = line
+                mol = Mol(smile=SMILE, allparamaters=self.paramaters,
+                          chirality=self.chirality)
+                if mol.error == -1:
+                    continue
                 if SMILE not in self.dicDB:
-                    count+=1
-                    self.dicDB[SMILE]=[SMILE,'unk',mol]
+                    count += 1
+                    self.dicDB[SMILE] = [SMILE, 'unk', mol]
                 else:
                     counteq+=1
                     continue
                 if verbose: print(count+1,SMILE)
             bar.finish()
             print('Repeated SMILES: %d'%counteq)
-
+        # Load moldb object from a pickle containing a moldb object
         elif smiDB == None and molDB != None and sdfDB == None and pdbList == None and molList == None:
             print('Loading MolDB from moldb')
             Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.AllProps)
@@ -199,7 +210,7 @@ class MolDB(object):
             self.dicDB = molDBobject.dicDB
             self.paramaters = molDBobject.paramaters
             self.chirality = molDBobject.chirality
-
+        # Load moldb object from an sdf file
         elif smiDB == None and molDB == None and sdfDB != None and pdbList == None and molList == None:
             self.dicDB = {}
             DB = Chem.SDMolSupplier(sdfDB, removeHs=False)
@@ -234,7 +245,7 @@ class MolDB(object):
                 if verbose: print(i+1,name,SMILE)
             bar.finish()
             print('Repeated SMILES: %d'%counteq)
-
+        # Load moldb obeject from a list of pdbs
         elif smiDB==None and molDB==None and sdfDB==None and pdbList!=None and molList==None:
             self.dicDB={}
             counteq=0
@@ -246,7 +257,7 @@ class MolDB(object):
                 mol = Mol(pdb=pdb, allparamaters=self.paramaters, chirality=self.chirality, name=pdb_name)
                 if mol.error==-1: continue
                 SMILE=mol.smile
-                eqSMILES=SMILE
+                eqSMILES = SMILE
                 IDs=os.path.basename(pdb).replace(".pdb","")
                 if SMILE not in self.dicDB:
                     self.dicDB[SMILE]=[eqSMILES,IDs,mol]
@@ -261,31 +272,33 @@ class MolDB(object):
             bar.finish()
             print('Unique molecules %d.\nRepeated SMILES: %d'
                 % (len(self.dicDB.keys()), counteq))
-
+        # Load moldb object from a list of mol objects
         elif smiDB==None and molDB==None and sdfDB==None and pdbList==None and molList!=None:
-            self.dicDB={}
-            counteq=0
-            
-            print('Loading MolDB from mol List')
+            self.dicDB = {}
+            counteq = 0
+            print('Loading MolDB from a list of Mol objects')
             bar = progressbar.ProgressBar(maxval=len(molList)).start()
-            for i, molobject in enumerate(molList):
+            for i, molobj in enumerate(molList):
                 bar.update(i)
-                SMILE=molobject.smile
-                name=molobject.name
-                if SMILE not in self.dicDB:
-                    self.dicDB[SMILE]=[SMILE,name,molobject]
+                smile = molobj.smile
+                name = molobj.name
+                if smile not in self.dicDB:
+                    self.dicDB[smile] = [smile, name, molobj]
                 else:
-                    counteq+=1
-                    self.dicDB[SMILE][1]+=',%s'%name
-                    old_eqSMILES=self.dicDB[SMILE][0].split(',')
-                    new_eqSMILES=[name]
-                    total_eqSMILES=','.join(list(set(old_eqSMILES + new_eqSMILES)))
-                    self.dicDB[SMILE][0]=total_eqSMILES
-                if verbose: print(i+1,name,SMILE)
+                    counteq += 1
+                    self.dicDB[smile][1] += ',%s' % name
+                    old_eqSMILES = self.dicDB[smile][0].split(',')
+                    new_eqSMILES = [smile]
+                    total_eqSMILES = ','.join(list(set(old_eqSMILES + new_eqSMILES)))
+                    self.dicDB[smile][0] = total_eqSMILES
+                if verbose:
+                    print(i+1, name, smile)
             bar.finish()
-            print('Unique molecules %d.\nRepeated SMILES: %d'%(len(self.dicDB.keys()),counteq))
+            print('Unique molecules %d.\nRepeated SMILES: %d'
+                % (len(self.dicDB.keys()), counteq))
         else:
-            raise KeyError('Provide only a smiDB, a molDB object, a sdfDB, a pdbList or a molList')
+            raise KeyError('Provide only a smiDB, a molDB object,\
+            a sdfDB, a pdbList or a molList')
         self._update()
 
     def _update(self):
@@ -330,7 +343,7 @@ class MolDB(object):
         Save the molDB object to sdf file
         - output: output file name (without format)
         """
-        with Chem.SDWriter(output) as w:
+        with Chem.SDWriter(output + '.sdf') as w:
             for k in self.dicDB.keys():
                 molrdkit=self.dicDB[k][2].molrdkit
                 ID=self.dicDB[k][1]
