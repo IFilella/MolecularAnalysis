@@ -42,7 +42,7 @@ def joinMolDBs(dbs, simt=None):
         new_db.filterSimilarity(simt=simt, alg='Morgan4', verbose=False)
     return new_db
 
-def intersectMolDBs(db1,db2,simt,alg='RDKIT',verbose=True):
+def intersectMolDBs(db1, db2, simt, alg='RDKIT', verbose=True):
     """
     Intersect two MolDB objects
     - db1: MolDB object

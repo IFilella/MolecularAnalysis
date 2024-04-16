@@ -127,26 +127,54 @@ def _organizeSplitOutput(pdb_dir, exe_dir, out_dir=None):
         if re.search("cof_ion", filename):
             shutil.move("%s%s"%(in_dir,filename), "%scof_ion/%s"%(out_dir,filename))
 
-def superimposePDB(mob_pdb, fix_pdb, out_dir, seqid=90, overlap=90, verbose=False):
+def superimposePDB(mob_pdb, fix_pdb, out_dir, seqid=90, overlap=90, verbose=False, soft='prody'):
     """
     Superimpose a mobile PDB into a fix PDB with Prody
     - mob_pdb: Mobile PDB to superimpose
     - fix_pdb: Fix PDB
     - out_dir: output directory
     - verbose: If True get additional details (default False)
+    - soft: Software either prody python package or TMalign\
+            (which should install in the path)
     """
-    structureFIX=parsePDB(fix_pdb)
-    structureMOB=parsePDB(mob_pdb)
-    nameMOB=os.path.basename(mob_pdb).replace(".pdb","")
-    try:
-        matchAlign(structureMOB, structureFIX, seqid=seqid, overlap=overlap)
-    except:
-        print('Superimposition between %s and %s failed'%(mob_pdb,fix_pdb))
-        return -1
-    writePDB('%s%s_super.pdb'%(out_dir,nameMOB),structureMOB)
-    return 0
+    out_dir = checkPath(out_dir)
+    if soft == 'prody':
+        structureFIX = parsePDB(fix_pdb)
+        structureMOB = parsePDB(mob_pdb)
+        nameMOB = os.path.basename(mob_pdb).replace(".pdb", "")
+        try:
+            matchAlign(structureMOB, structureFIX, seqid=seqid,
+                       overlap=overlap, pwalign=True)
+        except:
+            print('Superimposition between %s and %s failed' % (mob_pdb,
+                                                                fix_pdb))
+            return -1
+        writePDB('%s%s_super.pdb' % (out_dir, nameMOB), structureMOB)
+        return 0
 
-def superimposePDBs(pdbs, fix_pdb, out_dir, seqid=90, overlap=90, verbose=False):
+    elif soft == 'tmalign':
+        # Superimpose using TMalign
+        nameMOB = os.path.basename(mob_pdb).replace(".pdb", "")
+        outname = '%s%s_super' % (out_dir, nameMOB)
+        TMalign_cmd = 'TMalign %s %s -o %s' % (mob_pdb, fix_pdb, outname)
+        print(TMalign_cmd)
+        os.system(TMalign_cmd)
+        os.system('rm %s %s_all %s_all_atm %s_atm' % (outname,
+                                                      outname,
+                                                      outname,
+                                                      outname))
+        os.system('mv %s_all_atm_lig %s_all_atm_lig.pdb' % (outname, outname))
+        # Extract mobile pdb from the TMalign output
+        structurePDB = parsePDB('%s_all_atm_lig.pdb' % (outname))
+        hvPDB = structurePDB.getHierView()
+        # Write superimpose mobile element as a pdb
+        writePDB(outname, hvPDB['A'])
+        os.system('rm %s_all_atm_lig.pdb' % (outname))
+        return 0
+    else:
+        raise ValueError('soft must be either prody or tmalign')
+
+def superimposePDBs(pdbs, fix_pdb, out_dir, seqid=90, overlap=90, verbose=False, soft='prody'):
     """
     Given a list of mobile PDBs and a fix superimpose all mobile elements to the fix PDB
     - pdbs: 'list'. PDBs list of mobile elements
@@ -155,38 +183,24 @@ def superimposePDBs(pdbs, fix_pdb, out_dir, seqid=90, overlap=90, verbose=False)
     - out_dir: 'str'. Directory to store all the superimposed PDBs
     - verbose: If True get additional details (default False)
     """
-    out_dir=checkPath(out_dir)
-    errors=0
-    name_fix=os.path.basename(fix_pdb)
+    out_dir = checkPath(out_dir)
+    errors = 0
+    name_fix = os.path.basename(fix_pdb)
     for pdb in pdbs:
-        name_mobile=os.path.basename(pdb)
+        name_mobile = os.path.basename(pdb)
         if verbose:
-            print('Superimposition between fix PDB %s and mobile PDB %s'%(name_fix,name_mobile))
-        aux_error=superimposePDB(pdb,fix_pdb,out_dir, seqid, overlap, verbose)
+            print('Superimposition between fix PDB %s and mobile PDB %s'
+                    % (name_fix, name_mobile))
+        aux_error = superimposePDB(pdb, fix_pdb,
+                                   out_dir,
+                                   seqid,
+                                   overlap,
+                                   verbose,
+                                   soft=soft)
+        #if aux_error ==-1: exit()
         errors += aux_error
-    if verbose:  print('%d couldn\'t be superimpose'%-errors)
-
-    #for i, pdb in enumerate(pdbs):
-    #    #Superimpose using TMalign
-    #    pdbname=PDBnames[i]
-    #    if verbose: print(pdbname)
-    #    outname='%s/%s'%(outdir,IDs[i])
-    #    outname=outname.replace('//','/')
-    #    TMalign_cmd='TMalign %s %s -o %s'%(pdb, fix_pdb,outname)
-    #    print(TMalign_cmd)
-    #    os.system(TMalign_cmd)
-    #    os.system('rm %s %s_all %s_all_atm_lig %s_atm'%(outname,outname,outname,outname))
-    #    os.system('mv %s_all_atm %s_all_atm.pdb'%(outname,outname))
-    #
-    #    #Extract mobile pdb from the TMalign output
-    #    structurePDB=parsePDB('%s_all_atm.pdb'%(outname))
-    #    #Load Prody Hierarchical Views
-    #    hvPDB=structurePDB.getHierView()
-    #    #Write superimpose mobile element as a pdb
-    #    aux='%s/%s_super.pdb'%(outdir,IDs[i])
-    #    aux=aux.replace("//","/")
-    #    writePDB(aux,hvPDB['A'])
-    #    os.system('rm %s_all_atm.pdb'%(outname))
+    if verbose:
+        print('%d couldn\'t be superimpose' % errors)
 
 def runPrepWizard(pdbs, schroodinger_path, delimiter=None, out_fmt='mae',
                   max_processes=4):
