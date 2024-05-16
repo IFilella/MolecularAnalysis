@@ -189,6 +189,7 @@ def superimposePDBs(pdbs, fix_pdb, out_dir, seqid=90, overlap=90, verbose=False,
     for pdb in pdbs:
         name_mobile = os.path.basename(pdb)
         if verbose:
+            print('-------------------------------------------------------------------------------------')
             print('Superimposition between fix PDB %s and mobile PDB %s'
                     % (name_fix, name_mobile))
         aux_error = superimposePDB(pdb, fix_pdb,

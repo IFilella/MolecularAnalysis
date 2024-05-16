@@ -178,10 +178,10 @@ class MolDB(object):
         if smiDB != None and molDB == None and sdfDB == None and pdbList == None and molList == None:
             self.dicDB = {}
             db = open(smiDB, 'r')
-            lines = db.readline()
+            lines = db.readlines()
             count = 0
             counteq = 0
-            
+
             bar = progressbar.ProgressBar(maxval=len(lines)).start()
             print('Loading MolDB from smi file')
             for i, line in enumerate(lines):

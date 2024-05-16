@@ -253,6 +253,6 @@ def _plotReducer(reducer_results, Y, output, names, colors, sizes, alphas, linew
     h,l=g.get_legend_handles_labels()
     n=len(set(df['molDB'].values.tolist()))
     #plt.legend(frameon=False, title=None)
-    plt.legend(h[0:n+1],l[0:n+1]) #,bbox_to_anchor=(1.05, 1)), loc=2, borderaxespad=0.)
+    plt.legend(h[0:n+1],l[0:n+1], frameon=False, title=None) #,bbox_to_anchor=(1.05, 1)), loc=2, borderaxespad=0.)
     plt.tight_layout()
     plt.savefig(output+'.pdf',dpi=500)
