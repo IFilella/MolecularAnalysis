@@ -10,14 +10,16 @@ from matplotlib.colors import ListedColormap
 from matplotlib.patches import Patch
 import sys
 import numpy as np
+import dill
 
 class InteractionFingerprints(object):
     """
 
     """
     def __init__(self,
-                 pdbfile,
-                 sdffile,
+                 pdbfile=None,
+                 sdffile=None,
+                 intfpsfile=None,
                  interactions=['Hydrophobic',
                                'HBDonor',
                                'HBAcceptor',
@@ -40,6 +42,8 @@ class InteractionFingerprints(object):
             PDB file with protein structure
         sdffile: string
             SDF file with the docked ligands
+        intpfsfile: string
+            pickle file to load a precalculated InteractionFingerprints object
         interactions: list
             list of interactions to asses during Fingerprint\
             calculation
@@ -63,29 +67,50 @@ class InteractionFingerprints(object):
         14
         """
         self.test = test
-        # Load protein pdb and molecules sdf to prolif
-        protein_rdkit = Chem.MolFromPDBFile(pdbfile, removeHs=False)
-        protein_plf = plf.Molecule(protein_rdkit)
-        sdf_plf = plf.sdf_supplier(sdffile)
+        if intfpsfile:
+            self.load_pickle(intfpsfile)
+        else:
+            if not pdbfile or not sdffile:
+                raise ValueError('If a InteractionFingerprints object is not provided\
+                                  both a pdbfile and sdffile must be provided')
+            # Load protein pdb and molecules sdf to prolif
+            protein_rdkit = Chem.MolFromPDBFile(pdbfile, removeHs=False)
+            protein_plf = plf.Molecule(protein_rdkit)
+            sdf_plf = plf.sdf_supplier(sdffile)
 
-        # Retrive molecules names from sdf
-        mol_names = []
-        for mol in sdf_plf:
-            mol_names.append(mol.GetProp('_Name'))
+            # Retrive molecules names from sdf
+            mol_names = []
+            for mol in sdf_plf:
+                mol_names.append(mol.GetProp('_Name'))
 
-        self.mol_names = mol_names
+            self.mol_names = mol_names
 
-        # Compute inetraction fingerprints
-        int_fps = plf.Fingerprint(interactions=interactions)
-        int_fps.run_from_iterable(sdf_plf, protein_plf)
-        self.int_fps = int_fps
-        self.int_df = self.int_fps.to_dataframe()
+            # Compute inetraction fingerprints
+            int_fps = plf.Fingerprint(interactions=interactions)
+            int_fps.run_from_iterable(sdf_plf, protein_plf)
+            self.int_fps = int_fps
+            self.int_df = self.int_fps.to_dataframe()
+
+    def load_pickle(self, intfpsfile):
+        """
+
+        """
+        with open(intfpsfile, 'rb') as f:
+            intfpsobject = dill.load(f)
+            self.mol_names = intfpsobject.mol_names
+            self.int_fps = intfpsobject.int_fps
+            self.int_df = intfpsobject.int_df
+        #self.int_fps = plf.Fingerprint.from_pickle(intfpsfile)
+        #print(self.int_fps)
+
 
     def to_pickle(self, outname):
         """
 
         """
-        self.int_fp.to_pickle(outname)
+        with open(outname+'.intfp', 'wb') as handle:
+            dill.dump(self, handle)
+        #self.int_fps.to_pickle('%s.intfp' % outname)
 
     def to_csv(self, outname):
         """
