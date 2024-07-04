@@ -2,7 +2,9 @@
 
 import prolif as plf
 from rdkit import Chem
+from rdkit.Chem import rdFingerprintGenerator
 from rdkit import DataStructs
+from rdkit.Chem import AllChem
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -11,6 +13,8 @@ from matplotlib.patches import Patch
 import sys
 import numpy as np
 import dill
+import progressbar
+import random
 
 class InteractionFingerprints(object):
     """
@@ -80,10 +84,14 @@ class InteractionFingerprints(object):
 
             # Retrive molecules names from sdf
             mol_names = []
+            mols = []
             for mol in sdf_plf:
+                mols.append(mol)
                 mol_names.append(mol.GetProp('_Name'))
 
             self.mol_names = mol_names
+            self.mols = mols
+            #self.mol_smiles = 
 
             # Compute inetraction fingerprints
             int_fps = plf.Fingerprint(interactions=interactions)
@@ -100,6 +108,7 @@ class InteractionFingerprints(object):
             self.mol_names = intfpsobject.mol_names
             self.int_fps = intfpsobject.int_fps
             self.df_int = intfpsobject.df_int
+            self.mols = intfpsobject.mols
         #self.int_fps = plf.Fingerprint.from_pickle(intfpsfile)
         #print(self.int_fps)
 
@@ -107,6 +116,7 @@ class InteractionFingerprints(object):
         """
 
         """
+        Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.AllProps)
         with open(outname+'.intfp', 'wb') as handle:
             dill.dump(self, handle)
         #self.int_fps.to_pickle('%s.intfp' % outname)
@@ -138,7 +148,7 @@ class InteractionFingerprints(object):
         """
 
         """
-        df_int = self.df_int.droplevel('ligand', axis=1) 
+        df_int = self.df_int.droplevel('ligand', axis=1)
         df_int_res_perc = df_int.droplevel('interaction', axis=1)
         df_int_res_perc = df_int_res_perc.groupby(level=0, axis=1).any()
         mean_values = df_int_res_perc.mean(axis=0)
@@ -151,6 +161,60 @@ class InteractionFingerprints(object):
                         annot=self.df_int_res_perc.round(4),
                         cmap='viridis')
             plt.savefig(plot)
+
+    def plot_pair_similarity_dist(self, outname, n=10000000):
+        """
+        Structural similarity Vs Interaction similarity
+        """
+        # Get Morgan Fingerprints
+        str_fps_vecs = []
+        fpgen = rdFingerprintGenerator.GetMorganGenerator(radius=4)
+        print('Computing structural fingerprints')
+        bar = progressbar.ProgressBar(maxval=len(self.mols)).start()
+        for i, mol in enumerate(self.mols):
+            bar.update(i)
+            str_fps_vecs.append(fpgen.GetSparseCountFingerprint(mol))
+        bar.finish()
+
+        # Get structural similarit matrix
+        str_similarity_matrix = []
+        print('Computing structural similarity matrix')
+        bar = progressbar.ProgressBar(maxval=len(str_fps_vecs)).start()
+        for i, str_fp in enumerate(str_fps_vecs):
+            bar.update(i)
+            str_similarity_matrix.append(DataStructs.BulkTanimotoSimilarity(str_fp,
+                                                                            str_fps_vecs))
+        bar.finish()
+
+        # Get interaction similarity matrix
+        int_fps_vecs = self.int_fps.to_countvectors()
+        int_similarity_matrix = []
+        print('Computing interaction similarity matrix')
+        bar = progressbar.ProgressBar(maxval=len(int_fps_vecs)).start()
+        for i, cv in enumerate(int_fps_vecs):
+            bar.update(i)
+            int_similarity_matrix.append(DataStructs.BulkTanimotoSimilarity(cv,
+                                                                            int_fps_vecs))
+        bar.finish()
+
+        # Plot
+        x_vals = [item for sublist in str_similarity_matrix for item in sublist]
+        y_vals = [item for sublist in int_similarity_matrix for item in sublist]
+
+        indices = list(range(len(x_vals)))
+        random.shuffle(indices)
+        indices = indices[:n]
+
+        _x_vals = [x_vals[i] for i in indices]
+        _y_vals = [y_vals[i] for i in indices]
+
+        plt.figure(dpi=300)
+        plt.scatter(_x_vals, _y_vals, marker='.', s=1)
+        plt.axvline(x=0.5, color='black', linestyle='--', linewidth=1)
+        plt.axhline(y=0.5, color='black', linestyle='--', linewidth=1)
+        plt.xlabel('Structural Tanimoto Similarity')
+        plt.ylabel('Interactions Tanimoto Similarity')
+        plt.savefig(outname)
 
     def plot_barcode(self, outname, mol_labels=None):
         """
@@ -242,10 +306,13 @@ class InteractionFingerprints(object):
         """
         countvectors = self.int_fps.to_countvectors()
         similarity_matrix = []
+        bar = progressbar.ProgressBar(maxval=len(countvectors)).start()
         for i, cv in enumerate(countvectors):
+            bar.update(i)
             print('%d/%d' % (i, len(countvectors)))
             similarity_matrix.append(DataStructs.BulkTanimotoSimilarity(cv,
                                                                         countvectors))
+        bar.finish()
         if mol_labels:
             similarity_matrix = pd.DataFrame(similarity_matrix,
                                              index=mol_labels,
