@@ -89,7 +89,7 @@ class InteractionFingerprints(object):
             int_fps = plf.Fingerprint(interactions=interactions)
             int_fps.run_from_iterable(sdf_plf, protein_plf)
             self.int_fps = int_fps
-            self.int_df = self.int_fps.to_dataframe()
+            self.df_int = self.int_fps.to_dataframe()
 
     def load_pickle(self, intfpsfile):
         """
@@ -99,10 +99,9 @@ class InteractionFingerprints(object):
             intfpsobject = dill.load(f)
             self.mol_names = intfpsobject.mol_names
             self.int_fps = intfpsobject.int_fps
-            self.int_df = intfpsobject.int_df
+            self.df_int = intfpsobject.df_int
         #self.int_fps = plf.Fingerprint.from_pickle(intfpsfile)
         #print(self.int_fps)
-
 
     def to_pickle(self, outname):
         """
@@ -119,6 +118,40 @@ class InteractionFingerprints(object):
         df = self.int_fp.to_dataframe()
         df.to_csv(outname)
 
+    def get_int_perc(self, plot=None):
+        """
+
+        """
+        df_int = self.df_int.droplevel('ligand', axis=1)
+        df_int_perc = df_int.mean(axis=0)
+        self.df_int_perc = df_int_perc
+        print(self.df_int_perc)
+        if plot:
+            df_unstack = self.df_int_perc.unstack(level='interaction')
+            df_unstack = df_unstack.fillna(0)
+            print(df_unstack)
+            plt.figure(dpi=300, figsize=(10, 7))
+            sns.heatmap(df_unstack, annot=df_unstack.round(4), cmap='viridis')
+            plt.savefig(plot)
+
+    def get_int_res_perc(self, plot=None):
+        """
+
+        """
+        df_int = self.df_int.droplevel('ligand', axis=1) 
+        df_int_res_perc = df_int.droplevel('interaction', axis=1)
+        df_int_res_perc = df_int_res_perc.groupby(level=0, axis=1).any()
+        mean_values = df_int_res_perc.mean(axis=0)
+        df_int_res_perc = pd.DataFrame(mean_values, columns=['Percentage'])
+        self.df_int_res_perc = df_int_res_perc
+        print(self.df_int_res_perc)
+        if plot:
+            plt.figure(dpi=300)
+            sns.heatmap(self.df_int_res_perc,
+                        annot=self.df_int_res_perc.round(4),
+                        cmap='viridis')
+            plt.savefig(plot)
+
     def plot_barcode(self, outname, mol_labels=None):
         """
         Extracted from prolig source code (Jul 2024)
@@ -133,9 +166,9 @@ class InteractionFingerprints(object):
         inv_color_mapper = {value: interaction for interaction, value in color_mapper.items()}
         cmap = ListedColormap(list(separated_interaction_colors.values()))
 
-        n_ligand_residues = len(np.unique(self.int_df.columns.get_level_values("ligand")))
+        n_ligand_residues = len(np.unique(self.df_int.columns.get_level_values("ligand")))
         if n_ligand_residues == 1:
-            df = self.int_df.droplevel('ligand', axis=1)
+            df = self.df_int.droplevel('ligand', axis=1)
 
         def _bit_to_color_value(s: pd.Series) -> pd.Series:
             """Replaces a bit value with it's corresponding color value"""
@@ -209,7 +242,8 @@ class InteractionFingerprints(object):
         """
         countvectors = self.int_fps.to_countvectors()
         similarity_matrix = []
-        for cv in countvectors:
+        for i, cv in enumerate(countvectors):
+            print('%d/%d' % (i, len(countvectors)))
             similarity_matrix.append(DataStructs.BulkTanimotoSimilarity(cv,
                                                                         countvectors))
         if mol_labels:
