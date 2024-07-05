@@ -128,6 +128,16 @@ class InteractionFingerprints(object):
         df = self.int_fp.to_dataframe()
         df.to_csv(outname)
 
+    def get_numdiff_interactions(self):
+        """
+
+        """
+        int_fps_vecs = self.int_fps.to_countvectors()
+        int_fps_bitvecs = [''.join(map(str,int_fp.ToList())) for int_fp in int_fps_vecs]
+        numdiff_interactions = len(set(int_fps_bitvecs))
+        print(numdiff_interactions)
+        return numdiff_interactions
+
     def get_int_perc(self, plot=None):
         """
 
