@@ -15,6 +15,7 @@ import numpy as np
 import dill
 import progressbar
 import random
+from collections import Counter
 
 class InteractionFingerprints(object):
     """
@@ -138,6 +139,121 @@ class InteractionFingerprints(object):
         print(numdiff_interactions)
         return numdiff_interactions
 
+    def dbscan_clusters(self, int_similarity_matrix=None,
+                        eps=0.5,
+                        min_samples=5,
+                        **kwargs):
+        """
+
+        """
+        from sklearn.cluster import DBSCAN
+
+        # Compute int_similarity_matrix if not already computed or
+        # a submatrix of it not provided
+        if (not hasattr(self, 'int_similarity_matrix') and not
+                isinstance(int_similarity_matrix, np.ndarray)):
+            self._get_int_similarity_matrix()
+            int_similarity_matrix = self.int_similarity_matrix
+
+        # Perform DBSCANS clustering
+        print('Clustering with DBSCANS method and Tanimoto similarity')
+        clustering = DBSCAN(metric='precomputed',
+                            eps=eps,
+                            min_samples=min_samples)
+        clustering.fit(int_similarity_matrix)
+        counter = Counter(clustering.labels_)
+        print(counter)
+        return clustering
+
+    def plot_tsne(self, output, random_max=None, n_iter=1500,
+                  perplexity=30, early_exaggeration=12, clustering=False,
+                  **kwargs):
+        """
+
+        """
+        from sklearn.manifold import TSNE
+
+        # Get int_similarity_matrix for tsne and clustering
+        int_fps_vecs = self.int_fps.to_countvectors()
+        if random_max:
+            indices = list(range(len(int_fps_vecs)))
+            random.shuffle(indices)
+            indices = indices[:random_max]
+            int_fps_vecs = [int_fps_vecs[i] for i in indices]
+            mol_names = [self.mol_names[i] for i in indices]
+            int_similarity_matrix = []
+            print('Computing interaction similarity matrix')
+            bar = progressbar.ProgressBar(maxval=len(int_fps_vecs)).start()
+            for i, cv in enumerate(int_fps_vecs):
+                bar.update(i)
+                int_similarity_matrix.append(DataStructs.BulkTanimotoSimilarity(cv,
+                                                                                int_fps_vecs))
+            bar.finish()
+            int_similarity_matrix = np.asarray(int_similarity_matrix)
+        else:
+            if not hasattr(self, 'int_similarity_matrix'):
+                int_similarity_matrix = self._get_int_similarity_matrix()
+            else:
+                int_similarity_matrix = self.int_similarity_matrix
+            mol_names = self.mol_names
+
+        if clustering:
+            clustering = self.dbscan_clusters(int_similarity_matrix=int_similarity_matrix,
+                                              **kwargs)
+
+        # Compute tsne dimensional reduction
+        tsne = TSNE(n_components=2,
+                    verbose=1,
+                    learning_rate='auto',
+                    n_iter=n_iter,
+                    perplexity=perplexity,
+                    metric='precomputed',
+                    early_exaggeration=early_exaggeration,
+                    init='random')
+        tsne_results = tsne.fit_transform(int_similarity_matrix)
+
+        # Plot tsne results
+        plt.figure()
+        if clustering:
+            df = pd.DataFrame(dict(xaxis=tsne_results[:, 0],
+                                   yaxis=tsne_results[:, 1],
+                                   cluster=clustering.labels_))
+            sns.scatterplot(data=df,
+                            x='xaxis',
+                            y='yaxis',
+                            c='cluster',
+                            alpha=0.75,
+                            s=4,
+                            linewidth=0)
+            # Legend?????
+        else:
+            df = pd.DataFrame(dict(xaxis=tsne_results[:, 0],
+                                   yaxis=tsne_results[:, 1]))
+            sns.scatterplot(data=df,
+                            x='xaxis',
+                            y='yaxis',
+                            alpha=0.75,
+                            s=4,
+                            linewidth=0)
+        plt.savefig(output+'.png', dpi=300)
+
+    def _get_int_similarity_matrix(self):
+        """
+
+        """
+        # Get interaction fingerprint distance matrix
+        int_fps_vecs = self.int_fps.to_countvectors()
+        int_similarity_matrix = []
+        print('Computing interaction similarity matrix')
+        bar = progressbar.ProgressBar(maxval=len(int_fps_vecs)).start()
+        for i, cv in enumerate(int_fps_vecs):
+            bar.update(i)
+            int_similarity_matrix.append(DataStructs.BulkTanimotoSimilarity(cv,
+                                                                            int_fps_vecs))
+        int_similarity_matrix = np.asarray(int_similarity_matrix)
+        self.int_similarity_matrix = int_similarity_matrix
+        return int_similarity_matrix
+
     def get_int_perc(self, plot=None):
         """
 
@@ -196,20 +312,13 @@ class InteractionFingerprints(object):
                                                                             str_fps_vecs))
         bar.finish()
 
-        # Get interaction similarity matrix
-        int_fps_vecs = self.int_fps.to_countvectors()
-        int_similarity_matrix = []
-        print('Computing interaction similarity matrix')
-        bar = progressbar.ProgressBar(maxval=len(int_fps_vecs)).start()
-        for i, cv in enumerate(int_fps_vecs):
-            bar.update(i)
-            int_similarity_matrix.append(DataStructs.BulkTanimotoSimilarity(cv,
-                                                                            int_fps_vecs))
-        bar.finish()
+        # Get interaction similarity matrix 
+        if not hasattr(self, 'int_similarity_matrix'):
+            self._get_int_similarity_matrix()
 
         # Plot
         x_vals = [item for sublist in str_similarity_matrix for item in sublist]
-        y_vals = [item for sublist in int_similarity_matrix for item in sublist]
+        y_vals = [item for sublist in self.int_similarity_matrix for item in sublist]
 
         indices = list(range(len(x_vals)))
         random.shuffle(indices)
@@ -314,25 +423,19 @@ class InteractionFingerprints(object):
         """
 
         """
-        countvectors = self.int_fps.to_countvectors()
-        similarity_matrix = []
-        bar = progressbar.ProgressBar(maxval=len(countvectors)).start()
-        for i, cv in enumerate(countvectors):
-            bar.update(i)
-            print('%d/%d' % (i, len(countvectors)))
-            similarity_matrix.append(DataStructs.BulkTanimotoSimilarity(cv,
-                                                                        countvectors))
-        bar.finish()
+        if not hasattr(self, 'int_similarity_matrix'):
+            self._get_int_similarity_matrix()
+
         if mol_labels:
-            similarity_matrix = pd.DataFrame(similarity_matrix,
-                                             index=mol_labels,
-                                             columns=mol_labels)
+            similarity_matrix_df = pd.DataFrame(self.int_similarity_matrix,
+                                                index=mol_labels,
+                                                columns=mol_labels)
         else:
-            similarity_matrix = pd.DataFrame(similarity_matrix,
-                                             index=self.mol_names,
-                                             columns=self.mol_names)
+            similarity_matrix_df = pd.DataFrame(self.int_similarity_matrix,
+                                                index=self.mol_names,
+                                                columns=self.mol_names)
         plt.subplots(dpi=300, layout='constrained')
-        g = sns.clustermap(similarity_matrix, cmap='PRGn')
+        g = sns.clustermap(1-similarity_matrix_df, cmap='PRGn')
         ax = g.ax_heatmap
         ax.set_xlabel('Molecule')
         ax.set_ylabel('Molecule')
