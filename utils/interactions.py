@@ -110,8 +110,6 @@ class InteractionFingerprints(object):
             self.int_fps = intfpsobject.int_fps
             self.df_int = intfpsobject.df_int
             self.mols = intfpsobject.mols
-        #self.int_fps = plf.Fingerprint.from_pickle(intfpsfile)
-        #print(self.int_fps)
 
     def to_pickle(self, outname):
         """
@@ -120,7 +118,6 @@ class InteractionFingerprints(object):
         Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.AllProps)
         with open(outname+'.intfp', 'wb') as handle:
             dill.dump(self, handle)
-        #self.int_fps.to_pickle('%s.intfp' % outname)
 
     def to_csv(self, outname):
         """
@@ -139,41 +136,60 @@ class InteractionFingerprints(object):
         print(numdiff_interactions)
         return numdiff_interactions
 
-    def dbscan_clusters(self, int_similarity_matrix=None,
+    def dbscan_clusters(self,
+                        int_similarity_matrix=None,
                         eps=0.5,
                         min_samples=5,
+                        output=None,
                         **kwargs):
         """
 
         """
         from sklearn.cluster import DBSCAN
-
         # Compute int_similarity_matrix if not already computed or
         # a submatrix of it not provided
-        if (not hasattr(self, 'int_similarity_matrix') and not
-                isinstance(int_similarity_matrix, np.ndarray)):
-            self._get_int_similarity_matrix()
+        if not isinstance(int_similarity_matrix, np.ndarray):
+            if not hasattr(self, 'int_similarity_matrix'):
+                self._get_int_similarity_matrix()
             int_similarity_matrix = self.int_similarity_matrix
+        else:
+            pass
 
         # Perform DBSCANS clustering
         print('Clustering with DBSCANS method and Tanimoto similarity')
         clustering = DBSCAN(metric='precomputed',
                             eps=eps,
                             min_samples=min_samples)
-        clustering.fit(int_similarity_matrix)
+        clustering.fit(1-int_similarity_matrix)
         counter = Counter(clustering.labels_)
         print(counter)
+
+        # Plot int_perc tables and get csv with mols per each cluster
+        if output:
+            int_fps_vecs = self.int_fps.to_countvectors()
+            index_dic = {}
+            for index, cluster in enumerate(clustering.labels_):
+                if cluster not in index_dic:
+                    index_dic[cluster] = []
+                index_dic[cluster].append(index)
+            for cluster in index_dic.keys():
+                indexes = index_dic[cluster]
+                df_cluster = self.df_int.copy()
+                df_cluster = df_cluster.loc[indexes]
+                self.get_int_perc(df=df_cluster,
+                                  plot='%s_cluster%d' % (output, cluster))
+                fout = open('%s_cluster%d.csv' % (output, cluster) )
+                fout.write('ID\n')
+                for index in index_dic[cluster]:
+                    fout.write('%s\n' % self.mol_names[index])
+                fout.close()
+
         return clustering
 
-    def plot_tsne(self, output, random_max=None, n_iter=1500,
-                  perplexity=30, early_exaggeration=12, clustering=False,
-                  **kwargs):
+    def _prepare_reducer(self, random_max):
         """
-
+        Get int_similarity_matrix for tsne and clustering
         """
-        from sklearn.manifold import TSNE
-
-        # Get int_similarity_matrix for tsne and clustering
         int_fps_vecs = self.int_fps.to_countvectors()
         if random_max:
             indices = list(range(len(int_fps_vecs)))
@@ -197,10 +213,52 @@ class InteractionFingerprints(object):
                 int_similarity_matrix = self.int_similarity_matrix
             mol_names = self.mol_names
 
+        return int_similarity_matrix
+
+    def _plot_reducer(self, output, reducer_results, clustering):
+        """
+        plot reducer results
+        """
+        plt.figure()
+        if clustering:
+            df = pd.DataFrame(dict(xaxis=reducer_results[:, 0],
+                                   yaxis=reducer_results[:, 1],
+                                   cluster=clustering.labels_))
+            sns.scatterplot(data=df,
+                            x='xaxis',
+                            y='yaxis',
+                            hue='cluster',
+                            alpha=0.75,
+                            s=4,
+                            linewidth=0,
+                            palette="Paired")
+            plt.legend(title='Cluster')
+        else:
+            df = pd.DataFrame(dict(xaxis=reducer_results[:, 0],
+                                   yaxis=reducer_results[:, 1]))
+            sns.scatterplot(data=df,
+                            x='xaxis',
+                            y='yaxis',
+                            alpha=0.75,
+                            s=4,
+                            linewidth=0)
+        plt.savefig(output+'.png', dpi=300)
+
+    def plot_tsne(self, output, random_max=None, n_iter=1500,
+                  perplexity=30, early_exaggeration=12, clustering=False,
+                  **kwargs):
+        """
+
+        """
+        from sklearn.manifold import TSNE
+
+        # Get int_similarity_matrix for tsne and clustering
+        int_similarity_matrix = self._prepare_reducer(random_max)
+
+        # Get clustering
         if clustering:
             clustering = self.dbscan_clusters(int_similarity_matrix=int_similarity_matrix,
                                               **kwargs)
-
         # Compute tsne dimensional reduction
         tsne = TSNE(n_components=2,
                     verbose=1,
@@ -210,32 +268,34 @@ class InteractionFingerprints(object):
                     metric='precomputed',
                     early_exaggeration=early_exaggeration,
                     init='random')
-        tsne_results = tsne.fit_transform(int_similarity_matrix)
+        tsne_results = tsne.fit_transform(1-int_similarity_matrix)
 
         # Plot tsne results
-        plt.figure()
+        self._plot_reducer(output, tsne_results, clustering)
+
+    def plot_umap(self, output, random_max=None, n_neighbors=100,
+                  min_dist=0.1, n_epochs=1000, clustering=False, **kwargs):
+        """
+
+        """
+        import umap as mp
+        
+        # Get int_similarity_matrix for umap and clustering
+        int_similarity_matrix = self._prepare_reducer(random_max)
+        
+        # Get clustering
         if clustering:
-            df = pd.DataFrame(dict(xaxis=tsne_results[:, 0],
-                                   yaxis=tsne_results[:, 1],
-                                   cluster=clustering.labels_))
-            sns.scatterplot(data=df,
-                            x='xaxis',
-                            y='yaxis',
-                            c='cluster',
-                            alpha=0.75,
-                            s=4,
-                            linewidth=0)
-            # Legend?????
-        else:
-            df = pd.DataFrame(dict(xaxis=tsne_results[:, 0],
-                                   yaxis=tsne_results[:, 1]))
-            sns.scatterplot(data=df,
-                            x='xaxis',
-                            y='yaxis',
-                            alpha=0.75,
-                            s=4,
-                            linewidth=0)
-        plt.savefig(output+'.png', dpi=300)
+            clustering = self.dbscan_clusters(int_similarity_matrix=int_similarity_matrix,
+                                              **kwargs)
+        # Compute umap dimensional reduction
+        umap = mp.UMAP(n_neighbors=n_neighbors,
+                       n_epochs=n_epochs,
+                       min_dist= min_dist,
+                       metric='precomputed')
+        umap_results = umap.fit_transform(1-int_similarity_matrix)
+        
+        # Plot tsne results
+        self._plot_reducer(output, umap_results, clustering)
 
     def _get_int_similarity_matrix(self):
         """
@@ -254,11 +314,14 @@ class InteractionFingerprints(object):
         self.int_similarity_matrix = int_similarity_matrix
         return int_similarity_matrix
 
-    def get_int_perc(self, plot=None):
+    def get_int_perc(self, df=None, plot=None):
         """
 
         """
-        df_int = self.df_int.droplevel('ligand', axis=1)
+        if isinstance(df, pd.DataFrame):
+            df_int = df.droplevel('ligand', axis=1)
+        else:
+            df_int = self.df_int.droplevel('ligand', axis=1)
         df_int_perc = df_int.mean(axis=0)
         self.df_int_perc = df_int_perc
         print(self.df_int_perc)
@@ -268,7 +331,7 @@ class InteractionFingerprints(object):
             print(df_unstack)
             plt.figure(dpi=300, figsize=(10, 7))
             sns.heatmap(df_unstack, annot=df_unstack.round(4), cmap='viridis')
-            plt.savefig(plot)
+            plt.savefig(plot + '.png')
 
     def get_int_res_perc(self, plot=None):
         """
@@ -333,6 +396,28 @@ class InteractionFingerprints(object):
         plt.axhline(y=0.5, color='black', linestyle='--', linewidth=1)
         plt.xlabel('Structural Tanimoto Similarity')
         plt.ylabel('Interactions Tanimoto Similarity')
+        plt.savefig(outname)
+    
+    def plot_clustermap(self, outname, mol_labels=None):
+        """
+
+        """
+        if not hasattr(self, 'int_similarity_matrix'):
+            self._get_int_similarity_matrix()
+
+        if mol_labels:
+            similarity_matrix_df = pd.DataFrame(self.int_similarity_matrix,
+                                                index=mol_labels,
+                                                columns=mol_labels)
+        else:
+            similarity_matrix_df = pd.DataFrame(self.int_similarity_matrix,
+                                                index=self.mol_names,
+                                                columns=self.mol_names)
+        plt.subplots(dpi=300, layout='constrained')
+        g = sns.clustermap(1-similarity_matrix_df, cmap='PRGn')
+        ax = g.ax_heatmap
+        ax.set_xlabel('Molecule')
+        ax.set_ylabel('Molecule')
         plt.savefig(outname)
 
     def plot_barcode(self, outname, mol_labels=None):
@@ -418,29 +503,6 @@ class InteractionFingerprints(object):
         ax.legend(handles=patches, bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0)
         fig.tight_layout(pad=1.2)
         plt.savefig(outname)
-
-    def plot_clustermap(self, outname, mol_labels=None):
-        """
-
-        """
-        if not hasattr(self, 'int_similarity_matrix'):
-            self._get_int_similarity_matrix()
-
-        if mol_labels:
-            similarity_matrix_df = pd.DataFrame(self.int_similarity_matrix,
-                                                index=mol_labels,
-                                                columns=mol_labels)
-        else:
-            similarity_matrix_df = pd.DataFrame(self.int_similarity_matrix,
-                                                index=self.mol_names,
-                                                columns=self.mol_names)
-        plt.subplots(dpi=300, layout='constrained')
-        g = sns.clustermap(1-similarity_matrix_df, cmap='PRGn')
-        ax = g.ax_heatmap
-        ax.set_xlabel('Molecule')
-        ax.set_ylabel('Molecule')
-        plt.savefig(outname)
-
 
 if __name__ == "__main__":
     import doctest
