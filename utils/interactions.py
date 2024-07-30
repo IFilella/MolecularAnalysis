@@ -178,7 +178,7 @@ class InteractionFingerprints(object):
                 df_cluster = df_cluster.loc[indexes]
                 self.get_int_perc(df=df_cluster,
                                   plot='%s_cluster%d' % (output, cluster))
-                fout = open('%s_cluster%d.csv' % (output, cluster) )
+                fout = open('%s_cluster%d.csv' % (output, cluster), 'w')
                 fout.write('ID\n')
                 for index in index_dic[cluster]:
                     fout.write('%s\n' % self.mol_names[index])
