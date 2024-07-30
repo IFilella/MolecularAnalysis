@@ -493,7 +493,9 @@ class MolDB(object):
         - verbose: If True get additional details (default False)
         """
         simmatrix=np.zeros((self.size,self.size))
+        bar = progressbar.ProgressBar(maxval=len(self.mols)).start()
         for i,mol in enumerate(self.mols):
+            bar.update(i)
             for j,mol in enumerate(self.mols):
                 if i<j:
                     if verbose: print('%d/%d'%(i+1,self.size))
@@ -505,6 +507,7 @@ class MolDB(object):
                     simmatrix[i][i]=1
                 else:
                     continue
+        bar.finish()
         self.simmatrix=simmatrix
 
     def plotNPR(self,output, zkey=None):

@@ -310,6 +310,7 @@ class InteractionFingerprints(object):
             bar.update(i)
             int_similarity_matrix.append(DataStructs.BulkTanimotoSimilarity(cv,
                                                                             int_fps_vecs))
+        bar.finish()
         int_similarity_matrix = np.asarray(int_similarity_matrix)
         self.int_similarity_matrix = int_similarity_matrix
         return int_similarity_matrix
