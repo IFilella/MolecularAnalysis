@@ -1,5 +1,6 @@
 from MolecularAnalysis.mol import Mol
 import rdkit.Chem as Chem
+from rdkit.Chem import rdFingerprintGenerator
 from rdkit import DataStructs
 import dill as pickle
 import os
@@ -485,6 +486,56 @@ class MolDB(object):
         self.dicDB=new_dicDB
         self._update()
 
+    def _get_similarity_matrix(self,
+                               radius=4,
+                               metric='Tanimoto',
+                               verbose=False):
+        """
+
+        """
+        # Get Morgan Fingerprints
+        fps_vecs = []
+        fpgen = rdFingerprintGenerator.GetMorganGenerator(radius=radius)
+        print('Computing structural fingerprint')
+        bar = progressbar.ProgressBar(maxval=len(self.mols)).start()
+        for i, mol in enumerate(self.mols):
+            bar.update(i)
+            fps_vecs.append(fpgen.GetSparseCountFingerprint(mol.molrdkit))
+        bar.finish()
+
+        # Get structural similarity matrix
+        similarity_matrix = []
+        print('Computing similarity matrix')
+        bar = progressbar.ProgressBar(maxval=len(fps_vecs)).start()
+        for i, fp in enumerate(fps_vecs):
+            bar.update(i)
+            similarity_matrix.append(DataStructs.BulkTanimotoSimilarity(fp,
+                                                                        fps_vecs))
+        bar.finish()
+        self.simmatrix = similarity_matrix
+
+    def plot_similarity_clustermap(self, outname):
+        """
+
+        """
+        if not hasattr(self, 'simmatrix'):
+            self._get_similarity_matrix()
+
+        names = []
+        for mol in self.mols:
+            name = mol.molrdkit.GetProp('_Name')
+            names.append(name)
+        
+        similarity_matrix_df = pd.DataFrame(self.simmatrix,
+                                            index=names,
+                                            columns=names)
+        plt.subplots(dpi=300, layout='constrained')
+        g = sns.clustermap(1-similarity_matrix_df, cmap='OrRd')
+        ax = g.ax_heatmap
+        ax.set_xlabel('Molecule')
+        ax.set_ylabel('Molecule')
+        plt.savefig(outname)
+
     def getMatrixSimilarity(self, alg='Morgan4', metric='Tanimoto',verbose=False):
         """
         Get pairwise similarity matrix of all molecules in the MolDB obj
@@ -492,23 +543,26 @@ class MolDB(object):
         - metric: similarity metric (default Tanimoto)
         - verbose: If True get additional details (default False)
         """
-        simmatrix=np.zeros((self.size,self.size))
+        simmatrix = np.zeros((self.size, self.size))
         bar = progressbar.ProgressBar(maxval=len(self.mols)).start()
-        for i,mol in enumerate(self.mols):
+        for i, mol in enumerate(self.mols):
             bar.update(i)
-            for j,mol in enumerate(self.mols):
-                if i<j:
-                    if verbose: print('%d/%d'%(i+1,self.size))
-                    sim=getMolSimilarity(self.mols[i], self.mols[j], alg=alg
-                                            , metric=metric)
-                    simmatrix[i][j]=sim
-                    simmatrix[j][i]=sim
-                elif i==j:
-                    simmatrix[i][i]=1
+            for j, mol in enumerate(self.mols):
+                if i < j:
+                    if verbose:
+                        print('%d/%d' % (i+1, self.size))
+                    sim = getMolSimilarity(self.mols[i],
+                                           self.mols[j],
+                                           alg=alg,
+                                           metric=metric)
+                    simmatrix[i][j] = sim
+                    simmatrix[j][i] = sim
+                elif i == j:
+                    simmatrix[i][i] = 1
                 else:
                     continue
         bar.finish()
-        self.simmatrix=simmatrix
+        self.simmatrix = simmatrix
 
     def plotNPR(self,output, zkey=None):
         """
