@@ -12,6 +12,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from math import pi
 import progressbar
+from scipy.cluster.hierarchy import dendrogram, linkage
 
 
 def joinMolDBs(dbs, simt=None):
@@ -512,7 +513,15 @@ class MolDB(object):
             similarity_matrix.append(DataStructs.BulkTanimotoSimilarity(fp,
                                                                         fps_vecs))
         bar.finish()
-        self.simmatrix = similarity_matrix
+
+        names = []
+        for mol in self.mols:
+            name = mol.molrdkit.GetProp('_Name')
+            names.append(name)
+
+        self.simmatrix = pd.DataFrame(similarity_matrix,
+                                      index=names,
+                                      columns=names)
 
     def plot_similarity_clustermap(self, outname):
         """
@@ -521,20 +530,84 @@ class MolDB(object):
         if not hasattr(self, 'simmatrix'):
             self._get_similarity_matrix()
 
-        names = []
-        for mol in self.mols:
-            name = mol.molrdkit.GetProp('_Name')
-            names.append(name)
-        
-        similarity_matrix_df = pd.DataFrame(self.simmatrix,
-                                            index=names,
-                                            columns=names)
         plt.subplots(dpi=300, layout='constrained')
-        g = sns.clustermap(1-similarity_matrix_df, cmap='OrRd')
+        g = sns.clustermap(1-self.simmatrix, cmap='OrRd')
         ax = g.ax_heatmap
         ax.set_xlabel('Molecule')
         ax.set_ylabel('Molecule')
         plt.savefig(outname)
+
+    def _get_dendrogram(self):
+        """
+
+        """
+        if not hasattr(self, 'simmatrix'):
+            self._get_similarity_matrix()
+
+        self.simdendrogram = linkage(self.simmatrix, 'average', metric='euclidean')
+
+    def plot_dendrogram(self, outname, max_d, annotate_above, p=None):
+        """
+
+        """
+        if not hasattr(self, 'simdendrogram'):
+            self._get_dendrogram()
+
+        plt.figure(figsize=(25, 10))
+        plt.title('Hierarchical clustering dendrogram')
+        plt.xlabel('sample index', fontsize=16)
+        plt.ylabel('distance', fontsize=16)
+
+        if p:
+            self._plot_fancy_dendrogram(self.simdendrogram,
+                                        leaf_rotation=90.,
+                                        leaf_font_size=8.,
+                                        labels=self.IDs,
+                                        max_d=max_d,
+                                        annotate_above=annotate_above,
+                                        p=p,
+                                        truncate_mode='lastp',
+                                        show_contracted=True)
+        else:
+            self._plot_fancy_dendrogram(self.simdendrogram,
+                                        leaf_rotation=90.,
+                                        leaf_font_size=8.,
+                                        labels=self.IDs,
+                                        max_d=max_d,
+                                        annotate_above=annotate_above)
+
+        ax = plt.gca()
+        ax.tick_params(axis='x', which='major', labelsize=5)
+        ax.tick_params(axis='y', which='major', labelsize=14)
+        plt.savefig(outname, dpi=300)
+
+    def _plot_fancy_dendrogram(self, *args, **kwargs):
+        """
+
+        """
+        max_d = kwargs.pop('max_d', None)
+        if max_d and 'color_threshold' not in kwargs:
+            kwargs['color_threshold'] = max_d
+        annotate_above = kwargs.pop('annotate_above', 0)
+        ddata = dendrogram(*args, **kwargs)
+
+        if not kwargs.get('no_plot', False):
+            plt.title('Hierarchical Clustering Dendrogram (truncated)')
+            plt.xlabel('sample index or (cluster size)')
+            plt.ylabel('distance')
+            for i, d, c in zip(ddata['icoord'],
+                               ddata['dcoord'],
+                               ddata['color_list']):
+                x = 0.5 * sum(i[1:3])
+                y = d[1]
+                if y > annotate_above:
+                    plt.plot(x, y, 'o', c=c)
+                    plt.annotate("%.3g" % y, (x, y), xytext=(0, -5),
+                                 textcoords='offset points',
+                                 va='top', ha='center')
+            if max_d:
+                plt.axhline(y=max_d, c='k')
+        return ddata
 
     def getMatrixSimilarity(self, alg='Morgan4', metric='Tanimoto',verbose=False):
         """
