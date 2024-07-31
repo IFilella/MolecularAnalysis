@@ -12,7 +12,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from math import pi
 import progressbar
-from scipy.cluster.hierarchy import dendrogram, linkage
+from scipy.cluster.hierarchy import dendrogram, linkage, fcluster
 
 
 def joinMolDBs(dbs, simt=None):
@@ -545,6 +545,30 @@ class MolDB(object):
             self._get_similarity_matrix()
 
         self.simdendrogram = linkage(self.simmatrix, 'average', metric='euclidean')
+
+    def get_dendrogram_clusters(self, max_d):
+        """
+
+        """
+        if not hasattr(self, 'simdendrogram'):
+            self._get_dendrogram()
+
+        clusters = fcluster(self.simdendrogram, max_d, criterion='distance')
+        self.simdendrogram_clusters = clusters
+
+        ids = self.simmatrix.columns.tolist()
+
+        clusters_dic = {}
+        for i, id in enumerate(ids):
+            cluster = self.simdendrogram_clusters[i]
+            if cluster not in clusters_dic:
+                clusters_dic[cluster] = [id]
+            else:
+                clusters_dic[cluster].append(id)
+
+        self.simdendrogram_clusters_dic = clusters_dic
+
+        return self.simdendrogram_clusters_dic
 
     def plot_dendrogram(self, outname, max_d, annotate_above, p=None):
         """
