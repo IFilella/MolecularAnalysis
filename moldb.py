@@ -191,7 +191,7 @@ class MolDB(object):
                 line = line.replace('\n', '')
                 SMILE = line
                 mol = Mol(smile=SMILE, allparamaters=self.paramaters,
-                          chirality=self.chirality)
+                          chirality=self.chirality, name='unk')
                 if mol.error == -1:
                     continue
                 if SMILE not in self.dicDB:
@@ -230,8 +230,11 @@ class MolDB(object):
                         name = cpd.GetProp("Catalog ID")
                     except:
                         pass
-                mol = Mol(rdkit=cpd, allparamaters=self.paramaters,
-                          chirality=self.chirality, name=name)
+                try:
+                    mol = Mol(rdkit=cpd, allparamaters=self.paramaters,
+                              chirality=self.chirality, name=name)
+                except:
+                    pass
                 if mol.error==-1: continue
                 SMILE=mol.smile
                 eqSMILES=SMILE
